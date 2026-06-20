@@ -1,5 +1,5 @@
 import type { Source, RangeResponse } from 'pmtiles'
-import { savePmtilesBlob } from '../data/db'
+import { saveOfflineBlob } from '../data/db'
 
 /**
  * Source pmtiles qui lit les octets depuis un Blob local (téléchargé pour le
@@ -36,6 +36,7 @@ export class CachedPmtilesSource implements Source {
  */
 export async function downloadPmtiles(
   url: string,
+  key: string,
   onProgress: (received: number, total: number) => void,
 ): Promise<Blob> {
   const res = await fetch(url)
@@ -56,6 +57,6 @@ export async function downloadPmtiles(
   const blob = new Blob(chunks as BlobPart[], {
     type: 'application/octet-stream',
   })
-  await savePmtilesBlob(blob)
+  await saveOfflineBlob(key, blob)
   return blob
 }

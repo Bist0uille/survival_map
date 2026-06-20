@@ -5,6 +5,7 @@ import { FilterBar } from './components/FilterBar'
 import { SearchBar } from './components/SearchBar'
 import { AddPointForm } from './components/AddPointForm'
 import { OfflinePanel } from './components/OfflinePanel'
+import { RouteInfo, type RouteProps } from './components/RouteInfo'
 import {
   getPersonalPoints,
   addPersonalPoint,
@@ -22,6 +23,8 @@ function App() {
   const [count, setCount] = useState(0)
   const [flyTo, setFlyTo] = useState<Place | null>(null)
   const [showOffline, setShowOffline] = useState(false)
+  const [showRoutes, setShowRoutes] = useState(false)
+  const [selectedRoute, setSelectedRoute] = useState<RouteProps | null>(null)
   const [pending, setPending] = useState<{ lat: number; lon: number } | null>(
     null,
   )
@@ -38,6 +41,20 @@ function App() {
 
   const handleViewport = useCallback((bounds: GeoBounds, zoom: number) => {
     viewport.current = { bounds, zoom }
+  }, [])
+
+  const handleRouteSelect = useCallback(
+    (props: Record<string, unknown> | null) => {
+      setSelectedRoute(props as RouteProps | null)
+    },
+    [],
+  )
+
+  const toggleRoutes = useCallback(() => {
+    setShowRoutes((v) => {
+      if (v) setSelectedRoute(null) // on masque → désélectionne
+      return !v
+    })
   }, [])
 
   const toggleCategory = useCallback((id: string) => {
@@ -72,6 +89,9 @@ function App() {
         personalPoints={personalPoints}
         addMode={addMode}
         flyTo={flyTo}
+        showRoutes={showRoutes}
+        selectedRouteId={selectedRoute?.id ?? null}
+        onRouteSelect={handleRouteSelect}
         onMapClick={handleMapClick}
         onDeletePersonal={handleDeletePersonal}
         onCount={setCount}
@@ -86,6 +106,8 @@ function App() {
       <FilterBar
         active={active}
         onToggle={toggleCategory}
+        showRoutes={showRoutes}
+        onToggleRoutes={toggleRoutes}
         resultCount={count + personalPoints.length}
         loading={false}
         error={null}
@@ -133,6 +155,10 @@ function App() {
           zoom={viewport.current.zoom}
           onClose={() => setShowOffline(false)}
         />
+      )}
+
+      {showRoutes && selectedRoute && (
+        <RouteInfo route={selectedRoute} onClose={() => setSelectedRoute(null)} />
       )}
     </div>
   )

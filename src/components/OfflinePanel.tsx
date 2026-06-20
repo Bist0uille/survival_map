@@ -9,7 +9,7 @@ import {
   type GeoBounds,
 } from '../data/offline'
 import { downloadPmtiles } from '../map/cachedSource'
-import { hasPmtilesBlob } from '../data/db'
+import { hasOfflineBlob } from '../data/db'
 
 interface OfflinePanelProps {
   bounds: GeoBounds
@@ -18,19 +18,22 @@ interface OfflinePanelProps {
 }
 
 const POIS_URL = window.location.origin + '/pois.pmtiles'
+const ROUTES_URL = window.location.origin + '/routes.pmtiles'
 
 export function OfflinePanel({ bounds, zoom, onClose }: OfflinePanelProps) {
   const plan = useMemo(() => planTiles(bounds, zoom), [bounds, zoom])
   const [poiCached, setPoiCached] = useState<boolean | null>(null)
+  const [routesCached, setRoutesCached] = useState<boolean | null>(null)
   const [phase, setPhase] = useState<'confirm' | 'downloading' | 'done'>(
     'confirm',
   )
-  const [step, setStep] = useState<'poi' | 'tiles'>('poi')
-  const [poi, setPoi] = useState({ received: 0, total: 0 })
+  const [step, setStep] = useState<'poi' | 'routes' | 'tiles'>('poi')
+  const [bytes, setBytes] = useState({ received: 0, total: 0 })
   const [tiles, setTiles] = useState({ done: 0, total: plan.total })
 
   useEffect(() => {
-    hasPmtilesBlob().then(setPoiCached)
+    hasOfflineBlob('pois').then(setPoiCached)
+    hasOfflineBlob('routes').then(setRoutesCached)
   }, [])
 
   async function start() {
@@ -38,12 +41,24 @@ export function OfflinePanel({ bounds, zoom, onClose }: OfflinePanelProps) {
     await requestPersistent()
     if (!poiCached) {
       setStep('poi')
+      setBytes({ received: 0, total: 0 })
       try {
-        await downloadPmtiles(POIS_URL, (received, total) =>
-          setPoi({ received, total }),
+        await downloadPmtiles(POIS_URL, 'pois', (received, total) =>
+          setBytes({ received, total }),
         )
       } catch {
-        // si les POI échouent, on continue quand même avec le fond de carte
+        /* on continue */
+      }
+    }
+    if (!routesCached) {
+      setStep('routes')
+      setBytes({ received: 0, total: 0 })
+      try {
+        await downloadPmtiles(ROUTES_URL, 'routes', (received, total) =>
+          setBytes({ received, total }),
+        )
+      } catch {
+        /* itinéraires pas encore dispo → on continue */
       }
     }
     setStep('tiles')
@@ -52,7 +67,7 @@ export function OfflinePanel({ bounds, zoom, onClose }: OfflinePanelProps) {
   }
 
   const tilePct = tiles.total ? Math.round((tiles.done / tiles.total) * 100) : 0
-  const poiPct = poi.total ? Math.round((poi.received / poi.total) * 100) : 0
+  const bytePct = bytes.total ? Math.round((bytes.received / bytes.total) * 100) : 0
 
   return (
     <div className="absolute inset-0 z-30 flex items-end justify-center bg-black/30 p-3 sm:items-center">
@@ -74,8 +89,7 @@ export function OfflinePanel({ bounds, zoom, onClose }: OfflinePanelProps) {
           <>
             <p className="mb-3 text-sm text-slate-600">
               Télécharger la <b>zone affichée</b> pour l'utiliser sans réseau
-              (fond topo jusqu'au zoom {plan.reached}
-              {poiCached === false ? ' + tous les points de France' : ''}).
+              (fond topo jusqu'au zoom {plan.reached}).
             </p>
             <div className="mb-4 space-y-1 rounded-lg bg-slate-50 p-3 text-sm text-slate-700">
               <div>
@@ -87,9 +101,12 @@ export function OfflinePanel({ bounds, zoom, onClose }: OfflinePanelProps) {
                   Points d'intérêt (France) : ≈ <b>77 Mo</b> (une seule fois)
                 </div>
               )}
-              {poiCached === true && (
+              {routesCached === false && (
+                <div>Itinéraires de rando (France) : une seule fois</div>
+              )}
+              {poiCached === true && routesCached === true && (
                 <div className="text-green-700">
-                  Points d'intérêt : déjà disponibles hors-ligne ✓
+                  Points & itinéraires : déjà hors-ligne ✓
                 </div>
               )}
             </div>
@@ -106,7 +123,7 @@ export function OfflinePanel({ bounds, zoom, onClose }: OfflinePanelProps) {
               </button>
               <button
                 onClick={start}
-                disabled={poiCached === null}
+                disabled={poiCached === null || routesCached === null}
                 className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-700 py-2 text-sm font-medium text-white hover:bg-green-800 disabled:opacity-50"
               >
                 <Download size={16} />
@@ -121,23 +138,25 @@ export function OfflinePanel({ bounds, zoom, onClose }: OfflinePanelProps) {
             <p className="mb-3 text-sm text-slate-600">
               {step === 'poi'
                 ? 'Points d’intérêt (France)…'
-                : 'Fond de carte de la zone…'}{' '}
+                : step === 'routes'
+                  ? 'Itinéraires de rando (France)…'
+                  : 'Fond de carte de la zone…'}{' '}
               Ne ferme pas l'app.
             </p>
-            {step === 'poi' ? (
-              <>
-                <Bar pct={poiPct} />
-                <p className="text-center text-sm text-slate-500">
-                  {formatSize(poi.received)}
-                  {poi.total ? ` / ${formatSize(poi.total)} (${poiPct} %)` : ''}
-                </p>
-              </>
-            ) : (
+            {step === 'tiles' ? (
               <>
                 <Bar pct={tilePct} />
                 <p className="text-center text-sm text-slate-500">
                   {tiles.done.toLocaleString('fr-FR')} /{' '}
                   {tiles.total.toLocaleString('fr-FR')} tuiles ({tilePct} %)
+                </p>
+              </>
+            ) : (
+              <>
+                <Bar pct={bytePct} />
+                <p className="text-center text-sm text-slate-500">
+                  {formatSize(bytes.received)}
+                  {bytes.total ? ` / ${formatSize(bytes.total)} (${bytePct} %)` : ''}
                 </p>
               </>
             )}
@@ -151,8 +170,7 @@ export function OfflinePanel({ bounds, zoom, onClose }: OfflinePanelProps) {
               Zone enregistrée !
             </p>
             <p className="mb-4 text-xs text-slate-500">
-              Carte + points d'intérêt disponibles sans réseau. Tu peux passer
-              en mode avion.
+              Carte, points d'intérêt et itinéraires disponibles sans réseau.
             </p>
             <button
               onClick={onClose}

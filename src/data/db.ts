@@ -27,21 +27,19 @@ class SurvivalDB extends Dexie {
 
 export const db = new SurvivalDB()
 
-const PMTILES_KEY = 'pmtiles'
-
-/** Le fichier POI a-t-il été téléchargé ? (sans charger le blob) */
-export async function hasPmtilesBlob(): Promise<boolean> {
+/** Un fichier hors-ligne (clé 'pois' ou 'routes') est-il présent ? */
+export async function hasOfflineBlob(key: string): Promise<boolean> {
   const keys = await db.offline.toCollection().primaryKeys()
-  return keys.includes(PMTILES_KEY)
+  return keys.includes(key)
 }
 
-export async function getPmtilesBlob(): Promise<Blob | null> {
-  const rec = await db.offline.get(PMTILES_KEY)
+export async function getOfflineBlob(key: string): Promise<Blob | null> {
+  const rec = await db.offline.get(key)
   return rec?.blob ?? null
 }
 
-export async function savePmtilesBlob(blob: Blob): Promise<void> {
-  await db.offline.put({ key: PMTILES_KEY, blob, savedAt: Date.now() })
+export async function saveOfflineBlob(key: string, blob: Blob): Promise<void> {
+  await db.offline.put({ key, blob, savedAt: Date.now() })
 }
 
 /** TTL du cache Overpass : 24 h */
