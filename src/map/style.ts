@@ -12,11 +12,9 @@ export const TOPO_STYLE: StyleSpecification = {
   sources: {
     opentopomap: {
       type: 'raster',
-      tiles: [
-        'https://a.tile.opentopomap.org/{z}/{x}/{y}.png',
-        'https://b.tile.opentopomap.org/{z}/{x}/{y}.png',
-        'https://c.tile.opentopomap.org/{z}/{x}/{y}.png',
-      ],
+      // Un seul sous-domaine : indispensable pour que les tuiles téléchargées
+      // hors-ligne soient retrouvées (la clé de cache inclut l'hôte).
+      tiles: ['https://a.tile.opentopomap.org/{z}/{x}/{y}.png'],
       tileSize: 256,
       maxzoom: 17,
       attribution:

@@ -56,10 +56,9 @@ export default defineConfig({
             handler: 'CacheFirst',
             options: {
               cacheName: 'opentopomap-tiles',
-              expiration: {
-                maxEntries: 1500,
-                maxAgeSeconds: 60 * 60 * 24 * 30, // 30 jours
-              },
+              // Pas de plugin d'expiration : il ralentit énormément le
+              // téléchargement en masse (écriture IndexedDB par tuile). Le
+              // cache grossit, mais c'est voulu pour le hors-ligne.
               cacheableResponse: { statuses: [0, 200] },
             },
           },

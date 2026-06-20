@@ -7,6 +7,7 @@ import { TOPO_STYLE, NARBONNE } from './style'
 import { getCategory } from '../data/categories'
 import { addCategoryIcons } from './categoryIcons'
 import { featurePopupHtml, personalPopupHtml } from '../components/popupHtml'
+import type { GeoBounds } from '../data/offline'
 import type { PersonalPoint, Place } from '../types'
 
 // Enregistre le protocole pmtiles auprès de MapLibre (une seule fois).
@@ -27,6 +28,7 @@ interface MapViewProps {
   onMapClick: (lat: number, lon: number) => void
   onDeletePersonal: (id: string) => void
   onCount: (n: number) => void
+  onViewport: (bounds: GeoBounds, zoom: number) => void
 }
 
 /** Filtre de couche : ne garder que les catégories actives. */
@@ -78,6 +80,7 @@ export function MapView({
   onMapClick,
   onDeletePersonal,
   onCount,
+  onViewport,
 }: MapViewProps) {
   const container = useRef<HTMLDivElement>(null)
   const map = useRef<MLMap | null>(null)
@@ -89,10 +92,12 @@ export function MapView({
   const cbClick = useRef(onMapClick)
   const cbDelete = useRef(onDeletePersonal)
   const cbCount = useRef(onCount)
+  const cbViewport = useRef(onViewport)
   const addModeRef = useRef(addMode)
   cbClick.current = onMapClick
   cbDelete.current = onDeletePersonal
   cbCount.current = onCount
+  cbViewport.current = onViewport
   addModeRef.current = addMode
   activeRef.current = active
 
@@ -137,6 +142,14 @@ export function MapView({
       countTimer = setTimeout(recomputeCount, 200)
     }
     recomputeRef.current = scheduleCount
+
+    const emitViewport = () => {
+      const b = m.getBounds()
+      cbViewport.current(
+        { west: b.getWest(), south: b.getSouth(), east: b.getEast(), north: b.getNorth() },
+        m.getZoom(),
+      )
+    }
 
     m.once('load', async () => {
       m.resize()
@@ -204,10 +217,14 @@ export function MapView({
     ro.observe(el)
 
     m.on('idle', scheduleCount)
-    m.on('moveend', scheduleCount)
+    m.on('moveend', () => {
+      scheduleCount()
+      emitViewport()
+    })
     m.on('sourcedata', (e) => {
       if (e.sourceId === POI_SOURCE) scheduleCount()
     })
+    m.once('idle', emitViewport)
 
     m.on('click', (e) => {
       if (addModeRef.current) cbClick.current(e.lngLat.lat, e.lngLat.lng)
