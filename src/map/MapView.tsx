@@ -2,10 +2,12 @@ import { useEffect, useRef } from 'react'
 import maplibregl from 'maplibre-gl'
 import type { Map as MLMap, Marker as MLMarker } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { Protocol } from 'pmtiles'
+import { Protocol, PMTiles } from 'pmtiles'
 import { TOPO_STYLE, NARBONNE } from './style'
 import { getCategory } from '../data/categories'
 import { addCategoryIcons } from './categoryIcons'
+import { CachedPmtilesSource } from './cachedSource'
+import { getPmtilesBlob } from '../data/db'
 import { featurePopupHtml, personalPopupHtml } from '../components/popupHtml'
 import type { GeoBounds } from '../data/offline'
 import type { PersonalPoint, Place } from '../types'
@@ -155,25 +157,31 @@ export function MapView({
       m.resize()
       await addCategoryIcons(m)
 
-      // PMTiles (France) si le fichier existe ET commence par la signature
-      // "PMTiles" (le placeholder ou un 404 => on reste sur le repli Aude).
-      // On évite le content-length de HEAD : Vercel ne l'expose pas au navigateur.
+      // POI via PMTiles : on lit le fichier local (téléchargé hors-ligne) s'il
+      // est présent — détection par sa signature "PMTiles" —, sinon par réseau.
+      // (HEAD ne donne pas le content-length sur Vercel, d'où la lecture des
+      // 7 premiers octets.)
+      const pmUrl = window.location.origin + PMTILES_PATH
+      const pmBlob = await getPmtilesBlob()
       let usePmtiles = false
-      try {
-        const res = await fetch(PMTILES_PATH, { headers: { Range: 'bytes=0-6' } })
-        if (res.ok || res.status === 206) {
-          const bytes = new Uint8Array(await res.arrayBuffer())
-          usePmtiles = String.fromCharCode(...bytes.slice(0, 7)) === 'PMTiles'
+      if (pmBlob) {
+        const magic = new TextDecoder().decode(await pmBlob.slice(0, 7).arrayBuffer())
+        usePmtiles = magic === 'PMTiles'
+      } else {
+        try {
+          const res = await fetch(PMTILES_PATH, { headers: { Range: 'bytes=0-6' } })
+          if (res.ok || res.status === 206) {
+            const bytes = new Uint8Array(await res.arrayBuffer())
+            usePmtiles = String.fromCharCode(...bytes.slice(0, 7)) === 'PMTiles'
+          }
+        } catch {
+          usePmtiles = false
         }
-      } catch {
-        usePmtiles = false
       }
 
       if (usePmtiles) {
-        m.addSource(POI_SOURCE, {
-          type: 'vector',
-          url: 'pmtiles://' + window.location.origin + PMTILES_PATH,
-        })
+        pmtilesProtocol.add(new PMTiles(new CachedPmtilesSource(pmUrl, pmBlob)))
+        m.addSource(POI_SOURCE, { type: 'vector', url: 'pmtiles://' + pmUrl })
         m.addLayer({
           id: POI_LAYER,
           type: 'symbol',
