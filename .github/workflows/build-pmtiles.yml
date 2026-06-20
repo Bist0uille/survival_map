@@ -1,0 +1,72 @@
+# À copier dans .github/workflows/build-pmtiles.yml via l'interface web GitHub
+# (le token CLI n'a pas le scope `workflow` pour le pousser).
+# Construit public/pois.pmtiles (tous les POI de France) puis le commit.
+name: Construire PMTiles France
+
+on:
+  schedule:
+    # Le 1er de chaque mois à 03:00 UTC (fichier volumineux → mensuel)
+    - cron: '0 3 1 * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Installer osmium + tippecanoe
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y osmium-tool build-essential libsqlite3-dev zlib1g-dev
+          git clone --depth 1 https://github.com/felt/tippecanoe.git /tmp/tippecanoe
+          make -C /tmp/tippecanoe -j"$(nproc)"
+          sudo make -C /tmp/tippecanoe install
+
+      - name: Télécharger l'extrait France (Geofabrik)
+        run: wget -q -O /tmp/france.osm.pbf https://download.geofabrik.de/europe/france-latest.osm.pbf
+
+      - name: Filtrer les POI
+        run: |
+          osmium tags-filter /tmp/france.osm.pbf \
+            nwr/amenity=drinking_water,fountain,toilets,charging_station,public_bookcase \
+            nwr/leisure=picnic_table \
+            nwr/tourism=picnic_site,viewpoint,alpine_hut,wilderness_hut \
+            nwr/shop=bakery \
+            nwr/natural=peak,rock,stone \
+            nwr/waterway=waterfall \
+            nwr/highway=rest_area \
+            -o /tmp/filtered.osm.pbf
+
+      - name: Exporter en GeoJSONSeq
+        run: osmium export /tmp/filtered.osm.pbf --add-unique-id=type_id -f geojsonseq -o /tmp/filtered.geojsonseq
+
+      - name: Transformer (catégories + centroïdes)
+        run: node scripts/osm-to-pmtiles-input.mjs < /tmp/filtered.geojsonseq > /tmp/input.geojsonseq
+
+      - name: Construire le PMTiles
+        run: |
+          tippecanoe -o public/pois.pmtiles -l pois \
+            -Z4 -z14 --drop-densest-as-needed --extend-zooms-if-still-dropping --force \
+            /tmp/input.geojsonseq
+          ls -lh public/pois.pmtiles
+
+      - name: Commit si changé
+        run: |
+          git config user.name "Bist0uille"
+          git config user.email "111542828+Bist0uille@users.noreply.github.com"
+          if git diff --quiet -- public/pois.pmtiles; then
+            echo "PMTiles inchangé."
+          else
+            git add public/pois.pmtiles
+            git commit -m "chore(data): build PMTiles France"
+            git push
+          fi
