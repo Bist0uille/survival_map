@@ -9,6 +9,16 @@
     />
     <meta name="theme-color" content="#15803d" />
     <title>Survival Map — rando & bivouac</title>
+    <!-- CSS critique inline : garantit la hauteur AVANT le bundle CSS,
+         sinon MapLibre s'initialise dans un conteneur de hauteur 0. -->
+    <style>
+      html,
+      body,
+      #root {
+        height: 100%;
+        margin: 0;
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>

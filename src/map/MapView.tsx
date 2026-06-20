@@ -54,9 +54,10 @@ export function MapView({
 
   // Init carte (une seule fois)
   useEffect(() => {
-    if (!container.current || map.current) return
+    const el = container.current
+    if (!el || map.current) return
     const m = new maplibregl.Map({
-      container: container.current,
+      container: el,
       style: TOPO_STYLE,
       center: NARBONNE,
       zoom: 12,
@@ -71,6 +72,13 @@ export function MapView({
       }),
       'bottom-right',
     )
+
+    // Garantit que la carte remplit toujours son conteneur, même si la
+    // taille n'était pas encore résolue au moment de l'init (race CSS) ou
+    // change ensuite (barre d'adresse mobile, rotation…).
+    m.once('load', () => m.resize())
+    const ro = new ResizeObserver(() => m.resize())
+    ro.observe(el)
 
     m.on('moveend', () => {
       const c = m.getCenter()
@@ -94,6 +102,7 @@ export function MapView({
     cbMove.current(NARBONNE[1], NARBONNE[0])
 
     return () => {
+      ro.disconnect()
       m.remove()
       map.current = null
     }
@@ -135,5 +144,9 @@ export function MapView({
     }
   }, [pois, personalPoints])
 
-  return <div ref={container} className="absolute inset-0" />
+  // Style inline (et non la classe Tailwind `.absolute`) : la classe
+  // `.maplibregl-map` ajoutée par MapLibre définit `position:relative` et,
+  // chargée après Tailwind, l'emporterait — laissant le conteneur à 0 de
+  // hauteur. Le style inline prime sur toute règle de classe.
+  return <div ref={container} style={{ position: 'absolute', inset: 0 }} />
 }
