@@ -26,13 +26,17 @@ node scripts/osm-to-pmtiles-input.mjs < /tmp/filtered.geojsonseq > /tmp/input.ge
 
 echo "→ Construction du PMTiles"
 mkdir -p public
-# -r1 + --no-tile-size-limit : on GARDE TOUS LES POINTS (aucun éclaircissement)
-# de z9 à z14, pour voir toute une région d'un coup. En dessous de z9
-# (vue quasi nationale) la couche est vide, ce qui est voulu.
-# Le poids total n'affecte pas le client : MapLibre ne charge que les
-# tuiles visibles (requêtes HTTP range).
+# -r1 : pas d'éclaircissement automatique au dézoom (sinon les points
+#       disparaissent quand on dézoome — c'est ce qu'on veut éviter).
+# -Z6..-z14 : visibles dès le zoom 6 (vues « plusieurs villes » couvertes).
+# --drop-densest-as-needed --maximum-tile-bytes=2,5 Mo : on ne supprime des
+#   points QUE si une tuile dépasse 2,5 Mo (zones ultra-denses uniquement) ;
+#   les catégories éparses (boîtes à livres…) sont toujours conservées, et
+#   les tuiles restent légères à charger sur mobile.
+# Le poids total du fichier n'affecte pas le client : MapLibre ne télécharge
+# que les tuiles visibles (requêtes HTTP range).
 tippecanoe -o public/pois.pmtiles -l pois \
-  -Z9 -z14 -r1 --no-tile-size-limit --force \
+  -Z6 -z14 -r1 --drop-densest-as-needed --maximum-tile-bytes=2500000 --force \
   /tmp/input.geojsonseq
 
 ls -lh public/pois.pmtiles

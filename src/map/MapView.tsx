@@ -36,7 +36,7 @@ function filterExpr(active: string[]): maplibregl.FilterSpecification {
 
 const ICON_LAYOUT = {
   'icon-image': ['get', 'categoryId'],
-  'icon-size': ['interpolate', ['linear'], ['zoom'], 8, 0.42, 13, 0.6, 18, 0.9],
+  'icon-size': ['interpolate', ['linear'], ['zoom'], 6, 0.22, 9, 0.38, 13, 0.6, 18, 0.9],
   'icon-allow-overlap': true,
   'icon-ignore-placement': true,
 } as unknown as maplibregl.SymbolLayerSpecification['layout']
