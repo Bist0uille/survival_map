@@ -35,6 +35,15 @@ export interface PersonalPoint {
   createdAt: number
 }
 
+/** Lieu retourné par la recherche (géocodage Nominatim) */
+export interface Place {
+  lat: number
+  lon: number
+  /** [sud, nord, ouest, est] si disponible */
+  bbox?: [number, number, number, number]
+  label: string
+}
+
 /** Entrée de cache Overpass dans Dexie */
 export interface CacheEntry {
   /** clé = zone arrondie + catégories actives */

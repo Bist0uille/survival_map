@@ -16,7 +16,7 @@ export function FilterBar({
   error,
 }: FilterBarProps) {
   return (
-    <div className="pointer-events-none absolute left-0 right-0 top-0 z-10 flex flex-col gap-2 p-2">
+    <div className="pointer-events-none absolute left-0 right-0 top-14 z-10 flex flex-col gap-2 p-2">
       <div className="pointer-events-auto flex gap-1.5 overflow-x-auto pb-1">
         {CATEGORIES.map((cat) => {
           const Icon = cat.icon

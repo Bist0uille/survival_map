@@ -7,7 +7,7 @@ import { TOPO_STYLE, NARBONNE } from './style'
 import { getCategory } from '../data/categories'
 import { addCategoryIcons } from './categoryIcons'
 import { featurePopupHtml, personalPopupHtml } from '../components/popupHtml'
-import type { PersonalPoint } from '../types'
+import type { PersonalPoint, Place } from '../types'
 
 // Enregistre le protocole pmtiles auprès de MapLibre (une seule fois).
 const pmtilesProtocol = new Protocol()
@@ -23,6 +23,7 @@ interface MapViewProps {
   active: Set<string>
   personalPoints: PersonalPoint[]
   addMode: boolean
+  flyTo: Place | null
   onMapClick: (lat: number, lon: number) => void
   onDeletePersonal: (id: string) => void
   onCount: (n: number) => void
@@ -73,6 +74,7 @@ export function MapView({
   active,
   personalPoints,
   addMode,
+  flyTo,
   onMapClick,
   onDeletePersonal,
   onCount,
@@ -125,10 +127,13 @@ export function MapView({
       m.resize()
       await addCategoryIcons(m)
 
-      // PMTiles (France) si le fichier existe, sinon GeoJSON statique (Aude).
+      // PMTiles (France) si le fichier existe ET fait une taille réaliste
+      // (un placeholder minuscule => on reste sur le repli Aude).
       let usePmtiles = false
       try {
-        usePmtiles = (await fetch(PMTILES_PATH, { method: 'HEAD' })).ok
+        const head = await fetch(PMTILES_PATH, { method: 'HEAD' })
+        const size = Number(head.headers.get('content-length') ?? '0')
+        usePmtiles = head.ok && size > 100000
       } catch {
         usePmtiles = false
       }
@@ -206,6 +211,24 @@ export function MapView({
     if (!m) return
     m.getCanvas().style.cursor = addMode ? 'crosshair' : ''
   }, [addMode])
+
+  // Déplacement de la carte sur le lieu recherché.
+  useEffect(() => {
+    const m = map.current
+    if (!m || !flyTo) return
+    if (flyTo.bbox) {
+      const [s, n, w, e] = flyTo.bbox
+      m.fitBounds(
+        [
+          [w, s],
+          [e, n],
+        ],
+        { maxZoom: 15, padding: 40, duration: 900 },
+      )
+    } else {
+      m.flyTo({ center: [flyTo.lon, flyTo.lat], zoom: 14, duration: 900 })
+    }
+  }, [flyTo])
 
   // Filtre par catégories actives (instantané via la couche).
   useEffect(() => {

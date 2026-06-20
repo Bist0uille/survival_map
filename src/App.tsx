@@ -2,13 +2,14 @@ import { useState, useEffect, useCallback } from 'react'
 import { Plus, X } from 'lucide-react'
 import { MapView } from './map/MapView'
 import { FilterBar } from './components/FilterBar'
+import { SearchBar } from './components/SearchBar'
 import { AddPointForm } from './components/AddPointForm'
 import {
   getPersonalPoints,
   addPersonalPoint,
   deletePersonalPoint,
 } from './data/db'
-import type { PersonalPoint } from './types'
+import type { PersonalPoint, Place } from './types'
 
 const DEFAULT_ACTIVE = ['water']
 
@@ -17,6 +18,7 @@ function App() {
   const [personalPoints, setPersonalPoints] = useState<PersonalPoint[]>([])
   const [addMode, setAddMode] = useState(false)
   const [count, setCount] = useState(0)
+  const [flyTo, setFlyTo] = useState<Place | null>(null)
   const [pending, setPending] = useState<{ lat: number; lon: number } | null>(
     null,
   )
@@ -57,10 +59,16 @@ function App() {
         active={active}
         personalPoints={personalPoints}
         addMode={addMode}
+        flyTo={flyTo}
         onMapClick={handleMapClick}
         onDeletePersonal={handleDeletePersonal}
         onCount={setCount}
       />
+
+      {/* Recherche de lieu (au-dessus des filtres) */}
+      <div className="pointer-events-none absolute left-0 right-0 top-0 z-30 p-2">
+        <SearchBar onSelect={setFlyTo} />
+      </div>
 
       <FilterBar
         active={active}
