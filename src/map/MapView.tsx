@@ -127,13 +127,16 @@ export function MapView({
       m.resize()
       await addCategoryIcons(m)
 
-      // PMTiles (France) si le fichier existe ET fait une taille réaliste
-      // (un placeholder minuscule => on reste sur le repli Aude).
+      // PMTiles (France) si le fichier existe ET commence par la signature
+      // "PMTiles" (le placeholder ou un 404 => on reste sur le repli Aude).
+      // On évite le content-length de HEAD : Vercel ne l'expose pas au navigateur.
       let usePmtiles = false
       try {
-        const head = await fetch(PMTILES_PATH, { method: 'HEAD' })
-        const size = Number(head.headers.get('content-length') ?? '0')
-        usePmtiles = head.ok && size > 100000
+        const res = await fetch(PMTILES_PATH, { headers: { Range: 'bytes=0-6' } })
+        if (res.ok || res.status === 206) {
+          const bytes = new Uint8Array(await res.arrayBuffer())
+          usePmtiles = String.fromCharCode(...bytes.slice(0, 7)) === 'PMTiles'
+        }
       } catch {
         usePmtiles = false
       }
