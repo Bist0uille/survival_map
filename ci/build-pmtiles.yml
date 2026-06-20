@@ -63,11 +63,10 @@ jobs:
         run: |
           git config user.name "Bist0uille"
           git config user.email "111542828+Bist0uille@users.noreply.github.com"
-          git add public/pois.pmtiles
-          # --cached détecte aussi un fichier NOUVEAU (git diff seul ne le voit pas)
-          if git diff --cached --quiet; then
+          if git diff --quiet -- public/pois.pmtiles; then
             echo "PMTiles inchangé."
           else
+            git add public/pois.pmtiles
             git commit -m "chore(data): build PMTiles France"
             git push
           fi
