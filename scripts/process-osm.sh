@@ -40,3 +40,28 @@ tippecanoe -o public/pois.pmtiles -l pois \
   /tmp/input.geojsonseq
 
 ls -lh public/pois.pmtiles
+
+# ---------------------------------------------------------------------------
+# Itinéraires balisés (relations route=hiking) -> public/routes.pmtiles
+# ---------------------------------------------------------------------------
+echo "→ Filtrage des itinéraires (relations route=hiking + membres)"
+# Par défaut osmium tags-filter ajoute les objets référencés (ways + nodes)
+# des relations -> géométrie complète pour l'assemblage.
+osmium tags-filter "$PBF" r/route=hiking -o /tmp/routes.osm.pbf --overwrite
+
+echo "→ Assemblage des géométries (GDAL/ogr2ogr, couche multilinestrings)"
+# Le driver OSM de GDAL assemble chaque relation route en MultiLineString
+# avec ses tags (name, type) + other_tags (ref, network, osmc:symbol…).
+rm -f /tmp/routes.geojsonseq
+OGR_INTERLEAVED_READING=YES ogr2ogr -f GeoJSONSeq /tmp/routes.geojsonseq \
+  /tmp/routes.osm.pbf multilinestrings
+
+echo "→ Transformation des itinéraires"
+node scripts/osm-routes-to-input.mjs < /tmp/routes.geojsonseq > /tmp/routes-input.geojsonseq
+
+echo "→ Construction de routes.pmtiles"
+tippecanoe -o public/routes.pmtiles -l routes \
+  -Z6 -z14 -r1 --drop-densest-as-needed --maximum-tile-bytes=2500000 --force \
+  /tmp/routes-input.geojsonseq
+
+ls -lh public/routes.pmtiles

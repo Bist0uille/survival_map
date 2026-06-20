@@ -23,10 +23,10 @@ jobs:
         with:
           node-version: 20
 
-      - name: Installer osmium + tippecanoe
+      - name: Installer osmium + gdal + tippecanoe
         run: |
           sudo apt-get update
-          sudo apt-get install -y osmium-tool build-essential libsqlite3-dev zlib1g-dev
+          sudo apt-get install -y osmium-tool gdal-bin build-essential libsqlite3-dev zlib1g-dev
           git clone --depth 1 https://github.com/felt/tippecanoe.git /tmp/tippecanoe
           make -C /tmp/tippecanoe -j"$(nproc)"
           sudo make -C /tmp/tippecanoe install
@@ -49,10 +49,11 @@ jobs:
         run: |
           git config user.name "Bist0uille"
           git config user.email "111542828+Bist0uille@users.noreply.github.com"
-          if git diff --quiet -- public/pois.pmtiles; then
-            echo "PMTiles inchangé."
+          git add public/pois.pmtiles public/routes.pmtiles
+          # --cached détecte aussi les fichiers nouveaux (routes.pmtiles)
+          if git diff --cached --quiet; then
+            echo "PMTiles inchangés."
           else
-            git add public/pois.pmtiles
-            git commit -m "chore(data): build PMTiles France"
+            git commit -m "chore(data): build PMTiles France (POI + itinéraires)"
             git push
           fi
