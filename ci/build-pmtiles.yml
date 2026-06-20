@@ -42,30 +42,8 @@ jobs:
           done
           test -s /tmp/france.osm.pbf
 
-      - name: Filtrer les POI
-        run: |
-          osmium tags-filter /tmp/france.osm.pbf \
-            nwr/amenity=drinking_water,fountain,toilets,charging_station,public_bookcase \
-            nwr/leisure=picnic_table \
-            nwr/tourism=picnic_site,viewpoint,alpine_hut,wilderness_hut \
-            nwr/shop=bakery \
-            nwr/natural=peak,rock,stone \
-            nwr/waterway=waterfall \
-            nwr/highway=rest_area \
-            -o /tmp/filtered.osm.pbf
-
-      - name: Exporter en GeoJSONSeq
-        run: osmium export /tmp/filtered.osm.pbf --add-unique-id=type_id -f geojsonseq -o /tmp/filtered.geojsonseq
-
-      - name: Transformer (catégories + centroïdes)
-        run: node scripts/osm-to-pmtiles-input.mjs < /tmp/filtered.geojsonseq > /tmp/input.geojsonseq
-
-      - name: Construire le PMTiles
-        run: |
-          tippecanoe -o public/pois.pmtiles -l pois \
-            -Z4 -z14 --drop-densest-as-needed --extend-zooms-if-still-dropping --force \
-            /tmp/input.geojsonseq
-          ls -lh public/pois.pmtiles
+      - name: Traiter l'OSM et construire le PMTiles
+        run: bash scripts/process-osm.sh /tmp/france.osm.pbf
 
       - name: Commit si changé
         run: |
