@@ -1,32 +1,69 @@
 import { useEffect, useRef } from 'react'
 import maplibregl from 'maplibre-gl'
-import type { Map as MLMap, Marker as MLMarker } from 'maplibre-gl'
+import type {
+  Map as MLMap,
+  Marker as MLMarker,
+  GeoJSONSource,
+  ExpressionSpecification,
+} from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { TOPO_STYLE, NARBONNE } from './style'
-import { getCategory } from '../data/categories'
+import { CATEGORIES, CUSTOM_CATEGORY, getCategory } from '../data/categories'
 import { poiPopupHtml, personalPopupHtml } from '../components/popupHtml'
 import type { Poi, PersonalPoint } from '../types'
+
+export interface Bounds {
+  west: number
+  south: number
+  east: number
+  north: number
+}
 
 interface MapViewProps {
   pois: Poi[]
   personalPoints: PersonalPoint[]
   addMode: boolean
-  onMoveEnd: (lat: number, lon: number) => void
+  onMoveEnd: (lat: number, lon: number, bounds: Bounds) => void
   onMapClick: (lat: number, lon: number) => void
   onDeletePersonal: (id: string) => void
 }
 
-/** Crée un élément DOM de marqueur coloré pour une catégorie. */
-function markerEl(color: string, ring: boolean): HTMLDivElement {
+const POI_SOURCE = 'pois'
+const POI_LAYER = 'pois-circles'
+
+/** Expression MapLibre : couleur du cercle selon la catégorie. */
+function colorExpression(): ExpressionSpecification {
+  const pairs = CATEGORIES.flatMap((c) => [c.id, c.color])
+  return [
+    'match',
+    ['get', 'categoryId'],
+    ...pairs,
+    CUSTOM_CATEGORY.color,
+  ] as unknown as ExpressionSpecification
+}
+
+function toFeatureCollection(pois: Poi[]): GeoJSON.FeatureCollection {
+  return {
+    type: 'FeatureCollection',
+    features: pois.map((p) => ({
+      type: 'Feature',
+      geometry: { type: 'Point', coordinates: [p.lon, p.lat] },
+      properties: { id: p.id, categoryId: p.categoryId },
+    })),
+  }
+}
+
+/** Élément DOM pour un marqueur de point perso (avec anneau). */
+function personalMarkerEl(color: string): HTMLDivElement {
   const el = document.createElement('div')
   el.style.width = '16px'
   el.style.height = '16px'
   el.style.borderRadius = '50%'
   el.style.background = color
-  el.style.border = ring ? '3px solid #fff' : '2px solid #fff'
+  el.style.border = '3px solid #fff'
+  el.style.outline = '2px solid ' + color
   el.style.boxShadow = '0 1px 4px rgba(0,0,0,0.4)'
   el.style.cursor = 'pointer'
-  if (ring) el.style.outline = '2px solid ' + color
   return el
 }
 
@@ -41,12 +78,15 @@ export function MapView({
   const container = useRef<HTMLDivElement>(null)
   const map = useRef<MLMap | null>(null)
   const markers = useRef<MLMarker[]>([])
-  // Refs vers les callbacks pour éviter de ré-attacher les listeners
+  const ready = useRef(false)
+  // Index id -> Poi pour retrouver le détail au clic sur un cercle.
+  const poiIndex = useRef<Map<string, Poi>>(new Map())
+  const poisRef = useRef<Poi[]>(pois)
+
   const cbMove = useRef(onMoveEnd)
   const cbClick = useRef(onMapClick)
   const cbDelete = useRef(onDeletePersonal)
   const addModeRef = useRef(addMode)
-
   cbMove.current = onMoveEnd
   cbClick.current = onMapClick
   cbDelete.current = onDeletePersonal
@@ -73,38 +113,77 @@ export function MapView({
       'bottom-right',
     )
 
-    // Garantit que la carte remplit toujours son conteneur, même si la
-    // taille n'était pas encore résolue au moment de l'init (race CSS) ou
-    // change ensuite (barre d'adresse mobile, rotation…).
-    m.once('load', () => m.resize())
+    m.once('load', () => {
+      m.resize()
+      // Source + couche GPU pour les POI (gère des milliers de points).
+      m.addSource(POI_SOURCE, {
+        type: 'geojson',
+        data: toFeatureCollection(poisRef.current),
+      })
+      m.addLayer({
+        id: POI_LAYER,
+        type: 'circle',
+        source: POI_SOURCE,
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 3, 13, 6, 18, 10],
+          'circle-color': colorExpression(),
+          'circle-stroke-width': 1.5,
+          'circle-stroke-color': '#ffffff',
+        },
+      })
+      ready.current = true
+
+      m.on('click', POI_LAYER, (e) => {
+        const f = e.features?.[0]
+        if (!f) return
+        const poi = poiIndex.current.get(String(f.properties?.id))
+        if (!poi) return
+        new maplibregl.Popup({ offset: 10 })
+          .setLngLat([poi.lon, poi.lat])
+          .setHTML(poiPopupHtml(poi))
+          .addTo(m)
+      })
+      m.on('mouseenter', POI_LAYER, () => {
+        m.getCanvas().style.cursor = 'pointer'
+      })
+      m.on('mouseleave', POI_LAYER, () => {
+        m.getCanvas().style.cursor = addModeRef.current ? 'crosshair' : ''
+      })
+    })
+
     const ro = new ResizeObserver(() => m.resize())
     ro.observe(el)
 
-    m.on('moveend', () => {
+    const emitMove = () => {
       const c = m.getCenter()
-      cbMove.current(c.lat, c.lng)
-    })
+      const b = m.getBounds()
+      cbMove.current(c.lat, c.lng, {
+        west: b.getWest(),
+        south: b.getSouth(),
+        east: b.getEast(),
+        north: b.getNorth(),
+      })
+    }
+    m.on('moveend', emitMove)
 
     m.on('click', (e) => {
-      if (addModeRef.current) {
-        cbClick.current(e.lngLat.lat, e.lngLat.lng)
-      }
+      if (addModeRef.current) cbClick.current(e.lngLat.lat, e.lngLat.lng)
     })
 
     // Suppression d'un point perso depuis le bouton dans la popup
     m.getContainer().addEventListener('click', (ev) => {
-      const target = ev.target as HTMLElement
-      const id = target.getAttribute('data-delete-id')
+      const id = (ev.target as HTMLElement).getAttribute('data-delete-id')
       if (id) cbDelete.current(id)
     })
 
-    // Premier chargement
-    cbMove.current(NARBONNE[1], NARBONNE[0])
+    // Premier chargement (après que la carte ait ses dimensions)
+    m.once('idle', emitMove)
 
     return () => {
       ro.disconnect()
       m.remove()
       map.current = null
+      ready.current = false
     }
   }, [])
 
@@ -115,34 +194,31 @@ export function MapView({
     m.getCanvas().style.cursor = addMode ? 'crosshair' : ''
   }, [addMode])
 
-  // (Re)dessine les marqueurs quand POIs ou points perso changent
+  // Met à jour la couche POI (données GeoJSON) quand la liste change.
+  useEffect(() => {
+    poisRef.current = pois
+    poiIndex.current = new Map(pois.map((p) => [p.id, p]))
+    const m = map.current
+    if (!m || !ready.current) return
+    const src = m.getSource(POI_SOURCE) as GeoJSONSource | undefined
+    src?.setData(toFeatureCollection(pois))
+  }, [pois])
+
+  // Points perso : marqueurs DOM (peu nombreux).
   useEffect(() => {
     const m = map.current
     if (!m) return
-
     markers.current.forEach((mk) => mk.remove())
     markers.current = []
-
-    for (const poi of pois) {
-      const cat = getCategory(poi.categoryId)
-      const mk = new maplibregl.Marker({ element: markerEl(cat.color, false) })
-        .setLngLat([poi.lon, poi.lat])
-        .setPopup(new maplibregl.Popup({ offset: 12 }).setHTML(poiPopupHtml(poi)))
-        .addTo(m)
-      markers.current.push(mk)
-    }
-
     for (const p of personalPoints) {
       const cat = getCategory(p.categoryId)
-      const mk = new maplibregl.Marker({ element: markerEl(cat.color, true) })
+      const mk = new maplibregl.Marker({ element: personalMarkerEl(cat.color) })
         .setLngLat([p.lon, p.lat])
-        .setPopup(
-          new maplibregl.Popup({ offset: 12 }).setHTML(personalPopupHtml(p)),
-        )
+        .setPopup(new maplibregl.Popup({ offset: 12 }).setHTML(personalPopupHtml(p)))
         .addTo(m)
       markers.current.push(mk)
     }
-  }, [pois, personalPoints])
+  }, [personalPoints])
 
   // Style inline (et non la classe Tailwind `.absolute`) : la classe
   // `.maplibregl-map` ajoutée par MapLibre définit `position:relative` et,

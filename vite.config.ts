@@ -42,6 +42,16 @@ export default defineConfig({
         // => premier niveau d'offline sur les zones déjà ouvertes.
         runtimeCaching: [
           {
+            // Base statique des POI : servie depuis le cache, rafraîchie en fond.
+            urlPattern: /\/data\/pois\.json$/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'pois-data',
+              expiration: { maxEntries: 2, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheableResponse: { statuses: [0, 200] },
+            },
+          },
+          {
             urlPattern: /^https:\/\/[abc]\.tile\.opentopomap\.org\/.*/i,
             handler: 'CacheFirst',
             options: {

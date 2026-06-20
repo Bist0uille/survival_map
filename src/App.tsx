@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Plus, X } from 'lucide-react'
 import { MapView } from './map/MapView'
+import type { Bounds } from './map/MapView'
 import { FilterBar } from './components/FilterBar'
 import { AddPointForm } from './components/AddPointForm'
 import { usePois } from './hooks/usePois'
@@ -24,6 +25,13 @@ function App() {
     lat: 43.184,
     lon: 3.003,
   })
+  // Emprise courante (mise à jour à chaque déplacement de carte).
+  const bounds = useRef<Bounds>({
+    south: 43.13,
+    north: 43.24,
+    west: 2.93,
+    east: 3.08,
+  })
 
   const { pois, loading, error, load } = usePois()
 
@@ -32,15 +40,16 @@ function App() {
     getPersonalPoints().then(setPersonalPoints)
   }, [])
 
-  // Recharge les POIs quand les filtres changent
+  // Recharge les POIs quand les filtres changent (emprise courante).
   useEffect(() => {
-    load([...active], center.current.lat, center.current.lon)
+    load([...active], center.current.lat, center.current.lon, bounds.current)
   }, [active, load])
 
   const handleMoveEnd = useCallback(
-    (lat: number, lon: number) => {
+    (lat: number, lon: number, b: Bounds) => {
       center.current = { lat, lon }
-      load([...active], lat, lon)
+      bounds.current = b
+      load([...active], lat, lon, b)
     },
     [active, load],
   )

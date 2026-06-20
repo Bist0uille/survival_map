@@ -56,14 +56,11 @@ export const CATEGORIES: CategoryDef[] = [
     ],
   },
   {
-    id: 'books_cemetery',
-    label: 'Livres / Cimetières',
+    id: 'books',
+    label: 'Boîte à livres',
     color: '#0891b2',
     icon: BookOpen,
-    osm: [
-      { key: 'amenity', value: 'public_bookcase' },
-      { key: 'landuse', value: 'cemetery' },
-    ],
+    osm: [{ key: 'amenity', value: 'public_bookcase' }],
   },
   {
     id: 'bakery',
