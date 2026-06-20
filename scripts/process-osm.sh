@@ -60,8 +60,10 @@ echo "→ Transformation des itinéraires"
 node scripts/osm-routes-to-input.mjs < /tmp/routes.geojsonseq > /tmp/routes-input.geojsonseq
 
 echo "→ Construction de routes.pmtiles"
+# -z13 (pas z14) : suffisant pour des lignes, et garde le fichier sous la
+# limite GitHub de 100 Mo. MapLibre sur-zoome les tuiles z13 au-delà.
 tippecanoe -o public/routes.pmtiles -l routes \
-  -Z6 -z14 -r1 --drop-densest-as-needed --maximum-tile-bytes=2500000 --force \
+  -Z6 -z13 -r1 --drop-densest-as-needed --maximum-tile-bytes=2500000 --force \
   /tmp/routes-input.geojsonseq
 
 ls -lh public/routes.pmtiles

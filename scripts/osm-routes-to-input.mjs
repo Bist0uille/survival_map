@@ -36,7 +36,6 @@ rl.on('line', (line) => {
     name: p.name ?? '',
     ref: ot.ref ?? '',
     network: ot.network ?? '', // iwn/nwn/rwn/lwn
-    colour: ot.colour ?? ot['osmc:symbol'] ?? '',
   }
   process.stdout.write(
     JSON.stringify({ type: 'Feature', geometry: g, properties: props }) + '\n',
