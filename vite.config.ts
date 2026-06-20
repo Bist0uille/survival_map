@@ -54,7 +54,7 @@ export default defineConfig({
             },
           },
           {
-            urlPattern: /^https:\/\/overpass-api\.de\/api\/interpreter.*/i,
+            urlPattern: /\/api\/interpreter/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'overpass-api',

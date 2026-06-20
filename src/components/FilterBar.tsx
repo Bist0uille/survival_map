@@ -5,6 +5,7 @@ interface FilterBarProps {
   onToggle: (id: string) => void
   resultCount: number
   loading: boolean
+  error: string | null
 }
 
 export function FilterBar({
@@ -12,6 +13,7 @@ export function FilterBar({
   onToggle,
   resultCount,
   loading,
+  error,
 }: FilterBarProps) {
   return (
     <div className="pointer-events-none absolute left-0 right-0 top-0 z-10 flex flex-col gap-2 p-2">
@@ -37,8 +39,16 @@ export function FilterBar({
         })}
       </div>
       <div className="pointer-events-none">
-        <span className="pointer-events-auto inline-block rounded-full bg-white/90 px-3 py-1 text-xs font-medium text-slate-600 shadow-sm">
-          {loading ? 'Chargement…' : `${resultCount} point(s)`}
+        <span
+          className={`pointer-events-auto inline-block rounded-full px-3 py-1 text-xs font-medium shadow-sm ${
+            error ? 'bg-red-600 text-white' : 'bg-white/90 text-slate-600'
+          }`}
+        >
+          {loading
+            ? 'Chargement…'
+            : error
+              ? '⚠︎ Données indisponibles — réessaie'
+              : `${resultCount} point(s)`}
         </span>
       </div>
     </div>

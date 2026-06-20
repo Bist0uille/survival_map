@@ -25,7 +25,7 @@ function App() {
     lon: 3.003,
   })
 
-  const { pois, loading, load } = usePois()
+  const { pois, loading, error, load } = usePois()
 
   // Charge les points perso au démarrage
   useEffect(() => {
@@ -86,6 +86,7 @@ function App() {
         onToggle={toggleCategory}
         resultCount={pois.length + personalPoints.length}
         loading={loading}
+        error={error}
       />
 
       {/* Bouton d'ajout de point perso */}

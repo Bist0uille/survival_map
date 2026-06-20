@@ -1,7 +1,17 @@
 import { CATEGORIES, categoryForTags } from './categories'
 import type { Poi } from '../types'
 
-const OVERPASS_ENDPOINT = 'https://overpass-api.de/api/interpreter'
+// Plusieurs instances Overpass essayées dans l'ordre : si l'une est
+// indisponible / lente / la limite est atteinte, on bascule sur la suivante.
+const OVERPASS_ENDPOINTS = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+]
+
+/** Timeout par instance (ms) avant de passer à la suivante. */
+const ENDPOINT_TIMEOUT_MS = 8000
 
 interface OverpassElement {
   type: 'node' | 'way' | 'relation'
@@ -64,18 +74,34 @@ export async function fetchPois(
   if (activeCategoryIds.length === 0) return []
 
   const query = buildQuery(activeCategoryIds, lat, lon, radiusM)
-  const res = await fetch(OVERPASS_ENDPOINT, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: 'data=' + encodeURIComponent(query),
-  })
+  const body = 'data=' + encodeURIComponent(query)
 
-  if (!res.ok) {
-    throw new Error(`Overpass ${res.status}: ${res.statusText}`)
+  let lastError: unknown = null
+  for (const endpoint of OVERPASS_ENDPOINTS) {
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), ENDPOINT_TIMEOUT_MS)
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body,
+        signal: ctrl.signal,
+      })
+      if (!res.ok) throw new Error(`Overpass ${res.status}`)
+      const data: OverpassResponse = await res.json()
+      return parseElements(data.elements)
+    } catch (e) {
+      lastError = e
+      // on passe à l'instance suivante
+    } finally {
+      clearTimeout(timer)
+    }
   }
 
-  const data: OverpassResponse = await res.json()
-  return parseElements(data.elements)
+  throw new Error(
+    'Toutes les instances Overpass sont injoignables' +
+      (lastError instanceof Error ? ` (${lastError.message})` : ''),
+  )
 }
 
 function parseElements(elements: OverpassElement[]): Poi[] {
