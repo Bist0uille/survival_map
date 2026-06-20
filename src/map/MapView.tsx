@@ -84,8 +84,6 @@ export function MapView({
   const markers = useRef<MLMarker[]>([])
   const ready = useRef(false)
   const activeRef = useRef(active)
-  // source-layer du calque POI : défini pour les tuiles vecteur, absent en GeoJSON
-  const sourceLayerName = useRef<string | undefined>(undefined)
   const recomputeRef = useRef<() => void>(() => {})
 
   const cbClick = useRef(onMapClick)
@@ -119,30 +117,16 @@ export function MapView({
       'bottom-right',
     )
 
-    // Compte les POI des catégories actives dans l'emprise visible.
-    // querySourceFeatures (tuiles chargées) est plus fiable que
-    // queryRenderedFeatures (dépend du placement des symboles à l'instant T).
+    // Compte les icônes réellement affichées des catégories actives, pour
+    // coller à ce que l'utilisateur voit. queryRenderedFeatures respecte le
+    // filtre de la couche ; on déduplique par id (une feature peut apparaître
+    // sur plusieurs tuiles). Recalculé en anti-rebond une fois les tuiles
+    // posées (icon-allow-overlap => toutes les icônes sont placées).
     const recomputeCount = () => {
       if (!ready.current) return
-      const filter = filterExpr([...activeRef.current])
-      const feats = m.querySourceFeatures(
-        POI_SOURCE,
-        sourceLayerName.current
-          ? { sourceLayer: sourceLayerName.current, filter }
-          : { filter },
-      )
-      const b = m.getBounds()
-      const w = b.getWest()
-      const e = b.getEast()
-      const s = b.getSouth()
-      const n = b.getNorth()
+      const feats = m.queryRenderedFeatures({ layers: [POI_LAYER] })
       const ids = new Set<string>()
-      for (const f of feats) {
-        if (f.geometry.type !== 'Point') continue
-        const [lon, lat] = f.geometry.coordinates
-        if (lon < w || lon > e || lat < s || lat > n) continue
-        ids.add(String(f.properties?.id ?? `${lon},${lat}`))
-      }
+      for (const f of feats) ids.add(String(f.properties?.id ?? f.id))
       cbCount.current(ids.size)
     }
     // Anti-rebond : les tuiles vecteur arrivent par paquets, on recalcule
@@ -177,7 +161,6 @@ export function MapView({
           type: 'vector',
           url: 'pmtiles://' + window.location.origin + PMTILES_PATH,
         })
-        sourceLayerName.current = SOURCE_LAYER
         m.addLayer({
           id: POI_LAYER,
           type: 'symbol',
@@ -188,7 +171,6 @@ export function MapView({
         })
       } else {
         m.addSource(POI_SOURCE, { type: 'geojson', data: await loadStaticFC() })
-        sourceLayerName.current = undefined
         m.addLayer({
           id: POI_LAYER,
           type: 'symbol',
