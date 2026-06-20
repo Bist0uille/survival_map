@@ -1,10 +1,8 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Plus, X } from 'lucide-react'
 import { MapView } from './map/MapView'
-import type { Bounds } from './map/MapView'
 import { FilterBar } from './components/FilterBar'
 import { AddPointForm } from './components/AddPointForm'
-import { usePois } from './hooks/usePois'
 import {
   getPersonalPoints,
   addPersonalPoint,
@@ -18,41 +16,15 @@ function App() {
   const [active, setActive] = useState<Set<string>>(new Set(DEFAULT_ACTIVE))
   const [personalPoints, setPersonalPoints] = useState<PersonalPoint[]>([])
   const [addMode, setAddMode] = useState(false)
+  const [count, setCount] = useState(0)
   const [pending, setPending] = useState<{ lat: number; lon: number } | null>(
     null,
   )
-  const center = useRef<{ lat: number; lon: number }>({
-    lat: 43.184,
-    lon: 3.003,
-  })
-  // Emprise courante (mise à jour à chaque déplacement de carte).
-  const bounds = useRef<Bounds>({
-    south: 43.13,
-    north: 43.24,
-    west: 2.93,
-    east: 3.08,
-  })
-
-  const { pois, loading, error, load } = usePois()
 
   // Charge les points perso au démarrage
   useEffect(() => {
     getPersonalPoints().then(setPersonalPoints)
   }, [])
-
-  // Recharge les POIs quand les filtres changent (emprise courante).
-  useEffect(() => {
-    load([...active], center.current.lat, center.current.lon, bounds.current)
-  }, [active, load])
-
-  const handleMoveEnd = useCallback(
-    (lat: number, lon: number, b: Bounds) => {
-      center.current = { lat, lon }
-      bounds.current = b
-      load([...active], lat, lon, b)
-    },
-    [active, load],
-  )
 
   const toggleCategory = useCallback((id: string) => {
     setActive((prev) => {
@@ -82,20 +54,20 @@ function App() {
   return (
     <div className="relative h-full w-full overflow-hidden">
       <MapView
-        pois={pois}
+        active={active}
         personalPoints={personalPoints}
         addMode={addMode}
-        onMoveEnd={handleMoveEnd}
         onMapClick={handleMapClick}
         onDeletePersonal={handleDeletePersonal}
+        onCount={setCount}
       />
 
       <FilterBar
         active={active}
         onToggle={toggleCategory}
-        resultCount={pois.length + personalPoints.length}
-        loading={loading}
-        error={error}
+        resultCount={count + personalPoints.length}
+        loading={false}
+        error={null}
       />
 
       {/* Bouton d'ajout de point perso */}

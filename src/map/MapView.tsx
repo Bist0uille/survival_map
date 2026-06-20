@@ -1,39 +1,56 @@
 import { useEffect, useRef } from 'react'
 import maplibregl from 'maplibre-gl'
-import type { Map as MLMap, Marker as MLMarker, GeoJSONSource } from 'maplibre-gl'
+import type { Map as MLMap, Marker as MLMarker } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
+import { Protocol } from 'pmtiles'
 import { TOPO_STYLE, NARBONNE } from './style'
 import { getCategory } from '../data/categories'
 import { addCategoryIcons } from './categoryIcons'
-import { poiPopupHtml, personalPopupHtml } from '../components/popupHtml'
-import type { Poi, PersonalPoint } from '../types'
+import { featurePopupHtml, personalPopupHtml } from '../components/popupHtml'
+import type { PersonalPoint } from '../types'
 
-export interface Bounds {
-  west: number
-  south: number
-  east: number
-  north: number
-}
-
-interface MapViewProps {
-  pois: Poi[]
-  personalPoints: PersonalPoint[]
-  addMode: boolean
-  onMoveEnd: (lat: number, lon: number, bounds: Bounds) => void
-  onMapClick: (lat: number, lon: number) => void
-  onDeletePersonal: (id: string) => void
-}
+// Enregistre le protocole pmtiles auprès de MapLibre (une seule fois).
+const pmtilesProtocol = new Protocol()
+maplibregl.addProtocol('pmtiles', pmtilesProtocol.tile)
 
 const POI_SOURCE = 'pois'
 const POI_LAYER = 'pois-icons'
+const PMTILES_PATH = '/pois.pmtiles'
+const SOURCE_LAYER = 'pois' // nom de couche produit par tippecanoe (-l pois)
+const STATIC_JSON = '/data/pois.json' // repli : base statique Aude
 
-function toFeatureCollection(pois: Poi[]): GeoJSON.FeatureCollection {
+interface MapViewProps {
+  active: Set<string>
+  personalPoints: PersonalPoint[]
+  addMode: boolean
+  onMapClick: (lat: number, lon: number) => void
+  onDeletePersonal: (id: string) => void
+  onCount: (n: number) => void
+}
+
+/** Filtre de couche : ne garder que les catégories actives. */
+function filterExpr(active: string[]): maplibregl.FilterSpecification {
+  return ['in', ['get', 'categoryId'], ['literal', active]] as unknown as maplibregl.FilterSpecification
+}
+
+const ICON_LAYOUT = {
+  'icon-image': ['get', 'categoryId'],
+  'icon-size': ['interpolate', ['linear'], ['zoom'], 8, 0.42, 13, 0.6, 18, 0.9],
+  'icon-allow-overlap': true,
+  'icon-ignore-placement': true,
+} as unknown as maplibregl.SymbolLayerSpecification['layout']
+
+/** Charge la base statique Aude en FeatureCollection (mode repli). */
+async function loadStaticFC(): Promise<GeoJSON.FeatureCollection> {
+  const r = await fetch(STATIC_JSON)
+  const data: { pois: Array<{ id: string; lat: number; lon: number; c: string; n: string; t: Record<string, string> }> } =
+    await r.json()
   return {
     type: 'FeatureCollection',
-    features: pois.map((p) => ({
+    features: data.pois.map((p) => ({
       type: 'Feature',
       geometry: { type: 'Point', coordinates: [p.lon, p.lat] },
-      properties: { id: p.id, categoryId: p.categoryId },
+      properties: { id: p.id, categoryId: p.c, name: p.n, ...p.t },
     })),
   }
 }
@@ -53,29 +70,28 @@ function personalMarkerEl(color: string): HTMLDivElement {
 }
 
 export function MapView({
-  pois,
+  active,
   personalPoints,
   addMode,
-  onMoveEnd,
   onMapClick,
   onDeletePersonal,
+  onCount,
 }: MapViewProps) {
   const container = useRef<HTMLDivElement>(null)
   const map = useRef<MLMap | null>(null)
   const markers = useRef<MLMarker[]>([])
   const ready = useRef(false)
-  // Index id -> Poi pour retrouver le détail au clic sur un cercle.
-  const poiIndex = useRef<Map<string, Poi>>(new Map())
-  const poisRef = useRef<Poi[]>(pois)
+  const activeRef = useRef(active)
 
-  const cbMove = useRef(onMoveEnd)
   const cbClick = useRef(onMapClick)
   const cbDelete = useRef(onDeletePersonal)
+  const cbCount = useRef(onCount)
   const addModeRef = useRef(addMode)
-  cbMove.current = onMoveEnd
   cbClick.current = onMapClick
   cbDelete.current = onDeletePersonal
+  cbCount.current = onCount
   addModeRef.current = addMode
+  activeRef.current = active
 
   // Init carte (une seule fois)
   useEffect(() => {
@@ -98,36 +114,57 @@ export function MapView({
       'bottom-right',
     )
 
+    const recomputeCount = () => {
+      if (!ready.current) return
+      const feats = m.queryRenderedFeatures({ layers: [POI_LAYER] })
+      const ids = new Set(feats.map((f) => String(f.properties?.id ?? f.id)))
+      cbCount.current(ids.size)
+    }
+
     m.once('load', async () => {
       m.resize()
-      // Enregistre les icônes de catégorie puis la couche symbole GPU
-      // (gère des milliers de points).
       await addCategoryIcons(m)
-      m.addSource(POI_SOURCE, {
-        type: 'geojson',
-        data: toFeatureCollection(poisRef.current),
-      })
-      m.addLayer({
-        id: POI_LAYER,
-        type: 'symbol',
-        source: POI_SOURCE,
-        layout: {
-          'icon-image': ['get', 'categoryId'],
-          'icon-size': ['interpolate', ['linear'], ['zoom'], 8, 0.42, 13, 0.6, 18, 0.9],
-          'icon-allow-overlap': true,
-          'icon-ignore-placement': true,
-        },
-      })
+
+      // PMTiles (France) si le fichier existe, sinon GeoJSON statique (Aude).
+      let usePmtiles = false
+      try {
+        usePmtiles = (await fetch(PMTILES_PATH, { method: 'HEAD' })).ok
+      } catch {
+        usePmtiles = false
+      }
+
+      if (usePmtiles) {
+        m.addSource(POI_SOURCE, {
+          type: 'vector',
+          url: 'pmtiles://' + window.location.origin + PMTILES_PATH,
+        })
+        m.addLayer({
+          id: POI_LAYER,
+          type: 'symbol',
+          source: POI_SOURCE,
+          'source-layer': SOURCE_LAYER,
+          layout: ICON_LAYOUT,
+          filter: filterExpr([...activeRef.current]),
+        })
+      } else {
+        m.addSource(POI_SOURCE, { type: 'geojson', data: await loadStaticFC() })
+        m.addLayer({
+          id: POI_LAYER,
+          type: 'symbol',
+          source: POI_SOURCE,
+          layout: ICON_LAYOUT,
+          filter: filterExpr([...activeRef.current]),
+        })
+      }
       ready.current = true
 
       m.on('click', POI_LAYER, (e) => {
         const f = e.features?.[0]
-        if (!f) return
-        const poi = poiIndex.current.get(String(f.properties?.id))
-        if (!poi) return
+        if (!f || f.geometry.type !== 'Point') return
+        const [lon, lat] = f.geometry.coordinates
         new maplibregl.Popup({ offset: 10 })
-          .setLngLat([poi.lon, poi.lat])
-          .setHTML(poiPopupHtml(poi))
+          .setLngLat([lon, lat])
+          .setHTML(featurePopupHtml(f.properties))
           .addTo(m)
       })
       m.on('mouseenter', POI_LAYER, () => {
@@ -136,22 +173,14 @@ export function MapView({
       m.on('mouseleave', POI_LAYER, () => {
         m.getCanvas().style.cursor = addModeRef.current ? 'crosshair' : ''
       })
+
+      recomputeCount()
     })
 
     const ro = new ResizeObserver(() => m.resize())
     ro.observe(el)
 
-    const emitMove = () => {
-      const c = m.getCenter()
-      const b = m.getBounds()
-      cbMove.current(c.lat, c.lng, {
-        west: b.getWest(),
-        south: b.getSouth(),
-        east: b.getEast(),
-        north: b.getNorth(),
-      })
-    }
-    m.on('moveend', emitMove)
+    m.on('idle', recomputeCount)
 
     m.on('click', (e) => {
       if (addModeRef.current) cbClick.current(e.lngLat.lat, e.lngLat.lng)
@@ -162,9 +191,6 @@ export function MapView({
       const id = (ev.target as HTMLElement).getAttribute('data-delete-id')
       if (id) cbDelete.current(id)
     })
-
-    // Premier chargement (après que la carte ait ses dimensions)
-    m.once('idle', emitMove)
 
     return () => {
       ro.disconnect()
@@ -181,15 +207,14 @@ export function MapView({
     m.getCanvas().style.cursor = addMode ? 'crosshair' : ''
   }, [addMode])
 
-  // Met à jour la couche POI (données GeoJSON) quand la liste change.
+  // Filtre par catégories actives (instantané via la couche).
   useEffect(() => {
-    poisRef.current = pois
-    poiIndex.current = new Map(pois.map((p) => [p.id, p]))
     const m = map.current
     if (!m || !ready.current) return
-    const src = m.getSource(POI_SOURCE) as GeoJSONSource | undefined
-    src?.setData(toFeatureCollection(pois))
-  }, [pois])
+    m.setFilter(POI_LAYER, filterExpr([...active]))
+    const feats = m.queryRenderedFeatures({ layers: [POI_LAYER] })
+    cbCount.current(new Set(feats.map((f) => String(f.properties?.id ?? f.id))).size)
+  }, [active])
 
   // Points perso : marqueurs DOM (peu nombreux).
   useEffect(() => {
@@ -207,9 +232,8 @@ export function MapView({
     }
   }, [personalPoints])
 
-  // Style inline (et non la classe Tailwind `.absolute`) : la classe
-  // `.maplibregl-map` ajoutée par MapLibre définit `position:relative` et,
-  // chargée après Tailwind, l'emporterait — laissant le conteneur à 0 de
-  // hauteur. Le style inline prime sur toute règle de classe.
+  // Style inline (pas la classe Tailwind `.absolute`) : la classe
+  // `.maplibregl-map` (position:relative, chargée après Tailwind)
+  // l'emporterait, laissant le conteneur à 0 de hauteur.
   return <div ref={container} style={{ position: 'absolute', inset: 0 }} />
 }
