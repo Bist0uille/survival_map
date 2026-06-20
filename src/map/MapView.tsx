@@ -1,14 +1,10 @@
 import { useEffect, useRef } from 'react'
 import maplibregl from 'maplibre-gl'
-import type {
-  Map as MLMap,
-  Marker as MLMarker,
-  GeoJSONSource,
-  ExpressionSpecification,
-} from 'maplibre-gl'
+import type { Map as MLMap, Marker as MLMarker, GeoJSONSource } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { TOPO_STYLE, NARBONNE } from './style'
-import { CATEGORIES, CUSTOM_CATEGORY, getCategory } from '../data/categories'
+import { getCategory } from '../data/categories'
+import { addCategoryIcons } from './categoryIcons'
 import { poiPopupHtml, personalPopupHtml } from '../components/popupHtml'
 import type { Poi, PersonalPoint } from '../types'
 
@@ -29,18 +25,7 @@ interface MapViewProps {
 }
 
 const POI_SOURCE = 'pois'
-const POI_LAYER = 'pois-circles'
-
-/** Expression MapLibre : couleur du cercle selon la catégorie. */
-function colorExpression(): ExpressionSpecification {
-  const pairs = CATEGORIES.flatMap((c) => [c.id, c.color])
-  return [
-    'match',
-    ['get', 'categoryId'],
-    ...pairs,
-    CUSTOM_CATEGORY.color,
-  ] as unknown as ExpressionSpecification
-}
+const POI_LAYER = 'pois-icons'
 
 function toFeatureCollection(pois: Poi[]): GeoJSON.FeatureCollection {
   return {
@@ -113,22 +98,24 @@ export function MapView({
       'bottom-right',
     )
 
-    m.once('load', () => {
+    m.once('load', async () => {
       m.resize()
-      // Source + couche GPU pour les POI (gère des milliers de points).
+      // Enregistre les icônes de catégorie puis la couche symbole GPU
+      // (gère des milliers de points).
+      await addCategoryIcons(m)
       m.addSource(POI_SOURCE, {
         type: 'geojson',
         data: toFeatureCollection(poisRef.current),
       })
       m.addLayer({
         id: POI_LAYER,
-        type: 'circle',
+        type: 'symbol',
         source: POI_SOURCE,
-        paint: {
-          'circle-radius': ['interpolate', ['linear'], ['zoom'], 8, 3, 13, 6, 18, 10],
-          'circle-color': colorExpression(),
-          'circle-stroke-width': 1.5,
-          'circle-stroke-color': '#ffffff',
+        layout: {
+          'icon-image': ['get', 'categoryId'],
+          'icon-size': ['interpolate', ['linear'], ['zoom'], 8, 0.42, 13, 0.6, 18, 0.9],
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': true,
         },
       })
       ready.current = true

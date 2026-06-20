@@ -9,8 +9,9 @@ export const AUDE_BBOX = { south: 42.62, west: 1.65, north: 43.47, east: 3.27 }
 // Catégorie -> tags OSM. À GARDER EN PHASE avec src/data/categories.ts.
 const CATEGORIES = [
   { id: 'water', osm: [['amenity', 'drinking_water'], ['amenity', 'fountain']] },
-  { id: 'toilets_shelter', osm: [['amenity', 'toilets'], ['amenity', 'shelter']] },
-  { id: 'power_picnic', osm: [['amenity', 'charging_station'], ['leisure', 'picnic_table'], ['tourism', 'picnic_site']] },
+  { id: 'toilets', osm: [['amenity', 'toilets']] },
+  { id: 'power', osm: [['amenity', 'charging_station']] },
+  { id: 'picnic', osm: [['leisure', 'picnic_table'], ['tourism', 'picnic_site']] },
   { id: 'books', osm: [['amenity', 'public_bookcase']] },
   { id: 'bakery', osm: [['shop', 'bakery']] },
   { id: 'peak', osm: [['natural', 'peak']] },
