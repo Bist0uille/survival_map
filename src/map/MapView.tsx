@@ -145,7 +145,14 @@ export function MapView({
       }
       cbCount.current(ids.size)
     }
-    recomputeRef.current = recomputeCount
+    // Anti-rebond : les tuiles vecteur arrivent par paquets, on recalcule
+    // 200 ms après la dernière mise à jour pour avoir un total complet.
+    let countTimer: ReturnType<typeof setTimeout> | null = null
+    const scheduleCount = () => {
+      if (countTimer) clearTimeout(countTimer)
+      countTimer = setTimeout(recomputeCount, 200)
+    }
+    recomputeRef.current = scheduleCount
 
     m.once('load', async () => {
       m.resize()
@@ -208,13 +215,17 @@ export function MapView({
         m.getCanvas().style.cursor = addModeRef.current ? 'crosshair' : ''
       })
 
-      recomputeCount()
+      scheduleCount()
     })
 
     const ro = new ResizeObserver(() => m.resize())
     ro.observe(el)
 
-    m.on('idle', recomputeCount)
+    m.on('idle', scheduleCount)
+    m.on('moveend', scheduleCount)
+    m.on('sourcedata', (e) => {
+      if (e.sourceId === POI_SOURCE) scheduleCount()
+    })
 
     m.on('click', (e) => {
       if (addModeRef.current) cbClick.current(e.lngLat.lat, e.lngLat.lng)
