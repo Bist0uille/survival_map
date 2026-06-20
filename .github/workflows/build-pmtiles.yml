@@ -31,14 +31,16 @@ jobs:
           make -C /tmp/tippecanoe -j"$(nproc)"
           sudo make -C /tmp/tippecanoe install
 
-      - name: Télécharger l'extrait France (miroir OSM-France, repli Geofabrik)
+      - name: Télécharger l'extrait France (Geofabrik, repli miroir OSM-France)
         run: |
           set -e
           for url in \
-            https://download.openstreetmap.fr/extracts/europe/france.osm.pbf \
-            https://download.geofabrik.de/europe/france-latest.osm.pbf ; do
+            https://download.geofabrik.de/europe/france-latest.osm.pbf \
+            https://download.openstreetmap.fr/extracts/europe/france.osm.pbf ; do
             echo "Essai : $url"
-            if wget --tries=3 --waitretry=30 -O /tmp/france.osm.pbf "$url"; then break; fi
+            # --read-timeout : si le débit s'effondre (pas d'octet pendant 60s),
+            # on abandonne ce miroir et on tente le suivant.
+            if wget --tries=2 --read-timeout=60 --waitretry=20 -O /tmp/france.osm.pbf "$url"; then break; fi
           done
           test -s /tmp/france.osm.pbf
 
