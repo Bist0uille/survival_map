@@ -166,6 +166,9 @@ function App() {
         geometry: draft.geometry,
         distanceKm: draft.distanceKm,
         ascent: draft.ascent,
+        descent: draft.descent,
+        durationMin: draft.durationMin,
+        profile: draft.profile,
         createdAt: Date.now(),
       }
       await addPersonalRoute(route)
@@ -305,6 +308,8 @@ function App() {
             name: selectedPR.name,
             length: selectedPR.distanceKm,
             ascent: selectedPR.ascent,
+            durationMin: selectedPR.durationMin,
+            profile: selectedPR.profile,
             perso: '1',
           }}
           onClose={() => setSelectedPR(null)}

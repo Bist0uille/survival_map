@@ -12,6 +12,15 @@ import {
   Download,
   Trash2,
 } from 'lucide-react'
+import { ElevationProfile } from './ElevationProfile'
+
+function fmtMinutes(min?: number): string | null {
+  if (!min || min <= 0) return null
+  const h = Math.floor(min / 60)
+  const m = Math.round(min % 60)
+  if (h === 0) return `${m} min`
+  return m ? `${h} h ${String(m).padStart(2, '0')}` : `${h} h`
+}
 
 export interface RouteProps {
   id?: string
@@ -36,6 +45,8 @@ export interface RouteProps {
   teaser?: string
   // Itinéraire perso
   perso?: string
+  durationMin?: number
+  profile?: Array<[number, number]>
 }
 
 interface RouteInfoProps {
@@ -154,6 +165,11 @@ export function RouteInfo({
             <Badge icon={<Ruler size={13} />}>{distNum} km</Badge>
           )}
           {duration && <Badge icon={<Clock size={13} />}>{duration}</Badge>}
+          {route.durationMin ? (
+            <Badge icon={<Clock size={13} />}>
+              ≈ {fmtMinutes(route.durationMin)}
+            </Badge>
+          ) : null}
           {!Number.isNaN(ascent) && ascent > 0 && (
             <Badge icon={<TrendingUp size={13} />}>D+ {ascent} m</Badge>
           )}
@@ -176,6 +192,10 @@ export function RouteInfo({
             </span>
           )}
         </div>
+
+        {route.profile && route.profile.length > 1 && (
+          <ElevationProfile profile={route.profile} />
+        )}
 
         {desc && (
           <p className="mt-2 whitespace-pre-line text-xs leading-relaxed text-slate-600">

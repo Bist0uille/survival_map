@@ -43,6 +43,9 @@ export interface PersonalRoute {
   geometry: GeoJSON.LineString
   distanceKm: number
   ascent: number
+  descent: number
+  durationMin: number
+  profile: Array<[number, number]> // [distanceKm, altitude m]
   createdAt: number
 }
 

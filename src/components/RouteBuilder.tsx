@@ -1,6 +1,23 @@
 import { useState } from 'react'
-import { X, Undo2, Trash2, Save, Ruler, TrendingUp, Loader2 } from 'lucide-react'
+import {
+  X,
+  Undo2,
+  Trash2,
+  Save,
+  Ruler,
+  TrendingUp,
+  Clock,
+  Loader2,
+} from 'lucide-react'
 import type { ComputedRoute } from '../data/routing'
+import { ElevationProfile } from './ElevationProfile'
+
+function fmtMin(min: number): string {
+  const h = Math.floor(min / 60)
+  const m = Math.round(min % 60)
+  if (h === 0) return `${m} min`
+  return m ? `${h} h ${String(m).padStart(2, '0')}` : `${h} h`
+}
 
 interface RouteBuilderProps {
   count: number
@@ -47,7 +64,7 @@ export function RouteBuilder({
             : `${count} point(s) · le tracé suit les sentiers`}
         </p>
 
-        <div className="mb-3 flex items-center gap-3 text-sm">
+        <div className="mb-2 flex items-center gap-3 text-sm">
           {computing ? (
             <span className="inline-flex items-center gap-1 text-slate-500">
               <Loader2 size={14} className="animate-spin" /> calcul…
@@ -60,6 +77,9 @@ export function RouteBuilder({
               <span className="inline-flex items-center gap-1 font-medium text-slate-700">
                 <TrendingUp size={15} /> D+ {draft.ascent} m
               </span>
+              <span className="inline-flex items-center gap-1 font-medium text-slate-700">
+                <Clock size={15} /> ≈ {fmtMin(draft.durationMin)}
+              </span>
             </>
           ) : error ? (
             <span className="text-xs text-red-600">{error}</span>
@@ -69,6 +89,12 @@ export function RouteBuilder({
             </span>
           )}
         </div>
+
+        {draft && draft.profile.length > 1 && (
+          <div className="mb-3">
+            <ElevationProfile profile={draft.profile} />
+          </div>
+        )}
 
         <div className="mb-2 flex gap-2">
           <button
