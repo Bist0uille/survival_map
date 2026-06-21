@@ -125,8 +125,20 @@ const ROUTE_LINE_PAINT = {
     'lwn', '#2a9d3a',
     '#e07a00',
   ],
-  'line-width': ['interpolate', ['linear'], ['zoom'], 8, 1.4, 12, 2.6, 16, 4.5],
-  'line-opacity': 0.8,
+  // Largeur selon l'importance : GR/international (iwn/nwn) > régional (rwn)
+  // > PR/local. Les GR ressortent nettement.
+  'line-width': [
+    'interpolate',
+    ['linear'],
+    ['zoom'],
+    8,
+    ['match', ['get', 'network'], ['iwn', 'nwn'], 2.2, 'rwn', 1.4, 1],
+    12,
+    ['match', ['get', 'network'], ['iwn', 'nwn'], 4, 'rwn', 2.6, 1.8],
+    16,
+    ['match', ['get', 'network'], ['iwn', 'nwn'], 7, 'rwn', 4.5, 3.2],
+  ],
+  'line-opacity': 0.85,
 } as unknown as maplibregl.LineLayerSpecification['paint']
 
 const ROUTE_HL_PAINT = {
@@ -166,9 +178,9 @@ const DRAFT_LINE_PAINT = {
 // remplit les régions sans itinéraire balisé.
 const PATH_LINE_PAINT = {
   'line-color': '#ea580c',
-  'line-width': ['interpolate', ['linear'], ['zoom'], 11, 1.2, 13, 2.2, 16, 4],
+  'line-width': ['interpolate', ['linear'], ['zoom'], 11, 0.8, 13, 1.5, 16, 2.8],
   'line-dasharray': [2, 1.2],
-  'line-opacity': 0.9,
+  'line-opacity': 0.85,
 } as unknown as maplibregl.LineLayerSpecification['paint']
 
 const LINE_LAYOUT = {
