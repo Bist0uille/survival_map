@@ -31,12 +31,20 @@ rl.on('line', (line) => {
   const ot = parseOtherTags(p.other_tags)
   // L'extrait est déjà filtré route=hiking, mais on double-vérifie.
   if (ot.route && ot.route !== 'hiking') return
+  // On ne garde que les champs présents (tuiles légères).
   const props = {
     id: String(p.osm_id ?? f.id ?? 'x' + kept),
     name: p.name ?? '',
     ref: ot.ref ?? '',
     network: ot.network ?? '', // iwn/nwn/rwn/lwn
   }
+  if (ot.distance) props.distance = ot.distance // km
+  if (ot.description) props.description = ot.description.slice(0, 700)
+  if (ot.website || ot.url) props.website = ot.website ?? ot.url
+  if (ot.colour) props.colour = ot.colour
+  if (ot['osmc:symbol']) props.symbol = ot['osmc:symbol']
+  if (ot.operator) props.operator = ot.operator
+  if (ot.roundtrip === 'yes') props.loop = '1'
   process.stdout.write(
     JSON.stringify({ type: 'Feature', geometry: g, properties: props }) + '\n',
   )
