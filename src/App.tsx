@@ -105,7 +105,12 @@ function App() {
   const handleRouteSelect = useCallback(
     (props: Record<string, unknown> | null) => {
       setSelectedPR(null)
-      setSelectedRoute(props as RouteProps | null)
+      // Re-cliquer le même tracé le désélectionne (toggle).
+      setSelectedRoute((prev) => {
+        const next = props as RouteProps | null
+        if (prev && next && prev.id === next.id) return null
+        return next
+      })
     },
     [],
   )
@@ -274,7 +279,8 @@ function App() {
         onAddWaypoint={addWaypoint}
         onSelectPersonalRoute={(r) => {
           setSelectedRoute(null)
-          setSelectedPR(r)
+          // Re-cliquer le même itinéraire perso le désélectionne (toggle).
+          setSelectedPR((prev) => (prev && prev.id === r.id ? null : r))
         }}
         onMapClick={handleMapClick}
         onDeletePersonal={handleDeletePersonal}

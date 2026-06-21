@@ -44,4 +44,21 @@ describe('<FilterBar>', () => {
     setup({ error: 'boom' })
     expect(screen.getByText(/Données indisponibles/)).toBeInTheDocument()
   })
+
+  it('catégories en icônes seules : bascule le filtre via l’aria-label', async () => {
+    const props = setup()
+    // L'icône « Eau » n'a pas de texte visible, juste un aria-label.
+    const eau = screen.getByRole('button', { name: 'Eau' })
+    await userEvent.click(eau)
+    expect(props.onToggle).toHaveBeenCalledWith('water')
+  })
+
+  it('affiche le libellé en flash au clic d’une catégorie', async () => {
+    setup()
+    // Avant clic : aucun texte visible (icône seule, juste l'aria-label).
+    expect(screen.queryByText('Toilettes')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Toilettes' }))
+    // Après clic : le libellé apparaît en flash.
+    expect(screen.getByText('Toilettes')).toBeInTheDocument()
+  })
 })
