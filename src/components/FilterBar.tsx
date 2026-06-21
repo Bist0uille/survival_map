@@ -1,15 +1,11 @@
-import { Route as RouteIcon, Mountain, Footprints, ShieldAlert } from 'lucide-react'
+import { Route as RouteIcon, ShieldAlert } from 'lucide-react'
 import { CATEGORIES } from '../data/categories'
 
 interface FilterBarProps {
   active: Set<string>
   onToggle: (id: string) => void
-  showRoutes: boolean
-  onToggleRoutes: () => void
-  showTreks: boolean
-  onToggleTreks: () => void
-  showPaths: boolean
-  onTogglePaths: () => void
+  showTrails: boolean
+  onToggleTrails: () => void
   showProtected: boolean
   onToggleProtected: () => void
   resultCount: number
@@ -20,12 +16,8 @@ interface FilterBarProps {
 export function FilterBar({
   active,
   onToggle,
-  showRoutes,
-  onToggleRoutes,
-  showTreks,
-  onToggleTreks,
-  showPaths,
-  onTogglePaths,
+  showTrails,
+  onToggleTrails,
   showProtected,
   onToggleProtected,
   resultCount,
@@ -36,37 +28,16 @@ export function FilterBar({
     <div className="pointer-events-none absolute left-0 right-0 top-14 z-10 flex flex-col gap-2 p-2">
       <div className="pointer-events-auto flex gap-1.5 overflow-x-auto pb-1">
         <button
-          onClick={onToggleRoutes}
+          onClick={onToggleTrails}
+          title="Sentiers balisés (GR/PR) + tous les chemins"
           className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium shadow-sm transition ${
-            showRoutes
+            showTrails
               ? 'border-transparent bg-blue-600 text-white'
               : 'border-slate-300 bg-white/90 text-slate-600 hover:bg-white'
           }`}
         >
           <RouteIcon size={16} strokeWidth={2.2} />
-          Sentiers
-        </button>
-        <button
-          onClick={onToggleTreks}
-          className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium shadow-sm transition ${
-            showTreks
-              ? 'border-transparent bg-violet-600 text-white'
-              : 'border-slate-300 bg-white/90 text-slate-600 hover:bg-white'
-          }`}
-        >
-          <Mountain size={16} strokeWidth={2.2} />
-          Fiches
-        </button>
-        <button
-          onClick={onTogglePaths}
-          className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium shadow-sm transition ${
-            showPaths
-              ? 'border-transparent bg-amber-700 text-white'
-              : 'border-slate-300 bg-white/90 text-slate-600 hover:bg-white'
-          }`}
-        >
-          <Footprints size={16} strokeWidth={2.2} />
-          Chemins
+          Sentiers &amp; chemins
         </button>
         <button
           onClick={onToggleProtected}

@@ -50,6 +50,9 @@ const PATHS_URL =
   'https://pub-1cff175e1c4641718e16b36f04ea91b1.r2.dev/paths.pmtiles'
 const PATHS_SOURCE = 'paths'
 const PATHS_LAYER = 'paths-line'
+const PATHS_HIT = 'paths-hit' // cible de clic élargie
+const PATHS_HL_SOURCE = 'paths-hl' // segment cliqué surligné (copie geojson)
+const PATHS_HL_LAYER = 'paths-hl-line'
 const PATHS_SL = 'paths'
 
 // Aires protégées (bivouac réglementé), hébergées sur R2 comme les chemins.
@@ -187,6 +190,13 @@ const PROTECTED_LINE_PAINT = {
   'line-width': ['interpolate', ['linear'], ['zoom'], 6, 0.8, 12, 2],
   'line-dasharray': [3, 2],
   'line-opacity': 0.7,
+} as unknown as maplibregl.LineLayerSpecification['paint']
+
+// Surbrillance d'un chemin cliqué (segment recopié en geojson).
+const PATH_HL_PAINT = {
+  'line-color': '#1d4ed8',
+  'line-width': ['interpolate', ['linear'], ['zoom'], 8, 4, 16, 8],
+  'line-opacity': 0.85,
 } as unknown as maplibregl.LineLayerSpecification['paint']
 
 const LINE_LAYOUT = {
@@ -350,6 +360,7 @@ export function MapView({
         }
         pmtilesProtocol.add(new PMTiles(new CachedPmtilesSource(PATHS_URL, null)))
         m.addSource(PATHS_SOURCE, { type: 'vector', url: 'pmtiles://' + PATHS_URL })
+        const before = beforeOf([ROUTES_LAYER, TREKS_LAYER, PR_LAYER, POI_LAYER])
         m.addLayer(
           {
             id: PATHS_LAYER,
@@ -363,9 +374,50 @@ export function MapView({
             },
             paint: PATH_LINE_PAINT,
           },
-          beforeOf([ROUTES_LAYER, TREKS_LAYER, PR_LAYER, POI_LAYER]),
+          before,
+        )
+        // Surbrillance du chemin cliqué : source geojson dédiée (le chemin n'a
+        // pas d'id stable → on recopie la géométrie cliquée). Pas de panneau.
+        const hlVis = showPathsRef.current ? 'visible' : 'none'
+        m.addSource(PATHS_HL_SOURCE, { type: 'geojson', data: EMPTY_FC })
+        m.addLayer(
+          {
+            id: PATHS_HL_LAYER,
+            type: 'line',
+            source: PATHS_HL_SOURCE,
+            layout: { ...LINE_LAYOUT, visibility: hlVis },
+            paint: PATH_HL_PAINT,
+          },
+          before,
+        )
+        // Cible de clic élargie (les chemins sont fins).
+        m.addLayer(
+          {
+            id: PATHS_HIT,
+            type: 'line',
+            source: PATHS_SOURCE,
+            'source-layer': PATHS_SL,
+            minzoom: 12,
+            layout: { ...LINE_LAYOUT, visibility: hlVis },
+            paint: { 'line-color': '#000', 'line-opacity': 0, 'line-width': 10 },
+          },
+          before,
         )
         pathsReady.current = true
+        m.on('click', PATHS_HIT, (e) => {
+          if (addModeRef.current || createModeRef.current) return
+          const f = e.features?.[0]
+          if (!f) return
+          ;(m.getSource(PATHS_HL_SOURCE) as maplibregl.GeoJSONSource | undefined)?.setData(
+            { type: 'Feature', geometry: f.geometry, properties: {} },
+          )
+        })
+        m.on('mouseenter', PATHS_HIT, () => {
+          m.getCanvas().style.cursor = 'pointer'
+        })
+        m.on('mouseleave', PATHS_HIT, () => {
+          m.getCanvas().style.cursor = addModeRef.current ? 'crosshair' : ''
+        })
       })()
       return pathsInit.current
     }
@@ -852,7 +904,13 @@ export function MapView({
     ;(async () => {
       if (showPaths && !pathsReady.current) await ensurePathsRef.current()
       if (cancelled || !pathsReady.current) return
-      m.setLayoutProperty(PATHS_LAYER, 'visibility', showPaths ? 'visible' : 'none')
+      const v = showPaths ? 'visible' : 'none'
+      m.setLayoutProperty(PATHS_LAYER, 'visibility', v)
+      m.setLayoutProperty(PATHS_HIT, 'visibility', v)
+      m.setLayoutProperty(PATHS_HL_LAYER, 'visibility', v)
+      // On efface la surbrillance quand on masque la couche.
+      if (!showPaths)
+        (m.getSource(PATHS_HL_SOURCE) as maplibregl.GeoJSONSource | undefined)?.setData(EMPTY_FC)
     })()
     return () => {
       cancelled = true
