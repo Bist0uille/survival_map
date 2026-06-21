@@ -7,12 +7,8 @@ function setup(over = {}) {
   const props = {
     active: new Set<string>(['water']),
     onToggle: vi.fn(),
-    showRoutes: false,
-    onToggleRoutes: vi.fn(),
-    showTreks: false,
-    onToggleTreks: vi.fn(),
-    showPaths: false,
-    onTogglePaths: vi.fn(),
+    showTrails: false,
+    onToggleTrails: vi.fn(),
     showProtected: false,
     onToggleProtected: vi.fn(),
     resultCount: 42,
@@ -28,6 +24,13 @@ describe('<FilterBar>', () => {
   it('affiche le compteur de points', () => {
     setup()
     expect(screen.getByText('42 point(s)')).toBeInTheDocument()
+  })
+
+  it('expose le toggle « Sentiers & chemins » et le déclenche', async () => {
+    const props = setup()
+    const btn = screen.getByText(/Sentiers/)
+    await userEvent.click(btn)
+    expect(props.onToggleTrails).toHaveBeenCalledOnce()
   })
 
   it('expose le toggle « Bivouac réglementé » et le déclenche', async () => {

@@ -36,9 +36,10 @@ function App() {
   const [count, setCount] = useState(0)
   const [flyTo, setFlyTo] = useState<Place | null>(null)
   const [showOffline, setShowOffline] = useState(false)
-  const [showRoutes, setShowRoutes] = useState(false)
-  const [showTreks, setShowTreks] = useState(false)
-  const [showPaths, setShowPaths] = useState(false)
+  // Couche unique « Sentiers & chemins » : pilote à la fois les sentiers
+  // balisés (routes), les chemins bruts (paths) et les fiches Geotrek (treks,
+  // cliquables sans bouton dédié).
+  const [showTrails, setShowTrails] = useState(false)
   const [showProtected, setShowProtected] = useState(false)
   const [selectedRoute, setSelectedRoute] = useState<RouteProps | null>(null)
   const [selectedPR, setSelectedPR] = useState<PersonalRoute | null>(null)
@@ -109,15 +110,8 @@ function App() {
     [],
   )
 
-  const toggleRoutes = useCallback(() => {
-    setShowRoutes((v) => {
-      if (v) setSelectedRoute(null)
-      return !v
-    })
-  }, [])
-
-  const toggleTreks = useCallback(() => {
-    setShowTreks((v) => {
+  const toggleTrails = useCallback(() => {
+    setShowTrails((v) => {
       if (v) setSelectedRoute(null)
       return !v
     })
@@ -241,7 +235,7 @@ function App() {
   const handleImportGpx = useCallback(async (route: PersonalRoute) => {
     await addPersonalRoute(route)
     setPersonalRoutes((prev) => [...prev, route])
-    setShowRoutes(false)
+    setShowTrails(false)
     setSelectedPR(route)
     // Cadre la carte sur la trace importée.
     const lons = route.geometry.coordinates.map((c) => c[0])
@@ -266,9 +260,9 @@ function App() {
         personalPoints={personalPoints}
         addMode={addMode}
         flyTo={flyTo}
-        showRoutes={showRoutes}
-        showTreks={showTreks}
-        showPaths={showPaths}
+        showRoutes={showTrails}
+        showTreks={showTrails}
+        showPaths={showTrails}
         showProtected={showProtected}
         selectedRouteId={selectedRoute?.id ?? null}
         onRouteSelect={handleRouteSelect}
@@ -302,12 +296,8 @@ function App() {
       <FilterBar
         active={active}
         onToggle={toggleCategory}
-        showRoutes={showRoutes}
-        onToggleRoutes={toggleRoutes}
-        showTreks={showTreks}
-        onToggleTreks={toggleTreks}
-        showPaths={showPaths}
-        onTogglePaths={() => setShowPaths((v) => !v)}
+        showTrails={showTrails}
+        onToggleTrails={toggleTrails}
         showProtected={showProtected}
         onToggleProtected={() => setShowProtected((v) => !v)}
         resultCount={count + personalPoints.length}
@@ -433,7 +423,7 @@ function App() {
         />
       )}
 
-      {(showRoutes || showTreks) && selectedRoute && (
+      {showTrails && selectedRoute && (
         <RouteInfo route={selectedRoute} onClose={() => setSelectedRoute(null)} />
       )}
 
