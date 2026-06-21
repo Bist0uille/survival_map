@@ -7,7 +7,16 @@ import { TOPO_STYLE, NARBONNE } from './style'
 import { getCategory } from '../data/categories'
 import { addCategoryIcons } from './categoryIcons'
 import { CachedPmtilesSource } from './cachedSource'
-import { getOfflineBlob } from '../data/db'
+import {
+  EMPTY_FC,
+  detectPmtiles,
+  filterExpr,
+  hlFilter,
+  loadStaticFC,
+  waypointEl,
+  personalMarkerEl,
+} from './mapHelpers'
+import { toast } from '../data/toast'
 import { featurePopupHtml, personalPopupHtml } from '../components/popupHtml'
 import type { GeoBounds } from '../data/offline'
 import type { PersonalPoint, PersonalRoute, Place } from '../types'
@@ -20,7 +29,6 @@ const POI_SOURCE = 'pois'
 const POI_LAYER = 'pois-icons'
 const PMTILES_PATH = '/pois.pmtiles'
 const SOURCE_LAYER = 'pois' // nom de couche produit par tippecanoe (-l pois)
-const STATIC_JSON = '/data/pois.json' // repli : base statique Aude
 
 const ROUTES_SOURCE = 'routes'
 const ROUTES_LAYER = 'routes-line'
@@ -44,41 +52,22 @@ const PATHS_SOURCE = 'paths'
 const PATHS_LAYER = 'paths-line'
 const PATHS_SL = 'paths'
 
+// Aires protégées (bivouac réglementé), hébergées sur R2 comme les chemins.
+const PROTECTED_URL =
+  import.meta.env.VITE_PROTECTED_URL ||
+  'https://pub-1cff175e1c4641718e16b36f04ea91b1.r2.dev/protected.pmtiles'
+const PROTECTED_SOURCE = 'protected'
+const PROTECTED_FILL = 'protected-fill'
+const PROTECTED_LINE = 'protected-outline'
+const PROTECTED_SL = 'protected'
+
 const PR_SOURCE = 'perso-routes' // itinéraires créés par l'utilisateur
 const PR_LAYER = 'perso-routes-line'
 const PR_HIT = 'perso-routes-hit'
 const DRAFT_SOURCE = 'draft-route' // tracé en cours de création
 const DRAFT_LAYER = 'draft-route-line'
-
-const EMPTY_FC = { type: 'FeatureCollection', features: [] } as GeoJSON.FeatureCollection
-
-/**
- * Détecte un fichier pmtiles : lit le blob local (hors-ligne) s'il existe —
- * via sa signature "PMTiles" —, sinon teste le réseau (Range 0-6).
- */
-async function detectPmtiles(
-  path: string,
-  key: string,
-): Promise<{ use: boolean; url: string; blob: Blob | null }> {
-  const url = window.location.origin + path
-  const blob = await getOfflineBlob(key)
-  let use = false
-  if (blob) {
-    const magic = new TextDecoder().decode(await blob.slice(0, 7).arrayBuffer())
-    use = magic === 'PMTiles'
-  } else {
-    try {
-      const res = await fetch(path, { headers: { Range: 'bytes=0-6' } })
-      if (res.ok || res.status === 206) {
-        const bytes = new Uint8Array(await res.arrayBuffer())
-        use = String.fromCharCode(...bytes.slice(0, 7)) === 'PMTiles'
-      }
-    } catch {
-      use = false // hors-ligne / 404
-    }
-  }
-  return { use, url, blob }
-}
+const LIVE_SOURCE = 'live-track' // trace GPS en cours d'enregistrement
+const LIVE_LAYER = 'live-track-line'
 
 interface MapViewProps {
   active: Set<string>
@@ -88,11 +77,13 @@ interface MapViewProps {
   showRoutes: boolean
   showTreks: boolean
   showPaths: boolean
+  showProtected: boolean
   selectedRouteId: string | null
   onRouteSelect: (props: Record<string, unknown> | null) => void
   createMode: boolean
   waypoints: Array<[number, number]>
   draftGeometry: GeoJSON.LineString | null
+  liveTrack: GeoJSON.LineString | null
   personalRoutes: PersonalRoute[]
   onAddWaypoint: (lat: number, lon: number) => void
   onSelectPersonalRoute: (route: PersonalRoute) => void
@@ -100,11 +91,6 @@ interface MapViewProps {
   onDeletePersonal: (id: string) => void
   onCount: (n: number) => void
   onViewport: (bounds: GeoBounds, zoom: number) => void
-}
-
-/** Filtre de couche : ne garder que les catégories actives. */
-function filterExpr(active: string[]): maplibregl.FilterSpecification {
-  return ['in', ['get', 'categoryId'], ['literal', active]] as unknown as maplibregl.FilterSpecification
 }
 
 const ICON_LAYOUT = {
@@ -183,62 +169,30 @@ const PATH_LINE_PAINT = {
   'line-opacity': 0.85,
 } as unknown as maplibregl.LineLayerSpecification['paint']
 
+// Trace GPS enregistrée en direct : rouge vif et épaisse, au-dessus de tout.
+const LIVE_LINE_PAINT = {
+  'line-color': '#dc2626',
+  'line-width': ['interpolate', ['linear'], ['zoom'], 8, 3.5, 14, 5.5],
+  'line-opacity': 0.95,
+} as unknown as maplibregl.LineLayerSpecification['paint']
+
+// Aires protégées : remplissage rose translucide + contour. Sous tout le reste.
+const PROTECTED_FILL_PAINT = {
+  'fill-color': '#e11d48',
+  'fill-opacity': 0.12,
+} as unknown as maplibregl.FillLayerSpecification['paint']
+
+const PROTECTED_LINE_PAINT = {
+  'line-color': '#be123c',
+  'line-width': ['interpolate', ['linear'], ['zoom'], 6, 0.8, 12, 2],
+  'line-dasharray': [3, 2],
+  'line-opacity': 0.7,
+} as unknown as maplibregl.LineLayerSpecification['paint']
+
 const LINE_LAYOUT = {
   'line-join': 'round',
   'line-cap': 'round',
 } as unknown as maplibregl.LineLayerSpecification['layout']
-
-function hlFilter(id: string | null): maplibregl.FilterSpecification {
-  return ['==', ['get', 'id'], id ?? '__none__'] as unknown as maplibregl.FilterSpecification
-}
-
-/** Charge la base statique Aude en FeatureCollection (mode repli). */
-async function loadStaticFC(): Promise<GeoJSON.FeatureCollection> {
-  const r = await fetch(STATIC_JSON)
-  const data: { pois: Array<{ id: string; lat: number; lon: number; c: string; n: string; t: Record<string, string> }> } =
-    await r.json()
-  return {
-    type: 'FeatureCollection',
-    features: data.pois.map((p) => ({
-      type: 'Feature',
-      geometry: { type: 'Point', coordinates: [p.lon, p.lat] },
-      properties: { id: p.id, categoryId: p.c, name: p.n, ...p.t },
-    })),
-  }
-}
-
-/** Marqueur numéroté pour une étape d'itinéraire en création. */
-function waypointEl(n: number): HTMLDivElement {
-  const el = document.createElement('div')
-  el.textContent = String(n)
-  el.style.width = '22px'
-  el.style.height = '22px'
-  el.style.borderRadius = '50%'
-  el.style.background = '#ea580c'
-  el.style.border = '2px solid #fff'
-  el.style.color = '#fff'
-  el.style.fontSize = '12px'
-  el.style.fontWeight = '700'
-  el.style.display = 'flex'
-  el.style.alignItems = 'center'
-  el.style.justifyContent = 'center'
-  el.style.boxShadow = '0 1px 4px rgba(0,0,0,0.4)'
-  return el
-}
-
-/** Élément DOM pour un marqueur de point perso (avec anneau). */
-function personalMarkerEl(color: string): HTMLDivElement {
-  const el = document.createElement('div')
-  el.style.width = '16px'
-  el.style.height = '16px'
-  el.style.borderRadius = '50%'
-  el.style.background = color
-  el.style.border = '3px solid #fff'
-  el.style.outline = '2px solid ' + color
-  el.style.boxShadow = '0 1px 4px rgba(0,0,0,0.4)'
-  el.style.cursor = 'pointer'
-  return el
-}
 
 export function MapView({
   active,
@@ -248,11 +202,13 @@ export function MapView({
   showRoutes,
   showTreks,
   showPaths,
+  showProtected,
   selectedRouteId,
   onRouteSelect,
   createMode,
   waypoints,
   draftGeometry,
+  liveTrack,
   personalRoutes,
   onAddWaypoint,
   onSelectPersonalRoute,
@@ -274,6 +230,18 @@ export function MapView({
   const showPathsRef = useRef(showPaths)
   const selectedRouteRef = useRef(selectedRouteId)
   const recomputeRef = useRef<() => void>(() => {})
+  // Couches lourdes chargées à la demande (lazy) : fonctions d'init + garde
+  // anti-course (init unique même si load + toggle déclenchent en même temps).
+  const ensureRoutesRef = useRef<() => Promise<void>>(() => Promise.resolve())
+  const ensureTreksRef = useRef<() => Promise<void>>(() => Promise.resolve())
+  const ensurePathsRef = useRef<() => Promise<void>>(() => Promise.resolve())
+  const ensureProtectedRef = useRef<() => Promise<void>>(() => Promise.resolve())
+  const routesInit = useRef<Promise<void> | null>(null)
+  const treksInit = useRef<Promise<void> | null>(null)
+  const pathsInit = useRef<Promise<void> | null>(null)
+  const protectedInit = useRef<Promise<void> | null>(null)
+  const protectedReady = useRef(false)
+  const showProtectedRef = useRef(showProtected)
 
   const waypointMarkers = useRef<MLMarker[]>([])
   const prReady = useRef(false)
@@ -301,6 +269,7 @@ export function MapView({
   showRoutesRef.current = showRoutes
   showTreksRef.current = showTreks
   showPathsRef.current = showPaths
+  showProtectedRef.current = showProtected
   selectedRouteRef.current = selectedRouteId
 
   // Init carte (une seule fois)
@@ -353,13 +322,18 @@ export function MapView({
       )
     }
 
-    m.once('load', async () => {
-      m.resize()
-      await addCategoryIcons(m)
+    // Renvoie le 1er id de couche existant parmi `ids` (du bas vers le haut
+    // de la pile cible) → sert de `beforeId` pour insérer une couche lazy au
+    // bon niveau Z, quel que soit l'ordre d'activation par l'utilisateur.
+    const beforeOf = (ids: string[]): string | undefined =>
+      ids.find((id) => m.getLayer(id))
 
-      // --- Chemins OSM (tous), depuis R2 — en premier → sous tout le reste.
-      // En ligne uniquement (gros fichier non mis hors-ligne).
-      if (PATHS_URL) {
+    // --- Chemins OSM (tous), depuis R2 — sous tout le reste. En ligne
+    // uniquement (gros fichier non mis hors-ligne). Chargé à la demande.
+    const ensurePaths = (): Promise<void> => {
+      if (pathsReady.current || !PATHS_URL) return Promise.resolve()
+      if (pathsInit.current) return pathsInit.current
+      pathsInit.current = (async () => {
         let ok = false
         try {
           const res = await fetch(PATHS_URL, { headers: { Range: 'bytes=0-6' } })
@@ -370,15 +344,14 @@ export function MapView({
         } catch {
           ok = false
         }
-        if (ok) {
-          pmtilesProtocol.add(
-            new PMTiles(new CachedPmtilesSource(PATHS_URL, null)),
-          )
-          m.addSource(PATHS_SOURCE, {
-            type: 'vector',
-            url: 'pmtiles://' + PATHS_URL,
-          })
-          m.addLayer({
+        if (!ok) {
+          pathsInit.current = null // réseau absent : réessai possible plus tard
+          return
+        }
+        pmtilesProtocol.add(new PMTiles(new CachedPmtilesSource(PATHS_URL, null)))
+        m.addSource(PATHS_SOURCE, { type: 'vector', url: 'pmtiles://' + PATHS_URL })
+        m.addLayer(
+          {
             id: PATHS_LAYER,
             type: 'line',
             source: PATHS_SOURCE,
@@ -389,14 +362,90 @@ export function MapView({
               visibility: showPathsRef.current ? 'visible' : 'none',
             },
             paint: PATH_LINE_PAINT,
-          })
-          pathsReady.current = true
-        }
-      }
+          },
+          beforeOf([ROUTES_LAYER, TREKS_LAYER, PR_LAYER, POI_LAYER]),
+        )
+        pathsReady.current = true
+      })()
+      return pathsInit.current
+    }
+    ensurePathsRef.current = ensurePaths
 
-      // --- Itinéraires (lignes) : ajoutés EN PREMIER → restent SOUS les POI.
-      const routes = await detectPmtiles(ROUTES_PATH, 'routes')
-      if (routes.use) {
+    // --- Aires protégées (polygones) : tout en bas, sous les chemins/lignes.
+    const ensureProtected = (): Promise<void> => {
+      if (protectedReady.current || !PROTECTED_URL) return Promise.resolve()
+      if (protectedInit.current) return protectedInit.current
+      protectedInit.current = (async () => {
+        let ok = false
+        try {
+          const res = await fetch(PROTECTED_URL, {
+            headers: { Range: 'bytes=0-6' },
+          })
+          if (res.ok || res.status === 206) {
+            const bytes = new Uint8Array(await res.arrayBuffer())
+            ok = String.fromCharCode(...bytes.slice(0, 7)) === 'PMTiles'
+          }
+        } catch {
+          ok = false
+        }
+        if (!ok) {
+          protectedInit.current = null
+          return
+        }
+        pmtilesProtocol.add(
+          new PMTiles(new CachedPmtilesSource(PROTECTED_URL, null)),
+        )
+        m.addSource(PROTECTED_SOURCE, {
+          type: 'vector',
+          url: 'pmtiles://' + PROTECTED_URL,
+        })
+        const vis = showProtectedRef.current ? 'visible' : 'none'
+        // Sous toutes les autres couches (chemins, lignes, POI).
+        const before = beforeOf([
+          PATHS_LAYER,
+          ROUTES_LAYER,
+          TREKS_LAYER,
+          PR_LAYER,
+          POI_LAYER,
+        ])
+        m.addLayer(
+          {
+            id: PROTECTED_FILL,
+            type: 'fill',
+            source: PROTECTED_SOURCE,
+            'source-layer': PROTECTED_SL,
+            layout: { visibility: vis },
+            paint: PROTECTED_FILL_PAINT,
+          },
+          before,
+        )
+        m.addLayer(
+          {
+            id: PROTECTED_LINE,
+            type: 'line',
+            source: PROTECTED_SOURCE,
+            'source-layer': PROTECTED_SL,
+            layout: { ...LINE_LAYOUT, visibility: vis },
+            paint: PROTECTED_LINE_PAINT,
+          },
+          before,
+        )
+        protectedReady.current = true
+      })()
+      return protectedInit.current
+    }
+    ensureProtectedRef.current = ensureProtected
+
+    // --- Itinéraires balisés (lignes) : sous les POI. Chargé à la demande.
+    const ensureRoutes = (): Promise<void> => {
+      if (routesReady.current) return Promise.resolve()
+      if (routesInit.current) return routesInit.current
+      routesInit.current = (async () => {
+        const routes = await detectPmtiles(ROUTES_PATH, 'routes')
+        if (!routes.use) {
+          routesInit.current = null
+          return
+        }
         pmtilesProtocol.add(
           new PMTiles(new CachedPmtilesSource(routes.url, routes.blob)),
         )
@@ -405,32 +454,42 @@ export function MapView({
           url: 'pmtiles://' + routes.url,
         })
         const vis = showRoutesRef.current ? 'visible' : 'none'
-        m.addLayer({
-          id: ROUTES_LAYER,
-          type: 'line',
-          source: ROUTES_SOURCE,
-          'source-layer': ROUTES_SL,
-          layout: { ...LINE_LAYOUT, visibility: vis },
-          paint: ROUTE_LINE_PAINT,
-        })
-        m.addLayer({
-          id: ROUTES_HL,
-          type: 'line',
-          source: ROUTES_SOURCE,
-          'source-layer': ROUTES_SL,
-          layout: { ...LINE_LAYOUT, visibility: vis },
-          paint: ROUTE_HL_PAINT,
-          filter: hlFilter(selectedRouteRef.current),
-        })
+        const before = beforeOf([TREKS_LAYER, PR_LAYER, POI_LAYER])
+        m.addLayer(
+          {
+            id: ROUTES_LAYER,
+            type: 'line',
+            source: ROUTES_SOURCE,
+            'source-layer': ROUTES_SL,
+            layout: { ...LINE_LAYOUT, visibility: vis },
+            paint: ROUTE_LINE_PAINT,
+          },
+          before,
+        )
+        m.addLayer(
+          {
+            id: ROUTES_HL,
+            type: 'line',
+            source: ROUTES_SOURCE,
+            'source-layer': ROUTES_SL,
+            layout: { ...LINE_LAYOUT, visibility: vis },
+            paint: ROUTE_HL_PAINT,
+            filter: hlFilter(selectedRouteRef.current),
+          },
+          before,
+        )
         // Ligne transparente large : élargit la cible de clic (doigt / souris).
-        m.addLayer({
-          id: ROUTES_HIT,
-          type: 'line',
-          source: ROUTES_SOURCE,
-          'source-layer': ROUTES_SL,
-          layout: { ...LINE_LAYOUT, visibility: vis },
-          paint: { 'line-color': '#000', 'line-opacity': 0, 'line-width': 16 },
-        })
+        m.addLayer(
+          {
+            id: ROUTES_HIT,
+            type: 'line',
+            source: ROUTES_SOURCE,
+            'source-layer': ROUTES_SL,
+            layout: { ...LINE_LAYOUT, visibility: vis },
+            paint: { 'line-color': '#000', 'line-opacity': 0, 'line-width': 16 },
+          },
+          before,
+        )
         routesReady.current = true
         m.on('click', ROUTES_HIT, (e) => {
           if (addModeRef.current) return
@@ -443,11 +502,21 @@ export function MapView({
         m.on('mouseleave', ROUTES_HIT, () => {
           m.getCanvas().style.cursor = addModeRef.current ? 'crosshair' : ''
         })
-      }
+      })()
+      return routesInit.current
+    }
+    ensureRoutesRef.current = ensureRoutes
 
-      // --- Fiches Geotrek (treks) : couche distincte, même mécanique.
-      const treks = await detectPmtiles(TREKS_PATH, 'treks')
-      if (treks.use) {
+    // --- Fiches Geotrek (treks) : couche distincte, même mécanique.
+    const ensureTreks = (): Promise<void> => {
+      if (treksReady.current) return Promise.resolve()
+      if (treksInit.current) return treksInit.current
+      treksInit.current = (async () => {
+        const treks = await detectPmtiles(TREKS_PATH, 'treks')
+        if (!treks.use) {
+          treksInit.current = null
+          return
+        }
         pmtilesProtocol.add(
           new PMTiles(new CachedPmtilesSource(treks.url, treks.blob)),
         )
@@ -456,31 +525,41 @@ export function MapView({
           url: 'pmtiles://' + treks.url,
         })
         const tvis = showTreksRef.current ? 'visible' : 'none'
-        m.addLayer({
-          id: TREKS_LAYER,
-          type: 'line',
-          source: TREKS_SOURCE,
-          'source-layer': TREKS_SL,
-          layout: { ...LINE_LAYOUT, visibility: tvis },
-          paint: TREK_LINE_PAINT,
-        })
-        m.addLayer({
-          id: TREKS_HL,
-          type: 'line',
-          source: TREKS_SOURCE,
-          'source-layer': TREKS_SL,
-          layout: { ...LINE_LAYOUT, visibility: tvis },
-          paint: ROUTE_HL_PAINT,
-          filter: hlFilter(selectedRouteRef.current),
-        })
-        m.addLayer({
-          id: TREKS_HIT,
-          type: 'line',
-          source: TREKS_SOURCE,
-          'source-layer': TREKS_SL,
-          layout: { ...LINE_LAYOUT, visibility: tvis },
-          paint: HIT_PAINT,
-        })
+        const before = beforeOf([PR_LAYER, POI_LAYER])
+        m.addLayer(
+          {
+            id: TREKS_LAYER,
+            type: 'line',
+            source: TREKS_SOURCE,
+            'source-layer': TREKS_SL,
+            layout: { ...LINE_LAYOUT, visibility: tvis },
+            paint: TREK_LINE_PAINT,
+          },
+          before,
+        )
+        m.addLayer(
+          {
+            id: TREKS_HL,
+            type: 'line',
+            source: TREKS_SOURCE,
+            'source-layer': TREKS_SL,
+            layout: { ...LINE_LAYOUT, visibility: tvis },
+            paint: ROUTE_HL_PAINT,
+            filter: hlFilter(selectedRouteRef.current),
+          },
+          before,
+        )
+        m.addLayer(
+          {
+            id: TREKS_HIT,
+            type: 'line',
+            source: TREKS_SOURCE,
+            'source-layer': TREKS_SL,
+            layout: { ...LINE_LAYOUT, visibility: tvis },
+            paint: HIT_PAINT,
+          },
+          before,
+        )
         treksReady.current = true
         m.on('click', TREKS_HIT, (e) => {
           if (addModeRef.current) return
@@ -493,7 +572,14 @@ export function MapView({
         m.on('mouseleave', TREKS_HIT, () => {
           m.getCanvas().style.cursor = addModeRef.current ? 'crosshair' : ''
         })
-      }
+      })()
+      return treksInit.current
+    }
+    ensureTreksRef.current = ensureTreks
+
+    m.once('load', async () => {
+      m.resize()
+      await addCategoryIcons(m)
 
       // --- Itinéraires perso (vert) + tracé en cours de création (orange).
       m.addSource(PR_SOURCE, { type: 'geojson', data: EMPTY_FC })
@@ -518,6 +604,14 @@ export function MapView({
         source: DRAFT_SOURCE,
         layout: LINE_LAYOUT,
         paint: DRAFT_LINE_PAINT,
+      })
+      m.addSource(LIVE_SOURCE, { type: 'geojson', data: EMPTY_FC })
+      m.addLayer({
+        id: LIVE_LAYER,
+        type: 'line',
+        source: LIVE_SOURCE,
+        layout: LINE_LAYOUT,
+        paint: LIVE_LINE_PAINT,
       })
       prReady.current = true
       m.on('click', PR_HIT, (e) => {
@@ -560,6 +654,8 @@ export function MapView({
           layout: ICON_LAYOUT,
           filter: filterExpr([...activeRef.current]),
         })
+        // Base complète indisponible : on est retombé sur le repli local (Aude).
+        toast('Points limités à l’Aude (base complète indisponible)', 'info')
       }
       ready.current = true
 
@@ -580,6 +676,13 @@ export function MapView({
       })
 
       scheduleCount()
+
+      // Couches lourdes : on ne les charge qu'au démarrage si déjà activées.
+      // En séquentiel pour garantir l'empilement protected < paths < routes < treks.
+      if (showProtectedRef.current) await ensureProtected()
+      if (showPathsRef.current) await ensurePaths()
+      if (showRoutesRef.current) await ensureRoutes()
+      if (showTreksRef.current) await ensureTreks()
     })
 
     const ro = new ResizeObserver(() => m.resize())
@@ -655,6 +758,16 @@ export function MapView({
     ;(m.getSource(DRAFT_SOURCE) as maplibregl.GeoJSONSource | undefined)?.setData(data)
   }, [draftGeometry])
 
+  // Trace GPS en cours d'enregistrement (ligne rouge live).
+  useEffect(() => {
+    const m = map.current
+    if (!m || !prReady.current) return
+    const data: GeoJSON.GeoJSON = liveTrack
+      ? { type: 'Feature', geometry: liveTrack, properties: {} }
+      : EMPTY_FC
+    ;(m.getSource(LIVE_SOURCE) as maplibregl.GeoJSONSource | undefined)?.setData(data)
+  }, [liveTrack])
+
   // Marqueurs numérotés des étapes.
   useEffect(() => {
     const m = map.current
@@ -695,32 +808,74 @@ export function MapView({
     recomputeRef.current()
   }, [active])
 
-  // Affichage/masquage des itinéraires.
+  // Affichage/masquage des itinéraires (charge la couche à la 1re activation).
   useEffect(() => {
     const m = map.current
-    if (!m || !routesReady.current) return
-    const v = showRoutes ? 'visible' : 'none'
-    m.setLayoutProperty(ROUTES_LAYER, 'visibility', v)
-    m.setLayoutProperty(ROUTES_HL, 'visibility', v)
-    m.setLayoutProperty(ROUTES_HIT, 'visibility', v)
+    if (!m || !ready.current) return
+    let cancelled = false
+    ;(async () => {
+      if (showRoutes && !routesReady.current) await ensureRoutesRef.current()
+      if (cancelled || !routesReady.current) return
+      const v = showRoutes ? 'visible' : 'none'
+      m.setLayoutProperty(ROUTES_LAYER, 'visibility', v)
+      m.setLayoutProperty(ROUTES_HL, 'visibility', v)
+      m.setLayoutProperty(ROUTES_HIT, 'visibility', v)
+    })()
+    return () => {
+      cancelled = true
+    }
   }, [showRoutes])
 
-  // Affichage/masquage des fiches Geotrek.
+  // Affichage/masquage des fiches Geotrek (idem : chargement à la demande).
   useEffect(() => {
     const m = map.current
-    if (!m || !treksReady.current) return
-    const v = showTreks ? 'visible' : 'none'
-    m.setLayoutProperty(TREKS_LAYER, 'visibility', v)
-    m.setLayoutProperty(TREKS_HL, 'visibility', v)
-    m.setLayoutProperty(TREKS_HIT, 'visibility', v)
+    if (!m || !ready.current) return
+    let cancelled = false
+    ;(async () => {
+      if (showTreks && !treksReady.current) await ensureTreksRef.current()
+      if (cancelled || !treksReady.current) return
+      const v = showTreks ? 'visible' : 'none'
+      m.setLayoutProperty(TREKS_LAYER, 'visibility', v)
+      m.setLayoutProperty(TREKS_HL, 'visibility', v)
+      m.setLayoutProperty(TREKS_HIT, 'visibility', v)
+    })()
+    return () => {
+      cancelled = true
+    }
   }, [showTreks])
 
-  // Affichage/masquage des chemins OSM.
+  // Affichage/masquage des chemins OSM (idem : chargement à la demande).
   useEffect(() => {
     const m = map.current
-    if (!m || !pathsReady.current) return
-    m.setLayoutProperty(PATHS_LAYER, 'visibility', showPaths ? 'visible' : 'none')
+    if (!m || !ready.current) return
+    let cancelled = false
+    ;(async () => {
+      if (showPaths && !pathsReady.current) await ensurePathsRef.current()
+      if (cancelled || !pathsReady.current) return
+      m.setLayoutProperty(PATHS_LAYER, 'visibility', showPaths ? 'visible' : 'none')
+    })()
+    return () => {
+      cancelled = true
+    }
   }, [showPaths])
+
+  // Affichage/masquage des aires protégées (chargement à la demande).
+  useEffect(() => {
+    const m = map.current
+    if (!m || !ready.current) return
+    let cancelled = false
+    ;(async () => {
+      if (showProtected && !protectedReady.current)
+        await ensureProtectedRef.current()
+      if (cancelled || !protectedReady.current) return
+      const v = showProtected ? 'visible' : 'none'
+      m.setLayoutProperty(PROTECTED_FILL, 'visibility', v)
+      m.setLayoutProperty(PROTECTED_LINE, 'visibility', v)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [showProtected])
 
   // Surlignage de l'itinéraire/fiche sélectionné (filtre sur l'id, sur les
   // deux couches : seul l'id correspondant s'allume).

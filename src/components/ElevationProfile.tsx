@@ -1,6 +1,8 @@
 // Mini graphe du profil altimétrique (altitude en fonction de la distance),
 // avec une ligne pointillée au niveau de l'altitude maximale.
 
+import { memo, useMemo } from 'react'
+
 interface ElevationProfileProps {
   profile: Array<[number, number]> // [distanceKm, altitude m]
 }
@@ -11,25 +13,38 @@ const PADX = 4
 const TOP = 9 // marge haute pour que le pic ne colle pas au bord
 const BOT = 4
 
-export function ElevationProfile({ profile }: ElevationProfileProps) {
-  if (!profile || profile.length < 2) return null
+function ElevationProfileBase({ profile }: ElevationProfileProps) {
+  const geom = useMemo(() => {
+    if (!profile || profile.length < 2) return null
 
-  const maxD = profile[profile.length - 1][0] || 1
-  const eles = profile.map((p) => p[1])
-  const minE = Math.min(...eles)
-  const maxE = Math.max(...eles)
-  const rangeE = Math.max(1, maxE - minE)
-  const peakIdx = eles.indexOf(maxE)
+    const maxD = profile[profile.length - 1][0] || 1
+    const eles = profile.map((p) => p[1])
+    const minE = Math.min(...eles)
+    const maxE = Math.max(...eles)
+    const rangeE = Math.max(1, maxE - minE)
+    const peakIdx = eles.indexOf(maxE)
 
-  const x = (d: number) => PADX + (d / maxD) * (W - 2 * PADX)
-  const y = (e: number) => TOP + (1 - (e - minE) / rangeE) * (H - TOP - BOT)
+    const x = (d: number) => PADX + (d / maxD) * (W - 2 * PADX)
+    const y = (e: number) => TOP + (1 - (e - minE) / rangeE) * (H - TOP - BOT)
 
-  const line = profile.map((p) => `${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`)
-  const area = `M ${x(0).toFixed(1)},${H - BOT} L ${line.join(' L ')} L ${x(
-    maxD,
-  ).toFixed(1)},${H - BOT} Z`
-  const peakX = x(profile[peakIdx][0])
-  const peakY = y(maxE)
+    const line = profile.map(
+      (p) => `${x(p[0]).toFixed(1)},${y(p[1]).toFixed(1)}`,
+    )
+    const area = `M ${x(0).toFixed(1)},${H - BOT} L ${line.join(' L ')} L ${x(
+      maxD,
+    ).toFixed(1)},${H - BOT} Z`
+    return {
+      line,
+      area,
+      peakX: x(profile[peakIdx][0]),
+      peakY: y(maxE),
+      minE,
+      maxE,
+    }
+  }, [profile])
+
+  if (!geom) return null
+  const { line, area, peakX, peakY, minE, maxE } = geom
 
   return (
     <div className="mt-1">
@@ -69,3 +84,5 @@ export function ElevationProfile({ profile }: ElevationProfileProps) {
     </div>
   )
 }
+
+export const ElevationProfile = memo(ElevationProfileBase)
