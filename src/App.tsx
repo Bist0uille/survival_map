@@ -24,6 +24,7 @@ function App() {
   const [flyTo, setFlyTo] = useState<Place | null>(null)
   const [showOffline, setShowOffline] = useState(false)
   const [showRoutes, setShowRoutes] = useState(false)
+  const [showTreks, setShowTreks] = useState(false)
   const [selectedRoute, setSelectedRoute] = useState<RouteProps | null>(null)
   const [pending, setPending] = useState<{ lat: number; lon: number } | null>(
     null,
@@ -53,6 +54,13 @@ function App() {
   const toggleRoutes = useCallback(() => {
     setShowRoutes((v) => {
       if (v) setSelectedRoute(null) // on masque → désélectionne
+      return !v
+    })
+  }, [])
+
+  const toggleTreks = useCallback(() => {
+    setShowTreks((v) => {
+      if (v) setSelectedRoute(null)
       return !v
     })
   }, [])
@@ -90,6 +98,7 @@ function App() {
         addMode={addMode}
         flyTo={flyTo}
         showRoutes={showRoutes}
+        showTreks={showTreks}
         selectedRouteId={selectedRoute?.id ?? null}
         onRouteSelect={handleRouteSelect}
         onMapClick={handleMapClick}
@@ -108,6 +117,8 @@ function App() {
         onToggle={toggleCategory}
         showRoutes={showRoutes}
         onToggleRoutes={toggleRoutes}
+        showTreks={showTreks}
+        onToggleTreks={toggleTreks}
         resultCount={count + personalPoints.length}
         loading={false}
         error={null}
@@ -157,7 +168,7 @@ function App() {
         />
       )}
 
-      {showRoutes && selectedRoute && (
+      {(showRoutes || showTreks) && selectedRoute && (
         <RouteInfo route={selectedRoute} onClose={() => setSelectedRoute(null)} />
       )}
     </div>

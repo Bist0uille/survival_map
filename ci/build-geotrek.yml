@@ -17,6 +17,8 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - uses: actions/setup-node@v4
         with:
@@ -50,5 +52,6 @@ jobs:
             echo "treks.pmtiles inchangé."
           else
             git commit -m "chore(data): build PMTiles Geotrek (treks)"
+            git pull --rebase origin main
             git push
           fi

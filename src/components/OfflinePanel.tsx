@@ -19,48 +19,49 @@ interface OfflinePanelProps {
 
 const POIS_URL = window.location.origin + '/pois.pmtiles'
 const ROUTES_URL = window.location.origin + '/routes.pmtiles'
+const TREKS_URL = window.location.origin + '/treks.pmtiles'
 
 export function OfflinePanel({ bounds, zoom, onClose }: OfflinePanelProps) {
   const plan = useMemo(() => planTiles(bounds, zoom), [bounds, zoom])
   const [poiCached, setPoiCached] = useState<boolean | null>(null)
   const [routesCached, setRoutesCached] = useState<boolean | null>(null)
+  const [treksCached, setTreksCached] = useState<boolean | null>(null)
   const [phase, setPhase] = useState<'confirm' | 'downloading' | 'done'>(
     'confirm',
   )
-  const [step, setStep] = useState<'poi' | 'routes' | 'tiles'>('poi')
+  const [step, setStep] = useState<'poi' | 'routes' | 'treks' | 'tiles'>('poi')
   const [bytes, setBytes] = useState({ received: 0, total: 0 })
   const [tiles, setTiles] = useState({ done: 0, total: plan.total })
 
   useEffect(() => {
     hasOfflineBlob('pois').then(setPoiCached)
     hasOfflineBlob('routes').then(setRoutesCached)
+    hasOfflineBlob('treks').then(setTreksCached)
   }, [])
 
   async function start() {
     setPhase('downloading')
     await requestPersistent()
-    if (!poiCached) {
-      setStep('poi')
+    const dl = async (
+      cached: boolean | null,
+      url: string,
+      key: string,
+      s: 'poi' | 'routes' | 'treks',
+    ) => {
+      if (cached) return
+      setStep(s)
       setBytes({ received: 0, total: 0 })
       try {
-        await downloadPmtiles(POIS_URL, 'pois', (received, total) =>
+        await downloadPmtiles(url, key, (received, total) =>
           setBytes({ received, total }),
         )
       } catch {
-        /* on continue */
+        /* pas encore dispo → on continue */
       }
     }
-    if (!routesCached) {
-      setStep('routes')
-      setBytes({ received: 0, total: 0 })
-      try {
-        await downloadPmtiles(ROUTES_URL, 'routes', (received, total) =>
-          setBytes({ received, total }),
-        )
-      } catch {
-        /* itinéraires pas encore dispo → on continue */
-      }
-    }
+    await dl(poiCached, POIS_URL, 'pois', 'poi')
+    await dl(routesCached, ROUTES_URL, 'routes', 'routes')
+    await dl(treksCached, TREKS_URL, 'treks', 'treks')
     setStep('tiles')
     await downloadTiles(plan, (done, total) => setTiles({ done, total }))
     setPhase('done')
@@ -123,7 +124,11 @@ export function OfflinePanel({ bounds, zoom, onClose }: OfflinePanelProps) {
               </button>
               <button
                 onClick={start}
-                disabled={poiCached === null || routesCached === null}
+                disabled={
+                  poiCached === null ||
+                  routesCached === null ||
+                  treksCached === null
+                }
                 className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-700 py-2 text-sm font-medium text-white hover:bg-green-800 disabled:opacity-50"
               >
                 <Download size={16} />
@@ -139,8 +144,10 @@ export function OfflinePanel({ bounds, zoom, onClose }: OfflinePanelProps) {
               {step === 'poi'
                 ? 'Points d’intérêt (France)…'
                 : step === 'routes'
-                  ? 'Itinéraires de rando (France)…'
-                  : 'Fond de carte de la zone…'}{' '}
+                  ? 'Sentiers balisés (France)…'
+                  : step === 'treks'
+                    ? 'Fiches rando (Geotrek)…'
+                    : 'Fond de carte de la zone…'}{' '}
               Ne ferme pas l'app.
             </p>
             {step === 'tiles' ? (

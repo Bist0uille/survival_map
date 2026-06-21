@@ -29,6 +29,13 @@ const ROUTES_HIT = 'routes-hit' // ligne transparente large = cible de clic
 const ROUTES_PATH = '/routes.pmtiles'
 const ROUTES_SL = 'routes' // couche tippecanoe (-l routes)
 
+const TREKS_SOURCE = 'treks'
+const TREKS_LAYER = 'treks-line'
+const TREKS_HL = 'treks-highlight'
+const TREKS_HIT = 'treks-hit'
+const TREKS_PATH = '/treks.pmtiles'
+const TREKS_SL = 'treks'
+
 /**
  * Détecte un fichier pmtiles : lit le blob local (hors-ligne) s'il existe —
  * via sa signature "PMTiles" —, sinon teste le réseau (Range 0-6).
@@ -63,6 +70,7 @@ interface MapViewProps {
   addMode: boolean
   flyTo: Place | null
   showRoutes: boolean
+  showTreks: boolean
   selectedRouteId: string | null
   onRouteSelect: (props: Record<string, unknown> | null) => void
   onMapClick: (lat: number, lon: number) => void
@@ -102,6 +110,20 @@ const ROUTE_HL_PAINT = {
   'line-color': '#1d4ed8',
   'line-width': ['interpolate', ['linear'], ['zoom'], 8, 4, 16, 9],
   'line-opacity': 0.9,
+} as unknown as maplibregl.LineLayerSpecification['paint']
+
+// Fiches Geotrek : violet pointillé, pour les distinguer des sentiers OSM.
+const TREK_LINE_PAINT = {
+  'line-color': '#7c3aed',
+  'line-width': ['interpolate', ['linear'], ['zoom'], 8, 2, 12, 3, 16, 4.5],
+  'line-dasharray': [2, 1.5],
+  'line-opacity': 0.85,
+} as unknown as maplibregl.LineLayerSpecification['paint']
+
+const HIT_PAINT = {
+  'line-color': '#000',
+  'line-opacity': 0,
+  'line-width': 16,
 } as unknown as maplibregl.LineLayerSpecification['paint']
 
 const LINE_LAYOUT = {
@@ -148,6 +170,7 @@ export function MapView({
   addMode,
   flyTo,
   showRoutes,
+  showTreks,
   selectedRouteId,
   onRouteSelect,
   onMapClick,
@@ -160,8 +183,10 @@ export function MapView({
   const markers = useRef<MLMarker[]>([])
   const ready = useRef(false)
   const routesReady = useRef(false)
+  const treksReady = useRef(false)
   const activeRef = useRef(active)
   const showRoutesRef = useRef(showRoutes)
+  const showTreksRef = useRef(showTreks)
   const selectedRouteRef = useRef(selectedRouteId)
   const recomputeRef = useRef<() => void>(() => {})
 
@@ -179,6 +204,7 @@ export function MapView({
   addModeRef.current = addMode
   activeRef.current = active
   showRoutesRef.current = showRoutes
+  showTreksRef.current = showTreks
   selectedRouteRef.current = selectedRouteId
 
   // Init carte (une seule fois)
@@ -282,6 +308,56 @@ export function MapView({
           m.getCanvas().style.cursor = 'pointer'
         })
         m.on('mouseleave', ROUTES_HIT, () => {
+          m.getCanvas().style.cursor = addModeRef.current ? 'crosshair' : ''
+        })
+      }
+
+      // --- Fiches Geotrek (treks) : couche distincte, même mécanique.
+      const treks = await detectPmtiles(TREKS_PATH, 'treks')
+      if (treks.use) {
+        pmtilesProtocol.add(
+          new PMTiles(new CachedPmtilesSource(treks.url, treks.blob)),
+        )
+        m.addSource(TREKS_SOURCE, {
+          type: 'vector',
+          url: 'pmtiles://' + treks.url,
+        })
+        const tvis = showTreksRef.current ? 'visible' : 'none'
+        m.addLayer({
+          id: TREKS_LAYER,
+          type: 'line',
+          source: TREKS_SOURCE,
+          'source-layer': TREKS_SL,
+          layout: { ...LINE_LAYOUT, visibility: tvis },
+          paint: TREK_LINE_PAINT,
+        })
+        m.addLayer({
+          id: TREKS_HL,
+          type: 'line',
+          source: TREKS_SOURCE,
+          'source-layer': TREKS_SL,
+          layout: { ...LINE_LAYOUT, visibility: tvis },
+          paint: ROUTE_HL_PAINT,
+          filter: hlFilter(selectedRouteRef.current),
+        })
+        m.addLayer({
+          id: TREKS_HIT,
+          type: 'line',
+          source: TREKS_SOURCE,
+          'source-layer': TREKS_SL,
+          layout: { ...LINE_LAYOUT, visibility: tvis },
+          paint: HIT_PAINT,
+        })
+        treksReady.current = true
+        m.on('click', TREKS_HIT, (e) => {
+          if (addModeRef.current) return
+          const f = e.features?.[0]
+          if (f) cbRouteSelect.current(f.properties as Record<string, unknown>)
+        })
+        m.on('mouseenter', TREKS_HIT, () => {
+          m.getCanvas().style.cursor = 'pointer'
+        })
+        m.on('mouseleave', TREKS_HIT, () => {
           m.getCanvas().style.cursor = addModeRef.current ? 'crosshair' : ''
         })
       }
@@ -405,11 +481,23 @@ export function MapView({
     m.setLayoutProperty(ROUTES_HIT, 'visibility', v)
   }, [showRoutes])
 
-  // Surlignage de l'itinéraire sélectionné (filtre sur l'id).
+  // Affichage/masquage des fiches Geotrek.
   useEffect(() => {
     const m = map.current
-    if (!m || !routesReady.current) return
-    m.setFilter(ROUTES_HL, hlFilter(selectedRouteId))
+    if (!m || !treksReady.current) return
+    const v = showTreks ? 'visible' : 'none'
+    m.setLayoutProperty(TREKS_LAYER, 'visibility', v)
+    m.setLayoutProperty(TREKS_HL, 'visibility', v)
+    m.setLayoutProperty(TREKS_HIT, 'visibility', v)
+  }, [showTreks])
+
+  // Surlignage de l'itinéraire/fiche sélectionné (filtre sur l'id, sur les
+  // deux couches : seul l'id correspondant s'allume).
+  useEffect(() => {
+    const m = map.current
+    if (!m) return
+    if (routesReady.current) m.setFilter(ROUTES_HL, hlFilter(selectedRouteId))
+    if (treksReady.current) m.setFilter(TREKS_HL, hlFilter(selectedRouteId))
   }, [selectedRouteId])
 
   // Points perso : marqueurs DOM (peu nombreux).
