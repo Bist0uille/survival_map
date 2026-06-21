@@ -1,0 +1,54 @@
+# À copier dans .github/workflows/build-geotrek.yml
+# Récupère les fiches rando Geotrek (API v2) et construit public/treks.pmtiles.
+# Léger : pas de téléchargement OSM France, juste des appels API + tippecanoe.
+name: Construire PMTiles Geotrek
+
+on:
+  schedule:
+    - cron: '0 4 * * 1' # chaque lundi 04:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Installer tippecanoe
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libsqlite3-dev zlib1g-dev
+          git clone --depth 1 https://github.com/felt/tippecanoe.git /tmp/tippecanoe
+          make -C /tmp/tippecanoe -j"$(nproc)"
+          sudo make -C /tmp/tippecanoe install
+
+      - name: Récupérer les treks Geotrek
+        run: node scripts/fetch-geotrek.mjs > /tmp/treks.geojsonseq
+
+      - name: Construire treks.pmtiles
+        run: |
+          mkdir -p public
+          tippecanoe -o public/treks.pmtiles -l treks \
+            -Z6 -z13 -r1 --drop-densest-as-needed --maximum-tile-bytes=2500000 --force \
+            /tmp/treks.geojsonseq
+          ls -lh public/treks.pmtiles
+
+      - name: Commit si changé
+        run: |
+          git config user.name "Bist0uille"
+          git config user.email "111542828+Bist0uille@users.noreply.github.com"
+          git add public/treks.pmtiles
+          if git diff --cached --quiet; then
+            echo "treks.pmtiles inchangé."
+          else
+            git commit -m "chore(data): build PMTiles Geotrek (treks)"
+            git push
+          fi
