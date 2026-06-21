@@ -13,7 +13,53 @@ export interface ComputedRoute {
 
 const BROUTER = 'https://brouter.de/brouter'
 
-function haversineKm(a: number[], b: number[]): number {
+export interface RouteSummary {
+  distanceKm: number
+  ascent: number
+  descent: number
+  durationMin: number
+  profile: Array<[number, number]>
+}
+
+/**
+ * Résume un itinéraire à partir de ses coordonnées [lon, lat] et d'altitudes
+ * éventuelles (ex. trace GPX importée) : distance, D+/D-, durée estimée et
+ * profil. Sans altitudes, le profil est vide et D+/D- valent 0.
+ */
+export function summarizeRoute(
+  coords: Array<[number, number]>,
+  elevations?: Array<number | null>,
+): RouteSummary {
+  let cum = 0
+  let ascent = 0
+  let descent = 0
+  const prof: Array<[number, number]> = []
+  const hasEle = !!elevations && elevations.some((e) => e != null)
+  let prevEle: number | null = null
+  for (let i = 0; i < coords.length; i++) {
+    if (i > 0) cum += haversineKm(coords[i - 1], coords[i])
+    const ele = elevations?.[i] ?? null
+    if (hasEle && ele != null) {
+      if (prevEle != null) {
+        const d = ele - prevEle
+        if (d > 0) ascent += d
+        else descent -= d
+      }
+      prevEle = ele
+      prof.push([Math.round(cum * 100) / 100, Math.round(ele)])
+    }
+  }
+  const distanceKm = Math.round(cum * 10) / 10
+  return {
+    distanceKm,
+    ascent: Math.round(ascent),
+    descent: Math.round(descent),
+    durationMin: hikingMinutes(distanceKm, ascent, descent),
+    profile: downsample(prof, 80),
+  }
+}
+
+export function haversineKm(a: number[], b: number[]): number {
   const R = 6371
   const toR = Math.PI / 180
   const dLat = (b[1] - a[1]) * toR
@@ -27,7 +73,7 @@ function haversineKm(a: number[], b: number[]): number {
 }
 
 /** Réduit un profil à ~maxPts points (en gardant le dernier). */
-function downsample(
+export function downsample(
   prof: Array<[number, number]>,
   maxPts = 80,
 ): Array<[number, number]> {
@@ -44,7 +90,11 @@ function downsample(
  * 4,5 km/h à plat, +300 m/h en montée, +500 m/h en descente ; le total
  * combine le plus grand des deux temps + la moitié du plus petit.
  */
-function hikingMinutes(km: number, ascent: number, descent: number): number {
+export function hikingMinutes(
+  km: number,
+  ascent: number,
+  descent: number,
+): number {
   const th = km / 4.5
   const tv = ascent / 300 + descent / 500
   const hours = Math.max(th, tv) + 0.5 * Math.min(th, tv)

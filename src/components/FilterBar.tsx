@@ -1,4 +1,4 @@
-import { Route as RouteIcon, Mountain, Footprints } from 'lucide-react'
+import { Route as RouteIcon, Mountain, Footprints, ShieldAlert } from 'lucide-react'
 import { CATEGORIES } from '../data/categories'
 
 interface FilterBarProps {
@@ -10,6 +10,8 @@ interface FilterBarProps {
   onToggleTreks: () => void
   showPaths: boolean
   onTogglePaths: () => void
+  showProtected: boolean
+  onToggleProtected: () => void
   resultCount: number
   loading: boolean
   error: string | null
@@ -24,6 +26,8 @@ export function FilterBar({
   onToggleTreks,
   showPaths,
   onTogglePaths,
+  showProtected,
+  onToggleProtected,
   resultCount,
   loading,
   error,
@@ -63,6 +67,18 @@ export function FilterBar({
         >
           <Footprints size={16} strokeWidth={2.2} />
           Chemins
+        </button>
+        <button
+          onClick={onToggleProtected}
+          title="Zones où le bivouac est souvent interdit/réglementé"
+          className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium shadow-sm transition ${
+            showProtected
+              ? 'border-transparent bg-rose-700 text-white'
+              : 'border-slate-300 bg-white/90 text-slate-600 hover:bg-white'
+          }`}
+        >
+          <ShieldAlert size={16} strokeWidth={2.2} />
+          Bivouac réglementé
         </button>
         {CATEGORIES.map((cat) => {
           const Icon = cat.icon

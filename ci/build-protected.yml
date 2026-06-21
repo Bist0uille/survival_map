@@ -1,0 +1,93 @@
+# Génère protected.pmtiles = aires protégées de France (parcs nationaux,
+# réserves naturelles, aires protégées) où le bivouac est souvent interdit ou
+# réglementé. Couche informative. Hébergée sur Cloudflare R2 (comme paths).
+name: Construire PMTiles Aires protégées (R2)
+
+on:
+  schedule:
+    - cron: '0 6 1 * *' # 1er du mois 06:00 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Installer osmium + tippecanoe
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y osmium-tool build-essential libsqlite3-dev zlib1g-dev
+          git clone --depth 1 https://github.com/felt/tippecanoe.git /tmp/tippecanoe
+          make -C /tmp/tippecanoe -j"$(nproc)"
+          sudo make -C /tmp/tippecanoe install
+
+      - name: Télécharger l'extrait France
+        run: |
+          set -e
+          URLS=(
+            "https://download.geofabrik.de/europe/france-latest.osm.pbf"
+            "https://download.openstreetmap.fr/extracts/europe/france.osm.pbf"
+          )
+          for u in "${URLS[@]}"; do
+            echo "Essai $u"
+            if wget --tries=2 --read-timeout=60 --waitretry=20 -O /tmp/france.osm.pbf "$u"; then
+              break
+            fi
+          done
+          ls -lh /tmp/france.osm.pbf
+
+      - name: Extraire les aires protégées
+        run: |
+          set -e
+          # Relations + ways : parcs nationaux, aires protégées, réserves.
+          osmium tags-filter /tmp/france.osm.pbf \
+            wr/boundary=national_park,protected_area \
+            wr/leisure=nature_reserve \
+            -o /tmp/protected.osm.pbf --overwrite
+          osmium export /tmp/protected.osm.pbf -f geojsonseq \
+            --geometry-types=polygon -o /tmp/protected.geojsonseq --overwrite
+          node scripts/osm-protected-to-input.mjs < /tmp/protected.geojsonseq > /tmp/protected-input.geojsonseq
+          wc -l /tmp/protected-input.geojsonseq
+
+      - name: Construire protected.pmtiles
+        run: |
+          set -e
+          tippecanoe -o /tmp/protected.pmtiles -l protected \
+            -Z5 -z12 --drop-densest-as-needed --coalesce-densest-as-needed \
+            --simplification=10 --maximum-tile-bytes=500000 --force \
+            /tmp/protected-input.geojsonseq
+          echo "=== TAILLE protected.pmtiles ==="
+          ls -lh /tmp/protected.pmtiles
+
+      - name: Envoyer sur Cloudflare R2 (si secrets présents)
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+          AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
+        run: |
+          if [ -z "$R2_ACCESS_KEY_ID" ]; then
+            echo "Secrets R2 absents → upload sauté (mesure de taille seule)."
+            exit 0
+          fi
+          curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
+          unzip -q /tmp/awscliv2.zip -d /tmp
+          sudo /tmp/aws/install --update
+          export AWS_ACCESS_KEY_ID="$R2_ACCESS_KEY_ID"
+          export AWS_SECRET_ACCESS_KEY="$R2_SECRET_ACCESS_KEY"
+          export AWS_DEFAULT_REGION=auto
+          aws s3 cp /tmp/protected.pmtiles "s3://$R2_BUCKET/protected.pmtiles" \
+            --endpoint-url "https://$R2_ACCOUNT_ID.r2.cloudflarestorage.com" \
+            --content-type application/octet-stream
+          echo "✅ protected.pmtiles envoyé sur R2."

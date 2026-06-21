@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Plus, X, Download, Spline } from 'lucide-react'
+import { Plus, X, Download, Spline, Footprints, Tent } from 'lucide-react'
 import { MapView } from './map/MapView'
 import { FilterBar } from './components/FilterBar'
 import { SearchBar } from './components/SearchBar'
@@ -7,6 +7,10 @@ import { AddPointForm } from './components/AddPointForm'
 import { OfflinePanel } from './components/OfflinePanel'
 import { RouteInfo, type RouteProps } from './components/RouteInfo'
 import { RouteBuilder } from './components/RouteBuilder'
+import { ToastHost } from './components/Toast'
+import { ImportGpxButton } from './components/ImportGpxButton'
+import { BivouacPanel } from './components/BivouacPanel'
+import { useOnlineStatus } from './hooks/useOnlineStatus'
 import {
   getPersonalPoints,
   addPersonalPoint,
@@ -15,8 +19,10 @@ import {
   addPersonalRoute,
   deletePersonalRoute,
 } from './data/db'
-import { computeRoute, type ComputedRoute } from './data/routing'
+import { computeRoute, summarizeRoute, type ComputedRoute } from './data/routing'
 import { downloadGpx } from './data/gpx'
+import { useTrackRecorder } from './hooks/useTrackRecorder'
+import { TrackPanel } from './components/TrackPanel'
 import type { GeoBounds } from './data/offline'
 import type { PersonalPoint, PersonalRoute, Place } from './types'
 
@@ -33,6 +39,7 @@ function App() {
   const [showRoutes, setShowRoutes] = useState(false)
   const [showTreks, setShowTreks] = useState(false)
   const [showPaths, setShowPaths] = useState(false)
+  const [showProtected, setShowProtected] = useState(false)
   const [selectedRoute, setSelectedRoute] = useState<RouteProps | null>(null)
   const [selectedPR, setSelectedPR] = useState<PersonalRoute | null>(null)
   const [pending, setPending] = useState<{ lat: number; lon: number } | null>(
@@ -44,6 +51,12 @@ function App() {
   const [draft, setDraft] = useState<ComputedRoute | null>(null)
   const [computing, setComputing] = useState(false)
   const [routeError, setRouteError] = useState<string | null>(null)
+  const [trackMode, setTrackMode] = useState(false)
+  const [bivouac, setBivouac] = useState<{ lat: number; lon: number } | null>(
+    null,
+  )
+  const rec = useTrackRecorder()
+  const online = useOnlineStatus()
 
   const viewport = useRef<{ bounds: GeoBounds; zoom: number }>({
     bounds: { west: 2.9, south: 43.1, east: 3.1, north: 43.25 },
@@ -185,6 +198,67 @@ function App() {
     setSelectedPR(null)
   }, [])
 
+  // --- Suivi de trace en direct ---
+  const saveTrack = useCallback(async () => {
+    const pts = rec.points
+    if (pts.length < 2) return
+    const coords = pts.map((p) => [p.lon, p.lat] as [number, number])
+    const eles = pts.map((p) => p.ele ?? null)
+    const s = summarizeRoute(coords, eles)
+    const d = new Date()
+    const route: PersonalRoute = {
+      id: 'trk-' + d.getTime(),
+      name: `Sortie du ${d.toLocaleDateString('fr-FR')}`,
+      waypoints: [coords[0], coords[coords.length - 1]],
+      geometry: { type: 'LineString', coordinates: coords },
+      distanceKm: s.distanceKm,
+      ascent: s.ascent,
+      descent: s.descent,
+      durationMin: s.durationMin,
+      profile: s.profile,
+      createdAt: d.getTime(),
+    }
+    await addPersonalRoute(route)
+    setPersonalRoutes((prev) => [...prev, route])
+    rec.reset()
+    setTrackMode(false)
+    setSelectedPR(route)
+  }, [rec])
+
+  const discardTrack = useCallback(() => {
+    rec.reset()
+    setTrackMode(false)
+  }, [rec])
+
+  const openBivouac = useCallback(() => {
+    const b = viewport.current.bounds
+    setBivouac({
+      lat: (b.south + b.north) / 2,
+      lon: (b.west + b.east) / 2,
+    })
+  }, [])
+
+  const handleImportGpx = useCallback(async (route: PersonalRoute) => {
+    await addPersonalRoute(route)
+    setPersonalRoutes((prev) => [...prev, route])
+    setShowRoutes(false)
+    setSelectedPR(route)
+    // Cadre la carte sur la trace importée.
+    const lons = route.geometry.coordinates.map((c) => c[0])
+    const lats = route.geometry.coordinates.map((c) => c[1])
+    setFlyTo({
+      lat: lats[0],
+      lon: lons[0],
+      bbox: [
+        Math.min(...lats),
+        Math.max(...lats),
+        Math.min(...lons),
+        Math.max(...lons),
+      ],
+      label: route.name,
+    })
+  }, [])
+
   return (
     <div className="relative h-full w-full overflow-hidden">
       <MapView
@@ -195,11 +269,13 @@ function App() {
         showRoutes={showRoutes}
         showTreks={showTreks}
         showPaths={showPaths}
+        showProtected={showProtected}
         selectedRouteId={selectedRoute?.id ?? null}
         onRouteSelect={handleRouteSelect}
         createMode={createMode}
         waypoints={waypoints}
         draftGeometry={draft?.geometry ?? null}
+        liveTrack={rec.geometry}
         personalRoutes={personalRoutes}
         onAddWaypoint={addWaypoint}
         onSelectPersonalRoute={(r) => {
@@ -214,7 +290,14 @@ function App() {
 
       <div className="pointer-events-none absolute left-0 right-0 top-0 z-30 p-2">
         <SearchBar onSelect={setFlyTo} />
+        {!online && (
+          <div className="pointer-events-none mx-auto mt-2 w-fit rounded-full bg-amber-500/95 px-3 py-1 text-xs font-medium text-white shadow">
+            Hors ligne — données enregistrées uniquement
+          </div>
+        )}
       </div>
+
+      <ToastHost />
 
       <FilterBar
         active={active}
@@ -225,13 +308,38 @@ function App() {
         onToggleTreks={toggleTreks}
         showPaths={showPaths}
         onTogglePaths={() => setShowPaths((v) => !v)}
+        showProtected={showProtected}
+        onToggleProtected={() => setShowProtected((v) => !v)}
         resultCount={count + personalPoints.length}
         loading={false}
         error={null}
       />
 
-      {!createMode && (
+      {!createMode && !trackMode && (
         <>
+          {/* Infos bivouac : soleil / lune / météo */}
+          <button
+            onClick={openBivouac}
+            className="absolute bottom-[284px] left-4 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-700 shadow-lg transition hover:bg-slate-100"
+            aria-label="Infos bivouac (soleil, lune, météo)"
+            title="Infos bivouac : soleil, lune, météo"
+          >
+            <Tent size={20} />
+          </button>
+
+          {/* Enregistrer une trace (suivi GPS en direct) */}
+          <button
+            onClick={() => setTrackMode(true)}
+            className="absolute bottom-[244px] left-4 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-700 shadow-lg transition hover:bg-slate-100"
+            aria-label="Enregistrer une trace"
+            title="Enregistrer ma trace (GPS en direct)"
+          >
+            <Footprints size={20} />
+          </button>
+
+          {/* Importer une trace GPX */}
+          <ImportGpxButton onImport={handleImportGpx} />
+
           {/* Créer un itinéraire */}
           <button
             onClick={enterCreate}
@@ -284,12 +392,36 @@ function App() {
         />
       )}
 
+      {trackMode && (
+        <>
+          {/* Bouton fermer (visible tant qu'aucune trace n'est en attente) */}
+          {rec.status === 'idle' && rec.stats.points < 2 && (
+            <button
+              onClick={() => setTrackMode(false)}
+              className="absolute bottom-[120px] left-1/2 z-30 -translate-x-1/2 rounded-full bg-slate-700 px-3 py-1 text-xs text-white shadow"
+              aria-label="Fermer le suivi"
+            >
+              Fermer
+            </button>
+          )}
+          <TrackPanel rec={rec} onSave={saveTrack} onDiscard={discardTrack} />
+        </>
+      )}
+
       {pending && (
         <AddPointForm
           lat={pending.lat}
           lon={pending.lon}
           onSave={handleSavePoint}
           onCancel={() => setPending(null)}
+        />
+      )}
+
+      {bivouac && (
+        <BivouacPanel
+          lat={bivouac.lat}
+          lon={bivouac.lon}
+          onClose={() => setBivouac(null)}
         />
       )}
 
