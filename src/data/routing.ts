@@ -51,18 +51,44 @@ function hikingMinutes(km: number, ascent: number, descent: number): number {
   return Math.round(hours * 60)
 }
 
+// Profil prioritaire : « hiking-mountain » privilégie fortement les sentiers
+// (chemins/sentes) plutôt que les routes. Repli « trekking » si pas de tracé.
+const PROFILES = ['hiking-mountain', 'trekking']
+
+interface BrouterFeature {
+  geometry: { coordinates: number[][] }
+  properties: Record<string, unknown>
+}
+
+async function fetchRoute(
+  lonlats: string,
+  profile: string,
+): Promise<BrouterFeature> {
+  const url = `${BROUTER}?lonlats=${lonlats}&profile=${profile}&alternativeidx=0&format=geojson`
+  const res = await fetch(url)
+  if (!res.ok) throw new Error('HTTP ' + res.status)
+  const data = await res.json()
+  const f = data?.features?.[0]
+  if (!f?.geometry?.coordinates?.length) throw new Error('no route')
+  return f
+}
+
 export async function computeRoute(
   waypoints: Array<[number, number]>, // [lon, lat]
 ): Promise<ComputedRoute> {
   if (waypoints.length < 2) throw new Error('Au moins 2 points')
   const lonlats = waypoints.map(([lon, lat]) => `${lon},${lat}`).join('|')
-  const url = `${BROUTER}?lonlats=${lonlats}&profile=trekking&alternativeidx=0&format=geojson`
-  const res = await fetch(url)
-  if (!res.ok) throw new Error('Routage indisponible (' + res.status + ')')
-  const data = await res.json()
-  const f = data?.features?.[0]
-  const raw: number[][] = f?.geometry?.coordinates
-  if (!raw?.length) throw new Error('Itinéraire introuvable')
+  let f: BrouterFeature | null = null
+  for (const profile of PROFILES) {
+    try {
+      f = await fetchRoute(lonlats, profile)
+      break
+    } catch {
+      /* on tente le profil suivant */
+    }
+  }
+  if (!f) throw new Error('Itinéraire introuvable')
+  const raw: number[][] = f.geometry.coordinates
   const p = f.properties ?? {}
 
   // Géométrie 2D pour la carte + profil (distance cumulée / altitude).
