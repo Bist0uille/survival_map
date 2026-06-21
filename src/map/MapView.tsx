@@ -162,12 +162,13 @@ const DRAFT_LINE_PAINT = {
   'line-dasharray': [1.5, 1],
 } as unknown as maplibregl.LineLayerSpecification['paint']
 
-// Chemins OSM : fins, ocre pointillé, visibles à fort zoom (densité élevée).
+// Chemins OSM : tracé orange franc (pointillé « sentier »), bien visible —
+// remplit les régions sans itinéraire balisé.
 const PATH_LINE_PAINT = {
-  'line-color': '#b45309',
-  'line-width': ['interpolate', ['linear'], ['zoom'], 12, 1, 14, 2, 16, 3],
-  'line-dasharray': [1, 1],
-  'line-opacity': 0.6,
+  'line-color': '#ea580c',
+  'line-width': ['interpolate', ['linear'], ['zoom'], 11, 1.2, 13, 2.2, 16, 4],
+  'line-dasharray': [2, 1.2],
+  'line-opacity': 0.9,
 } as unknown as maplibregl.LineLayerSpecification['paint']
 
 const LINE_LAYOUT = {
