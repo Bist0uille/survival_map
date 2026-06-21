@@ -8,6 +8,7 @@ const INSTANCES = [
   { code: 'ecr', name: 'Parc national des Écrins', host: 'geotrek-admin.ecrins-parcnational.fr' },
   { code: 'cev', name: 'Parc national des Cévennes', host: 'geotrek-admin.cevennes-parcnational.net' },
   { code: 'loz', name: 'Lozère', host: 'admin48.openig.org' },
+  { code: 'pcr', name: 'Parc national de Port-Cros', host: 'geotrek-admin.portcros-parcnational.fr' },
 ]
 
 async function getJson(url) {
