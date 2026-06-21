@@ -26,16 +26,17 @@ describe('<FilterBar>', () => {
     expect(screen.getByText('42 point(s)')).toBeInTheDocument()
   })
 
-  it('expose le toggle « Sentiers & chemins » et le déclenche', async () => {
+  it('expose le toggle « Sentiers & chemins » (icône) et le déclenche', async () => {
     const props = setup()
-    const btn = screen.getByText(/Sentiers/)
+    // Inactif = icône seule : ciblé par son nom accessible (aria-label).
+    const btn = screen.getByRole('button', { name: /Sentiers/ })
     await userEvent.click(btn)
     expect(props.onToggleTrails).toHaveBeenCalledOnce()
   })
 
   it('expose le toggle « Bivouac réglementé » et le déclenche', async () => {
     const props = setup()
-    const btn = screen.getByText('Bivouac réglementé')
+    const btn = screen.getByRole('button', { name: /Bivouac/ })
     await userEvent.click(btn)
     expect(props.onToggleProtected).toHaveBeenCalledOnce()
   })
@@ -45,20 +46,29 @@ describe('<FilterBar>', () => {
     expect(screen.getByText(/Données indisponibles/)).toBeInTheDocument()
   })
 
-  it('catégories en icônes seules : bascule le filtre via l’aria-label', async () => {
-    const props = setup()
-    // L'icône « Eau » n'a pas de texte visible, juste un aria-label.
-    const eau = screen.getByRole('button', { name: 'Eau' })
-    await userEvent.click(eau)
-    expect(props.onToggle).toHaveBeenCalledWith('water')
+  it('catégorie inactive = icône seule, sans libellé visible', () => {
+    setup() // seul « water » est actif
+    // « Toilettes » est inactif → pas de texte visible (juste l'aria-label).
+    expect(screen.queryByText('Toilettes')).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: 'Toilettes' }),
+    ).toBeInTheDocument()
   })
 
-  it('affiche le libellé en flash au clic d’une catégorie', async () => {
-    setup()
-    // Avant clic : aucun texte visible (icône seule, juste l'aria-label).
-    expect(screen.queryByText('Toilettes')).not.toBeInTheDocument()
+  it('catégorie active = libellé visible', () => {
+    setup({ active: new Set(['water']) })
+    // « Eau » est actif → son libellé est affiché.
+    expect(screen.getByText('Eau')).toBeInTheDocument()
+  })
+
+  it('cliquer une catégorie bascule le filtre', async () => {
+    const props = setup()
     await userEvent.click(screen.getByRole('button', { name: 'Toilettes' }))
-    // Après clic : le libellé apparaît en flash.
-    expect(screen.getByText('Toilettes')).toBeInTheDocument()
+    expect(props.onToggle).toHaveBeenCalledWith('toilets')
+  })
+
+  it('toggle de couche actif affiche son libellé', () => {
+    setup({ showTrails: true })
+    expect(screen.getByText('Sentiers & chemins')).toBeInTheDocument()
   })
 })

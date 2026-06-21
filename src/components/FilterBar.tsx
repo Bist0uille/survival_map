@@ -1,5 +1,8 @@
-import { useRef, useState } from 'react'
-import { Route as RouteIcon, ShieldAlert } from 'lucide-react'
+import {
+  Route as RouteIcon,
+  ShieldAlert,
+  type LucideIcon,
+} from 'lucide-react'
 import { CATEGORIES } from '../data/categories'
 
 interface FilterBarProps {
@@ -14,6 +17,38 @@ interface FilterBarProps {
   error: string | null
 }
 
+interface ChipProps {
+  icon: LucideIcon
+  label: string
+  active: boolean
+  color: string // couleur de fond quand actif
+  onClick: () => void
+}
+
+/**
+ * Pastille de filtre : icône seule quand inactive (barre compacte), icône +
+ * libellé coloré quand active. Le survol souris affiche le nom (title).
+ */
+function Chip({ icon: Icon, label, active, color, onClick }: ChipProps) {
+  return (
+    <button
+      onClick={onClick}
+      title={label}
+      aria-label={label}
+      aria-pressed={active}
+      className={`flex shrink-0 items-center justify-center rounded-full border shadow-sm transition ${
+        active
+          ? 'gap-1.5 border-transparent px-3 py-1.5 text-sm font-medium text-white'
+          : 'h-9 w-9 border-slate-300 bg-white/90 text-slate-600 hover:bg-white'
+      }`}
+      style={active ? { backgroundColor: color } : undefined}
+    >
+      <Icon size={active ? 16 : 18} strokeWidth={2.2} />
+      {active && <span>{label}</span>}
+    </button>
+  )
+}
+
 export function FilterBar({
   active,
   onToggle,
@@ -25,71 +60,33 @@ export function FilterBar({
   loading,
   error,
 }: FilterBarProps) {
-  // Catégories en icônes seules : on affiche brièvement le libellé de la
-  // catégorie touchée (le survol souris utilise aussi l'attribut title).
-  const [flashed, setFlashed] = useState<string | null>(null)
-  const flashTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const handleCategory = (id: string, label: string) => {
-    onToggle(id)
-    setFlashed(label)
-    if (flashTimer.current) clearTimeout(flashTimer.current)
-    flashTimer.current = setTimeout(() => setFlashed(null), 1500)
-  }
-
   return (
     <div className="pointer-events-none absolute left-0 right-0 top-14 z-10 flex flex-col gap-2 p-2">
       <div className="pointer-events-auto flex gap-1.5 overflow-x-auto pb-1">
-        <button
+        <Chip
+          icon={RouteIcon}
+          label="Sentiers & chemins"
+          active={showTrails}
+          color="#2563eb"
           onClick={onToggleTrails}
-          title="Sentiers balisés (GR/PR) + tous les chemins"
-          className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium shadow-sm transition ${
-            showTrails
-              ? 'border-transparent bg-blue-600 text-white'
-              : 'border-slate-300 bg-white/90 text-slate-600 hover:bg-white'
-          }`}
-        >
-          <RouteIcon size={16} strokeWidth={2.2} />
-          Sentiers &amp; chemins
-        </button>
-        <button
+        />
+        <Chip
+          icon={ShieldAlert}
+          label="Bivouac réglementé"
+          active={showProtected}
+          color="#be123c"
           onClick={onToggleProtected}
-          title="Zones où le bivouac est souvent interdit/réglementé"
-          className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium shadow-sm transition ${
-            showProtected
-              ? 'border-transparent bg-rose-700 text-white'
-              : 'border-slate-300 bg-white/90 text-slate-600 hover:bg-white'
-          }`}
-        >
-          <ShieldAlert size={16} strokeWidth={2.2} />
-          Bivouac réglementé
-        </button>
-        {CATEGORIES.map((cat) => {
-          const Icon = cat.icon
-          const on = active.has(cat.id)
-          return (
-            <div key={cat.id} className="relative shrink-0">
-              <button
-                onClick={() => handleCategory(cat.id, cat.label)}
-                title={cat.label}
-                aria-label={cat.label}
-                aria-pressed={on}
-                className={`flex h-9 w-9 items-center justify-center rounded-full border shadow-sm transition ${
-                  on
-                    ? 'border-transparent text-white'
-                    : 'border-slate-300 bg-white/90 text-slate-600 hover:bg-white'
-                }`}
-                style={on ? { backgroundColor: cat.color } : undefined}
-              >
-                <Icon size={18} strokeWidth={2.2} />
-              </button>
-              {flashed === cat.label && (
-                <span className="pointer-events-none absolute -top-7 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded bg-slate-800 px-2 py-0.5 text-xs text-white shadow">
-                  {cat.label}
-                </span>
-              )}
-            </div>
-          )
-        })}
+        />
+        {CATEGORIES.map((cat) => (
+          <Chip
+            key={cat.id}
+            icon={cat.icon}
+            label={cat.label}
+            active={active.has(cat.id)}
+            color={cat.color}
+            onClick={() => onToggle(cat.id)}
+          />
+        ))}
       </div>
       <div className="pointer-events-none">
         <span
