@@ -3,11 +3,14 @@ import {
   X,
   Route as RouteIcon,
   Mountain,
+  Spline,
   Ruler,
   Clock,
   TrendingUp,
   RotateCw,
   ExternalLink,
+  Download,
+  Trash2,
 } from 'lucide-react'
 
 export interface RouteProps {
@@ -31,11 +34,15 @@ export interface RouteProps {
   ascent?: string | number
   length?: string | number
   teaser?: string
+  // Itinéraire perso
+  perso?: string
 }
 
 interface RouteInfoProps {
   route: RouteProps
   onClose: () => void
+  onDelete?: () => void
+  onExportGpx?: () => void
 }
 
 function typeLabel(network?: string): string {
@@ -73,17 +80,25 @@ function colourSwatch(c?: string): string | null {
   return null
 }
 
-export function RouteInfo({ route, onClose }: RouteInfoProps) {
+export function RouteInfo({
+  route,
+  onClose,
+  onDelete,
+  onExportGpx,
+}: RouteInfoProps) {
   const isGeotrek = route.geotrek === '1'
+  const isPerso = route.perso === '1'
   const ref = (route.ref ?? '').trim()
   const name = (route.name ?? '').trim()
 
-  const title = isGeotrek ? name || 'Randonnée' : ref || name || 'Itinéraire'
-  const subtitle = isGeotrek
-    ? route.source || 'Fiche rando'
-    : ref && name
-      ? name
-      : typeLabel(route.network)
+  const title = isGeotrek || isPerso ? name || 'Itinéraire' : ref || name || 'Itinéraire'
+  const subtitle = isPerso
+    ? 'Mon itinéraire'
+    : isGeotrek
+      ? route.source || 'Fiche rando'
+      : ref && name
+        ? name
+        : typeLabel(route.network)
 
   const dist = route.length ?? route.distance // km
   const distNum = dist != null ? Number(dist) : NaN
@@ -98,10 +113,16 @@ export function RouteInfo({ route, onClose }: RouteInfoProps) {
         <div className="flex items-start gap-3">
           <div
             className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white ${
-              isGeotrek ? 'bg-violet-600' : 'bg-blue-600'
+              isPerso ? 'bg-green-600' : isGeotrek ? 'bg-violet-600' : 'bg-blue-600'
             }`}
           >
-            {isGeotrek ? <Mountain size={18} /> : <RouteIcon size={18} />}
+            {isPerso ? (
+              <Spline size={18} />
+            ) : isGeotrek ? (
+              <Mountain size={18} />
+            ) : (
+              <RouteIcon size={18} />
+            )}
           </div>
           <div className="min-w-0 flex-1">
             <div className="truncate text-sm font-semibold text-slate-800">
@@ -171,6 +192,27 @@ export function RouteInfo({ route, onClose }: RouteInfoProps) {
           >
             <ExternalLink size={13} /> Plus d'infos
           </a>
+        )}
+
+        {(onExportGpx || onDelete) && (
+          <div className="mt-3 flex gap-2 border-t border-slate-100 pt-3">
+            {onExportGpx && (
+              <button
+                onClick={onExportGpx}
+                className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-slate-300 py-2 text-xs font-medium text-slate-600 hover:bg-slate-50"
+              >
+                <Download size={14} /> GPX
+              </button>
+            )}
+            {onDelete && (
+              <button
+                onClick={onDelete}
+                className="flex flex-1 items-center justify-center gap-1 rounded-lg border border-red-200 py-2 text-xs font-medium text-red-600 hover:bg-red-50"
+              >
+                <Trash2 size={14} /> Supprimer
+              </button>
+            )}
+          </div>
         )}
       </div>
     </div>

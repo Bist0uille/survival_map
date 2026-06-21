@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie'
-import type { CacheEntry, PersonalPoint } from '../types'
+import type { CacheEntry, PersonalPoint, PersonalRoute } from '../types'
 
 /** Fichier volumineux stocké hors-ligne (ex. la base POI pmtiles). */
 interface OfflineFile {
@@ -12,6 +12,7 @@ class SurvivalDB extends Dexie {
   cachePois!: Table<CacheEntry, string>
   personalPoints!: Table<PersonalPoint, string>
   offline!: Table<OfflineFile, string>
+  personalRoutes!: Table<PersonalRoute, string>
 
   constructor() {
     super('survival-map')
@@ -21,6 +22,9 @@ class SurvivalDB extends Dexie {
     })
     this.version(2).stores({
       offline: 'key',
+    })
+    this.version(3).stores({
+      personalRoutes: 'id, createdAt',
     })
   }
 }
@@ -69,4 +73,16 @@ export async function addPersonalPoint(point: PersonalPoint): Promise<void> {
 
 export async function deletePersonalPoint(id: string): Promise<void> {
   await db.personalPoints.delete(id)
+}
+
+export async function getPersonalRoutes(): Promise<PersonalRoute[]> {
+  return db.personalRoutes.toArray()
+}
+
+export async function addPersonalRoute(route: PersonalRoute): Promise<void> {
+  await db.personalRoutes.put(route)
+}
+
+export async function deletePersonalRoute(id: string): Promise<void> {
+  await db.personalRoutes.delete(id)
 }

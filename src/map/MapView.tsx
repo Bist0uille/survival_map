@@ -10,7 +10,7 @@ import { CachedPmtilesSource } from './cachedSource'
 import { getOfflineBlob } from '../data/db'
 import { featurePopupHtml, personalPopupHtml } from '../components/popupHtml'
 import type { GeoBounds } from '../data/offline'
-import type { PersonalPoint, Place } from '../types'
+import type { PersonalPoint, PersonalRoute, Place } from '../types'
 
 // Enregistre le protocole pmtiles auprès de MapLibre (une seule fois).
 const pmtilesProtocol = new Protocol()
@@ -35,6 +35,14 @@ const TREKS_HL = 'treks-highlight'
 const TREKS_HIT = 'treks-hit'
 const TREKS_PATH = '/treks.pmtiles'
 const TREKS_SL = 'treks'
+
+const PR_SOURCE = 'perso-routes' // itinéraires créés par l'utilisateur
+const PR_LAYER = 'perso-routes-line'
+const PR_HIT = 'perso-routes-hit'
+const DRAFT_SOURCE = 'draft-route' // tracé en cours de création
+const DRAFT_LAYER = 'draft-route-line'
+
+const EMPTY_FC = { type: 'FeatureCollection', features: [] } as GeoJSON.FeatureCollection
 
 /**
  * Détecte un fichier pmtiles : lit le blob local (hors-ligne) s'il existe —
@@ -73,6 +81,12 @@ interface MapViewProps {
   showTreks: boolean
   selectedRouteId: string | null
   onRouteSelect: (props: Record<string, unknown> | null) => void
+  createMode: boolean
+  waypoints: Array<[number, number]>
+  draftGeometry: GeoJSON.LineString | null
+  personalRoutes: PersonalRoute[]
+  onAddWaypoint: (lat: number, lon: number) => void
+  onSelectPersonalRoute: (route: PersonalRoute) => void
   onMapClick: (lat: number, lon: number) => void
   onDeletePersonal: (id: string) => void
   onCount: (n: number) => void
@@ -126,6 +140,19 @@ const HIT_PAINT = {
   'line-width': 16,
 } as unknown as maplibregl.LineLayerSpecification['paint']
 
+// Itinéraires perso (vert) et tracé en cours (orange pointillé).
+const PR_LINE_PAINT = {
+  'line-color': '#16a34a',
+  'line-width': ['interpolate', ['linear'], ['zoom'], 8, 2.5, 14, 4.5],
+  'line-opacity': 0.9,
+} as unknown as maplibregl.LineLayerSpecification['paint']
+
+const DRAFT_LINE_PAINT = {
+  'line-color': '#ea580c',
+  'line-width': ['interpolate', ['linear'], ['zoom'], 8, 3, 14, 5],
+  'line-dasharray': [1.5, 1],
+} as unknown as maplibregl.LineLayerSpecification['paint']
+
 const LINE_LAYOUT = {
   'line-join': 'round',
   'line-cap': 'round',
@@ -148,6 +175,25 @@ async function loadStaticFC(): Promise<GeoJSON.FeatureCollection> {
       properties: { id: p.id, categoryId: p.c, name: p.n, ...p.t },
     })),
   }
+}
+
+/** Marqueur numéroté pour une étape d'itinéraire en création. */
+function waypointEl(n: number): HTMLDivElement {
+  const el = document.createElement('div')
+  el.textContent = String(n)
+  el.style.width = '22px'
+  el.style.height = '22px'
+  el.style.borderRadius = '50%'
+  el.style.background = '#ea580c'
+  el.style.border = '2px solid #fff'
+  el.style.color = '#fff'
+  el.style.fontSize = '12px'
+  el.style.fontWeight = '700'
+  el.style.display = 'flex'
+  el.style.alignItems = 'center'
+  el.style.justifyContent = 'center'
+  el.style.boxShadow = '0 1px 4px rgba(0,0,0,0.4)'
+  return el
 }
 
 /** Élément DOM pour un marqueur de point perso (avec anneau). */
@@ -173,6 +219,12 @@ export function MapView({
   showTreks,
   selectedRouteId,
   onRouteSelect,
+  createMode,
+  waypoints,
+  draftGeometry,
+  personalRoutes,
+  onAddWaypoint,
+  onSelectPersonalRoute,
   onMapClick,
   onDeletePersonal,
   onCount,
@@ -190,18 +242,28 @@ export function MapView({
   const selectedRouteRef = useRef(selectedRouteId)
   const recomputeRef = useRef<() => void>(() => {})
 
+  const waypointMarkers = useRef<MLMarker[]>([])
+  const prReady = useRef(false)
+  const personalRoutesRef = useRef(personalRoutes)
+  personalRoutesRef.current = personalRoutes
   const cbClick = useRef(onMapClick)
   const cbDelete = useRef(onDeletePersonal)
   const cbCount = useRef(onCount)
   const cbViewport = useRef(onViewport)
   const cbRouteSelect = useRef(onRouteSelect)
+  const cbAddWaypoint = useRef(onAddWaypoint)
+  const cbSelectPR = useRef(onSelectPersonalRoute)
   const addModeRef = useRef(addMode)
+  const createModeRef = useRef(createMode)
   cbClick.current = onMapClick
   cbDelete.current = onDeletePersonal
   cbCount.current = onCount
   cbViewport.current = onViewport
   cbRouteSelect.current = onRouteSelect
+  cbAddWaypoint.current = onAddWaypoint
+  cbSelectPR.current = onSelectPersonalRoute
   addModeRef.current = addMode
+  createModeRef.current = createMode
   activeRef.current = active
   showRoutesRef.current = showRoutes
   showTreksRef.current = showTreks
@@ -362,6 +424,48 @@ export function MapView({
         })
       }
 
+      // --- Itinéraires perso (vert) + tracé en cours de création (orange).
+      m.addSource(PR_SOURCE, { type: 'geojson', data: EMPTY_FC })
+      m.addLayer({
+        id: PR_LAYER,
+        type: 'line',
+        source: PR_SOURCE,
+        layout: LINE_LAYOUT,
+        paint: PR_LINE_PAINT,
+      })
+      m.addLayer({
+        id: PR_HIT,
+        type: 'line',
+        source: PR_SOURCE,
+        layout: LINE_LAYOUT,
+        paint: HIT_PAINT,
+      })
+      m.addSource(DRAFT_SOURCE, { type: 'geojson', data: EMPTY_FC })
+      m.addLayer({
+        id: DRAFT_LAYER,
+        type: 'line',
+        source: DRAFT_SOURCE,
+        layout: LINE_LAYOUT,
+        paint: DRAFT_LINE_PAINT,
+      })
+      prReady.current = true
+      m.on('click', PR_HIT, (e) => {
+        if (addModeRef.current || createModeRef.current) return
+        const id = e.features?.[0]?.properties?.id
+        const route = personalRoutesRef.current.find((r) => r.id === id)
+        if (route) cbSelectPR.current(route)
+      })
+      m.on('mouseenter', PR_HIT, () => {
+        if (!createModeRef.current) m.getCanvas().style.cursor = 'pointer'
+      })
+      m.on('mouseleave', PR_HIT, () => {
+        m.getCanvas().style.cursor = createModeRef.current
+          ? 'crosshair'
+          : addModeRef.current
+            ? 'crosshair'
+            : ''
+      })
+
       // --- POI (icônes) : au-dessus des itinéraires. Fichier local si présent
       // (détection par signature "PMTiles"), sinon réseau, sinon repli Aude.
       const poi = await detectPmtiles(PMTILES_PATH, 'pois')
@@ -421,7 +525,11 @@ export function MapView({
     m.once('idle', emitViewport)
 
     m.on('click', (e) => {
-      if (addModeRef.current) cbClick.current(e.lngLat.lat, e.lngLat.lng)
+      if (createModeRef.current) {
+        cbAddWaypoint.current(e.lngLat.lat, e.lngLat.lng)
+      } else if (addModeRef.current) {
+        cbClick.current(e.lngLat.lat, e.lngLat.lng)
+      }
     })
 
     // Suppression d'un point perso depuis le bouton dans la popup
@@ -438,12 +546,57 @@ export function MapView({
     }
   }, [])
 
-  // Curseur en mode ajout
+  // Curseur en mode ajout / création
   useEffect(() => {
     const m = map.current
     if (!m) return
-    m.getCanvas().style.cursor = addMode ? 'crosshair' : ''
-  }, [addMode])
+    m.getCanvas().style.cursor = addMode || createMode ? 'crosshair' : ''
+  }, [addMode, createMode])
+
+  // Itinéraires perso enregistrés (ligne verte).
+  useEffect(() => {
+    const m = map.current
+    if (!m || !prReady.current) return
+    const fc: GeoJSON.FeatureCollection = {
+      type: 'FeatureCollection',
+      features: personalRoutes.map((r) => ({
+        type: 'Feature',
+        geometry: r.geometry,
+        properties: {
+          id: r.id,
+          name: r.name,
+          length: r.distanceKm,
+          ascent: r.ascent,
+          perso: '1',
+        },
+      })),
+    }
+    ;(m.getSource(PR_SOURCE) as maplibregl.GeoJSONSource | undefined)?.setData(fc)
+  }, [personalRoutes])
+
+  // Tracé en cours de création (ligne orange pointillée).
+  useEffect(() => {
+    const m = map.current
+    if (!m || !prReady.current) return
+    const data: GeoJSON.GeoJSON = draftGeometry
+      ? { type: 'Feature', geometry: draftGeometry, properties: {} }
+      : EMPTY_FC
+    ;(m.getSource(DRAFT_SOURCE) as maplibregl.GeoJSONSource | undefined)?.setData(data)
+  }, [draftGeometry])
+
+  // Marqueurs numérotés des étapes.
+  useEffect(() => {
+    const m = map.current
+    if (!m) return
+    waypointMarkers.current.forEach((mk) => mk.remove())
+    waypointMarkers.current = []
+    waypoints.forEach(([lon, lat], i) => {
+      const mk = new maplibregl.Marker({ element: waypointEl(i + 1) })
+        .setLngLat([lon, lat])
+        .addTo(m)
+      waypointMarkers.current.push(mk)
+    })
+  }, [waypoints])
 
   // Déplacement de la carte sur le lieu recherché.
   useEffect(() => {

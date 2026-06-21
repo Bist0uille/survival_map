@@ -35,6 +35,17 @@ export interface PersonalPoint {
   createdAt: number
 }
 
+/** Itinéraire créé par l'utilisateur (tracé sur les chemins via BRouter) */
+export interface PersonalRoute {
+  id: string
+  name: string
+  waypoints: Array<[number, number]> // [lon, lat]
+  geometry: GeoJSON.LineString
+  distanceKm: number
+  ascent: number
+  createdAt: number
+}
+
 /** Lieu retourné par la recherche (géocodage Nominatim) */
 export interface Place {
   lat: number

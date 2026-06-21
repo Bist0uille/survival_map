@@ -1,24 +1,31 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Plus, X, Download } from 'lucide-react'
+import { Plus, X, Download, Spline } from 'lucide-react'
 import { MapView } from './map/MapView'
 import { FilterBar } from './components/FilterBar'
 import { SearchBar } from './components/SearchBar'
 import { AddPointForm } from './components/AddPointForm'
 import { OfflinePanel } from './components/OfflinePanel'
 import { RouteInfo, type RouteProps } from './components/RouteInfo'
+import { RouteBuilder } from './components/RouteBuilder'
 import {
   getPersonalPoints,
   addPersonalPoint,
   deletePersonalPoint,
+  getPersonalRoutes,
+  addPersonalRoute,
+  deletePersonalRoute,
 } from './data/db'
+import { computeRoute, type ComputedRoute } from './data/routing'
+import { downloadGpx } from './data/gpx'
 import type { GeoBounds } from './data/offline'
-import type { PersonalPoint, Place } from './types'
+import type { PersonalPoint, PersonalRoute, Place } from './types'
 
 const DEFAULT_ACTIVE = ['water']
 
 function App() {
   const [active, setActive] = useState<Set<string>>(new Set(DEFAULT_ACTIVE))
   const [personalPoints, setPersonalPoints] = useState<PersonalPoint[]>([])
+  const [personalRoutes, setPersonalRoutes] = useState<PersonalRoute[]>([])
   const [addMode, setAddMode] = useState(false)
   const [count, setCount] = useState(0)
   const [flyTo, setFlyTo] = useState<Place | null>(null)
@@ -26,19 +33,55 @@ function App() {
   const [showRoutes, setShowRoutes] = useState(false)
   const [showTreks, setShowTreks] = useState(false)
   const [selectedRoute, setSelectedRoute] = useState<RouteProps | null>(null)
+  const [selectedPR, setSelectedPR] = useState<PersonalRoute | null>(null)
   const [pending, setPending] = useState<{ lat: number; lon: number } | null>(
     null,
   )
-  // Emprise + zoom courants (pour le téléchargement hors-ligne).
+  // Création d'itinéraire
+  const [createMode, setCreateMode] = useState(false)
+  const [waypoints, setWaypoints] = useState<Array<[number, number]>>([])
+  const [draft, setDraft] = useState<ComputedRoute | null>(null)
+  const [computing, setComputing] = useState(false)
+  const [routeError, setRouteError] = useState<string | null>(null)
+
   const viewport = useRef<{ bounds: GeoBounds; zoom: number }>({
     bounds: { west: 2.9, south: 43.1, east: 3.1, north: 43.25 },
     zoom: 12,
   })
 
-  // Charge les points perso au démarrage
   useEffect(() => {
     getPersonalPoints().then(setPersonalPoints)
+    getPersonalRoutes().then(setPersonalRoutes)
   }, [])
+
+  // Recalcule le tracé (BRouter) quand les étapes changent (anti-rebond).
+  useEffect(() => {
+    if (waypoints.length < 2) {
+      setDraft(null)
+      setRouteError(null)
+      return
+    }
+    let cancelled = false
+    setComputing(true)
+    setRouteError(null)
+    const t = setTimeout(async () => {
+      try {
+        const r = await computeRoute(waypoints)
+        if (!cancelled) setDraft(r)
+      } catch {
+        if (!cancelled) {
+          setDraft(null)
+          setRouteError('Pas de chemin trouvé entre ces points')
+        }
+      } finally {
+        if (!cancelled) setComputing(false)
+      }
+    }, 350)
+    return () => {
+      cancelled = true
+      clearTimeout(t)
+    }
+  }, [waypoints])
 
   const handleViewport = useCallback((bounds: GeoBounds, zoom: number) => {
     viewport.current = { bounds, zoom }
@@ -46,6 +89,7 @@ function App() {
 
   const handleRouteSelect = useCallback(
     (props: Record<string, unknown> | null) => {
+      setSelectedPR(null)
       setSelectedRoute(props as RouteProps | null)
     },
     [],
@@ -53,7 +97,7 @@ function App() {
 
   const toggleRoutes = useCallback(() => {
     setShowRoutes((v) => {
-      if (v) setSelectedRoute(null) // on masque → désélectionne
+      if (v) setSelectedRoute(null)
       return !v
     })
   }, [])
@@ -90,6 +134,53 @@ function App() {
     setPersonalPoints((prev) => prev.filter((p) => p.id !== id))
   }, [])
 
+  // --- Création d'itinéraire ---
+  const enterCreate = useCallback(() => {
+    setCreateMode(true)
+    setAddMode(false)
+    setSelectedRoute(null)
+    setSelectedPR(null)
+    setWaypoints([])
+    setDraft(null)
+    setRouteError(null)
+  }, [])
+
+  const cancelCreate = useCallback(() => {
+    setCreateMode(false)
+    setWaypoints([])
+    setDraft(null)
+    setRouteError(null)
+  }, [])
+
+  const addWaypoint = useCallback((lat: number, lon: number) => {
+    setWaypoints((w) => [...w, [lon, lat]])
+  }, [])
+
+  const saveRoute = useCallback(
+    async (name: string) => {
+      if (!draft) return
+      const route: PersonalRoute = {
+        id: 'pr-' + Date.now(),
+        name,
+        waypoints,
+        geometry: draft.geometry,
+        distanceKm: draft.distanceKm,
+        ascent: draft.ascent,
+        createdAt: Date.now(),
+      }
+      await addPersonalRoute(route)
+      setPersonalRoutes((prev) => [...prev, route])
+      cancelCreate()
+    },
+    [draft, waypoints, cancelCreate],
+  )
+
+  const handleDeletePR = useCallback(async (id: string) => {
+    await deletePersonalRoute(id)
+    setPersonalRoutes((prev) => prev.filter((r) => r.id !== id))
+    setSelectedPR(null)
+  }, [])
+
   return (
     <div className="relative h-full w-full overflow-hidden">
       <MapView
@@ -101,13 +192,21 @@ function App() {
         showTreks={showTreks}
         selectedRouteId={selectedRoute?.id ?? null}
         onRouteSelect={handleRouteSelect}
+        createMode={createMode}
+        waypoints={waypoints}
+        draftGeometry={draft?.geometry ?? null}
+        personalRoutes={personalRoutes}
+        onAddWaypoint={addWaypoint}
+        onSelectPersonalRoute={(r) => {
+          setSelectedRoute(null)
+          setSelectedPR(r)
+        }}
         onMapClick={handleMapClick}
         onDeletePersonal={handleDeletePersonal}
         onCount={setCount}
         onViewport={handleViewport}
       />
 
-      {/* Recherche de lieu (au-dessus des filtres) */}
       <div className="pointer-events-none absolute left-0 right-0 top-0 z-30 p-2">
         <SearchBar onSelect={setFlyTo} />
       </div>
@@ -124,31 +223,58 @@ function App() {
         error={null}
       />
 
-      {/* Bouton télécharger la zone (hors-ligne) */}
-      <button
-        onClick={() => setShowOffline(true)}
-        className="absolute bottom-24 left-4 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-700 shadow-lg transition hover:bg-slate-100"
-        aria-label="Télécharger la zone hors-ligne"
-        title="Télécharger cette zone pour le hors-ligne"
-      >
-        <Download size={20} />
-      </button>
+      {!createMode && (
+        <>
+          {/* Créer un itinéraire */}
+          <button
+            onClick={enterCreate}
+            className="absolute bottom-[164px] left-4 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-700 shadow-lg transition hover:bg-slate-100"
+            aria-label="Créer un itinéraire"
+            title="Créer un itinéraire (suit les chemins)"
+          >
+            <Spline size={20} />
+          </button>
 
-      {/* Bouton d'ajout de point perso */}
-      <button
-        onClick={() => setAddMode((v) => !v)}
-        className={`absolute bottom-6 left-4 z-20 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-lg transition ${
-          addMode ? 'bg-slate-700' : 'bg-green-700 hover:bg-green-800'
-        }`}
-        aria-label="Ajouter un point"
-      >
-        {addMode ? <X size={26} /> : <Plus size={26} />}
-      </button>
+          {/* Télécharger la zone (hors-ligne) */}
+          <button
+            onClick={() => setShowOffline(true)}
+            className="absolute bottom-24 left-4 z-20 flex h-11 w-11 items-center justify-center rounded-full bg-white text-slate-700 shadow-lg transition hover:bg-slate-100"
+            aria-label="Télécharger la zone hors-ligne"
+            title="Télécharger cette zone pour le hors-ligne"
+          >
+            <Download size={20} />
+          </button>
+
+          {/* Ajouter un point perso */}
+          <button
+            onClick={() => setAddMode((v) => !v)}
+            className={`absolute bottom-6 left-4 z-20 flex h-14 w-14 items-center justify-center rounded-full text-white shadow-lg transition ${
+              addMode ? 'bg-slate-700' : 'bg-green-700 hover:bg-green-800'
+            }`}
+            aria-label="Ajouter un point"
+          >
+            {addMode ? <X size={26} /> : <Plus size={26} />}
+          </button>
+        </>
+      )}
 
       {addMode && (
         <div className="pointer-events-none absolute bottom-8 left-20 z-20 rounded-lg bg-slate-800/90 px-3 py-2 text-xs text-white shadow">
           Touche la carte pour placer le point
         </div>
+      )}
+
+      {createMode && (
+        <RouteBuilder
+          count={waypoints.length}
+          draft={draft}
+          computing={computing}
+          error={routeError}
+          onUndo={() => setWaypoints((w) => w.slice(0, -1))}
+          onClear={() => setWaypoints([])}
+          onSave={saveRoute}
+          onCancel={cancelCreate}
+        />
       )}
 
       {pending && (
@@ -170,6 +296,21 @@ function App() {
 
       {(showRoutes || showTreks) && selectedRoute && (
         <RouteInfo route={selectedRoute} onClose={() => setSelectedRoute(null)} />
+      )}
+
+      {selectedPR && (
+        <RouteInfo
+          route={{
+            id: selectedPR.id,
+            name: selectedPR.name,
+            length: selectedPR.distanceKm,
+            ascent: selectedPR.ascent,
+            perso: '1',
+          }}
+          onClose={() => setSelectedPR(null)}
+          onDelete={() => handleDeletePR(selectedPR.id)}
+          onExportGpx={() => downloadGpx(selectedPR.name, selectedPR.geometry)}
+        />
       )}
     </div>
   )
