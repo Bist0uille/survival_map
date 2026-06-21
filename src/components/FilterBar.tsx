@@ -1,4 +1,4 @@
-import { Route as RouteIcon, Mountain } from 'lucide-react'
+import { Route as RouteIcon, Mountain, Footprints } from 'lucide-react'
 import { CATEGORIES } from '../data/categories'
 
 interface FilterBarProps {
@@ -8,6 +8,8 @@ interface FilterBarProps {
   onToggleRoutes: () => void
   showTreks: boolean
   onToggleTreks: () => void
+  showPaths: boolean
+  onTogglePaths: () => void
   resultCount: number
   loading: boolean
   error: string | null
@@ -20,6 +22,8 @@ export function FilterBar({
   onToggleRoutes,
   showTreks,
   onToggleTreks,
+  showPaths,
+  onTogglePaths,
   resultCount,
   loading,
   error,
@@ -48,6 +52,17 @@ export function FilterBar({
         >
           <Mountain size={16} strokeWidth={2.2} />
           Fiches
+        </button>
+        <button
+          onClick={onTogglePaths}
+          className={`flex shrink-0 items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium shadow-sm transition ${
+            showPaths
+              ? 'border-transparent bg-amber-700 text-white'
+              : 'border-slate-300 bg-white/90 text-slate-600 hover:bg-white'
+          }`}
+        >
+          <Footprints size={16} strokeWidth={2.2} />
+          Chemins
         </button>
         {CATEGORIES.map((cat) => {
           const Icon = cat.icon

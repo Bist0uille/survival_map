@@ -32,6 +32,7 @@ function App() {
   const [showOffline, setShowOffline] = useState(false)
   const [showRoutes, setShowRoutes] = useState(false)
   const [showTreks, setShowTreks] = useState(false)
+  const [showPaths, setShowPaths] = useState(false)
   const [selectedRoute, setSelectedRoute] = useState<RouteProps | null>(null)
   const [selectedPR, setSelectedPR] = useState<PersonalRoute | null>(null)
   const [pending, setPending] = useState<{ lat: number; lon: number } | null>(
@@ -193,6 +194,7 @@ function App() {
         flyTo={flyTo}
         showRoutes={showRoutes}
         showTreks={showTreks}
+        showPaths={showPaths}
         selectedRouteId={selectedRoute?.id ?? null}
         onRouteSelect={handleRouteSelect}
         createMode={createMode}
@@ -221,6 +223,8 @@ function App() {
         onToggleRoutes={toggleRoutes}
         showTreks={showTreks}
         onToggleTreks={toggleTreks}
+        showPaths={showPaths}
+        onTogglePaths={() => setShowPaths((v) => !v)}
         resultCount={count + personalPoints.length}
         loading={false}
         error={null}

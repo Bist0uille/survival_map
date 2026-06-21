@@ -36,6 +36,14 @@ const TREKS_HIT = 'treks-hit'
 const TREKS_PATH = '/treks.pmtiles'
 const TREKS_SL = 'treks'
 
+// Chemins praticables OSM (tous), hébergés sur Cloudflare R2 (gros fichier).
+const PATHS_URL =
+  import.meta.env.VITE_PATHS_URL ||
+  'https://pub-1cff175e1c4641718e16b36f04ea91b1.r2.dev/paths.pmtiles'
+const PATHS_SOURCE = 'paths'
+const PATHS_LAYER = 'paths-line'
+const PATHS_SL = 'paths'
+
 const PR_SOURCE = 'perso-routes' // itinéraires créés par l'utilisateur
 const PR_LAYER = 'perso-routes-line'
 const PR_HIT = 'perso-routes-hit'
@@ -79,6 +87,7 @@ interface MapViewProps {
   flyTo: Place | null
   showRoutes: boolean
   showTreks: boolean
+  showPaths: boolean
   selectedRouteId: string | null
   onRouteSelect: (props: Record<string, unknown> | null) => void
   createMode: boolean
@@ -153,6 +162,14 @@ const DRAFT_LINE_PAINT = {
   'line-dasharray': [1.5, 1],
 } as unknown as maplibregl.LineLayerSpecification['paint']
 
+// Chemins OSM : fins, ocre pointillé, visibles à fort zoom (densité élevée).
+const PATH_LINE_PAINT = {
+  'line-color': '#b45309',
+  'line-width': ['interpolate', ['linear'], ['zoom'], 12, 1, 14, 2, 16, 3],
+  'line-dasharray': [1, 1],
+  'line-opacity': 0.6,
+} as unknown as maplibregl.LineLayerSpecification['paint']
+
 const LINE_LAYOUT = {
   'line-join': 'round',
   'line-cap': 'round',
@@ -217,6 +234,7 @@ export function MapView({
   flyTo,
   showRoutes,
   showTreks,
+  showPaths,
   selectedRouteId,
   onRouteSelect,
   createMode,
@@ -236,9 +254,11 @@ export function MapView({
   const ready = useRef(false)
   const routesReady = useRef(false)
   const treksReady = useRef(false)
+  const pathsReady = useRef(false)
   const activeRef = useRef(active)
   const showRoutesRef = useRef(showRoutes)
   const showTreksRef = useRef(showTreks)
+  const showPathsRef = useRef(showPaths)
   const selectedRouteRef = useRef(selectedRouteId)
   const recomputeRef = useRef<() => void>(() => {})
 
@@ -267,6 +287,7 @@ export function MapView({
   activeRef.current = active
   showRoutesRef.current = showRoutes
   showTreksRef.current = showTreks
+  showPathsRef.current = showPaths
   selectedRouteRef.current = selectedRouteId
 
   // Init carte (une seule fois)
@@ -322,6 +343,43 @@ export function MapView({
     m.once('load', async () => {
       m.resize()
       await addCategoryIcons(m)
+
+      // --- Chemins OSM (tous), depuis R2 — en premier → sous tout le reste.
+      // En ligne uniquement (gros fichier non mis hors-ligne).
+      if (PATHS_URL) {
+        let ok = false
+        try {
+          const res = await fetch(PATHS_URL, { headers: { Range: 'bytes=0-6' } })
+          if (res.ok || res.status === 206) {
+            const bytes = new Uint8Array(await res.arrayBuffer())
+            ok = String.fromCharCode(...bytes.slice(0, 7)) === 'PMTiles'
+          }
+        } catch {
+          ok = false
+        }
+        if (ok) {
+          pmtilesProtocol.add(
+            new PMTiles(new CachedPmtilesSource(PATHS_URL, null)),
+          )
+          m.addSource(PATHS_SOURCE, {
+            type: 'vector',
+            url: 'pmtiles://' + PATHS_URL,
+          })
+          m.addLayer({
+            id: PATHS_LAYER,
+            type: 'line',
+            source: PATHS_SOURCE,
+            'source-layer': PATHS_SL,
+            minzoom: 12,
+            layout: {
+              ...LINE_LAYOUT,
+              visibility: showPathsRef.current ? 'visible' : 'none',
+            },
+            paint: PATH_LINE_PAINT,
+          })
+          pathsReady.current = true
+        }
+      }
 
       // --- Itinéraires (lignes) : ajoutés EN PREMIER → restent SOUS les POI.
       const routes = await detectPmtiles(ROUTES_PATH, 'routes')
@@ -643,6 +701,13 @@ export function MapView({
     m.setLayoutProperty(TREKS_HL, 'visibility', v)
     m.setLayoutProperty(TREKS_HIT, 'visibility', v)
   }, [showTreks])
+
+  // Affichage/masquage des chemins OSM.
+  useEffect(() => {
+    const m = map.current
+    if (!m || !pathsReady.current) return
+    m.setLayoutProperty(PATHS_LAYER, 'visibility', showPaths ? 'visible' : 'none')
+  }, [showPaths])
 
   // Surlignage de l'itinéraire/fiche sélectionné (filtre sur l'id, sur les
   // deux couches : seul l'id correspondant s'allume).
