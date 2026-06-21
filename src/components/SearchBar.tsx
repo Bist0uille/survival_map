@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Search, X } from 'lucide-react'
 import type { Place } from '../types'
+import { toast } from '../data/toast'
 
 interface NominatimResult {
   lat: string
@@ -64,8 +65,11 @@ export function SearchBar({ onSelect }: SearchBarProps) {
           })),
         )
         setOpen(true)
-      } catch {
-        // requête annulée ou erreur réseau : on ignore
+      } catch (err) {
+        // On ignore les annulations (frappe suivante) ; on signale le reste.
+        if (!(err instanceof DOMException && err.name === 'AbortError')) {
+          toast('Recherche indisponible (réseau ?)', 'error')
+        }
       } finally {
         setLoading(false)
       }
