@@ -19,7 +19,8 @@ let kept = 0
 let seen = 0
 
 for await (const line of rl) {
-  const s = line.trim()
+  // GeoJSONSeq préfixe chaque ligne d'un caractère RS (0x1e) à retirer.
+  const s = line.replace(/\x1e/g, '').trim()
   if (!s) continue
   seen++
   let f
