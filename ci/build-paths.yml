@@ -23,10 +23,10 @@ jobs:
         with:
           node-version: 20
 
-      - name: Installer osmium + tippecanoe + awscli
+      - name: Installer osmium + tippecanoe
         run: |
           sudo apt-get update
-          sudo apt-get install -y osmium-tool build-essential libsqlite3-dev zlib1g-dev awscli
+          sudo apt-get install -y osmium-tool build-essential libsqlite3-dev zlib1g-dev
           git clone --depth 1 https://github.com/felt/tippecanoe.git /tmp/tippecanoe
           make -C /tmp/tippecanoe -j"$(nproc)"
           sudo make -C /tmp/tippecanoe install
@@ -80,6 +80,9 @@ jobs:
             echo "Secrets R2 absents → upload sauté (mesure de taille seule)."
             exit 0
           fi
+          curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
+          unzip -q /tmp/awscliv2.zip -d /tmp
+          sudo /tmp/aws/install --update
           export AWS_ACCESS_KEY_ID="$R2_ACCESS_KEY_ID"
           export AWS_SECRET_ACCESS_KEY="$R2_SECRET_ACCESS_KEY"
           export AWS_DEFAULT_REGION=auto
