@@ -1,5 +1,4 @@
-# À copier dans .github/workflows/build-paths.yml
-# Génère public-paths/paths.pmtiles = TOUS les chemins praticables de France
+# Génère paths.pmtiles = TOUS les chemins praticables de FR + ES + IT
 # (highway=path/track/footway/bridleway/steps/...) et l'envoie sur Cloudflare R2.
 # Trop gros pour le repo → hébergé sur R2 (pas committé).
 name: Construire PMTiles Chemins (R2)
@@ -15,7 +14,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 50
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
 
@@ -31,27 +30,11 @@ jobs:
           make -C /tmp/tippecanoe -j"$(nproc)"
           sudo make -C /tmp/tippecanoe install
 
-      - name: Télécharger l'extrait France
+      - name: Télécharger + filtrer + fusionner FR+ES+IT
         run: |
           set -e
-          URLS=(
-            "https://download.geofabrik.de/europe/france-latest.osm.pbf"
-            "https://download.openstreetmap.fr/extracts/europe/france.osm.pbf"
-          )
-          for u in "${URLS[@]}"; do
-            echo "Essai $u"
-            if wget --tries=2 --read-timeout=60 --waitretry=20 -O /tmp/france.osm.pbf "$u"; then
-              break
-            fi
-          done
-          ls -lh /tmp/france.osm.pbf
-
-      - name: Extraire les chemins praticables
-        run: |
-          set -e
-          osmium tags-filter /tmp/france.osm.pbf \
-            w/highway=path,track,footway,bridleway,steps,via_ferrata,cycleway,pedestrian \
-            -o /tmp/paths.osm.pbf --overwrite
+          bash scripts/fetch-merge.sh /tmp/paths.osm.pbf "france spain italy" \
+            w/highway=path,track,footway,bridleway,steps,via_ferrata,cycleway,pedestrian
           osmium export /tmp/paths.osm.pbf -f geojsonseq \
             --geometry-types=linestring -o /tmp/paths.geojsonseq --overwrite
           node scripts/osm-paths-to-input.mjs < /tmp/paths.geojsonseq > /tmp/paths-input.geojsonseq
