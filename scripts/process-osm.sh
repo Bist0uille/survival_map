@@ -48,7 +48,7 @@ for c in $COUNTRIES; do
     nwr/amenity=drinking_water,fountain,toilets,charging_station,device_charging_station,power_supply,public_bookcase \
     nwr/power=outlet \
     nwr/leisure=picnic_table \
-    nwr/tourism=picnic_site,viewpoint,alpine_hut,wilderness_hut \
+    nwr/tourism=picnic_site,viewpoint,alpine_hut,wilderness_hut,hostel \
     nwr/shop=bakery \
     nwr/natural=peak,rock,stone \
     nwr/waterway=waterfall \

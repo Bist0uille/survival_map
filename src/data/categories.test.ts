@@ -30,6 +30,10 @@ describe('categoryForTags', () => {
     expect(categoryForTags({ amenity: 'charging_station', motorcar: 'yes' })).toBeNull()
   })
 
+  it('classe une auberge de jeunesse en « hostel »', () => {
+    expect(categoryForTags({ tourism: 'hostel' })?.id).toBe('hostel')
+  })
+
   it('renvoie null pour des tags inconnus', () => {
     expect(categoryForTags({ amenity: 'bank' })).toBeNull()
     expect(categoryForTags({})).toBeNull()
