@@ -11,6 +11,7 @@ import {
   Gem,
   Home,
   TreePine,
+  BedDouble,
   MapPin,
   type LucideIcon,
 } from 'lucide-react'
@@ -126,6 +127,13 @@ export const CATEGORIES: CategoryDef[] = [
     color: '#65a30d',
     icon: TreePine,
     osm: [{ key: 'highway', value: 'rest_area' }],
+  },
+  {
+    id: 'hostel',
+    label: 'Auberge de jeunesse',
+    color: '#4f46e5',
+    icon: BedDouble,
+    osm: [{ key: 'tourism', value: 'hostel' }],
   },
 ]
 

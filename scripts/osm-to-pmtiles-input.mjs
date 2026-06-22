@@ -20,6 +20,7 @@ const CATEGORIES = [
   { id: 'rock', osm: [['natural', 'rock'], ['natural', 'stone']] },
   { id: 'refuge', osm: [['tourism', 'alpine_hut'], ['tourism', 'wilderness_hut']] },
   { id: 'rest_area', osm: [['highway', 'rest_area']] },
+  { id: 'hostel', osm: [['tourism', 'hostel']] },
 ]
 const KEEP_TAGS = ['ele', 'opening_hours', 'access', 'fee', 'description', 'operator', 'website']
 
