@@ -1,4 +1,4 @@
-# Génère protected.pmtiles = aires protégées de France (parcs nationaux,
+# Génère protected.pmtiles = aires protégées de FR + ES + IT (parcs nationaux,
 # réserves naturelles, aires protégées) où le bivouac est souvent interdit ou
 # réglementé. Couche informative. Hébergée sur Cloudflare R2 (comme paths).
 name: Construire PMTiles Aires protégées (R2)
@@ -14,7 +14,7 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 50
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
 
@@ -30,29 +30,13 @@ jobs:
           make -C /tmp/tippecanoe -j"$(nproc)"
           sudo make -C /tmp/tippecanoe install
 
-      - name: Télécharger l'extrait France
-        run: |
-          set -e
-          URLS=(
-            "https://download.geofabrik.de/europe/france-latest.osm.pbf"
-            "https://download.openstreetmap.fr/extracts/europe/france.osm.pbf"
-          )
-          for u in "${URLS[@]}"; do
-            echo "Essai $u"
-            if wget --tries=2 --read-timeout=60 --waitretry=20 -O /tmp/france.osm.pbf "$u"; then
-              break
-            fi
-          done
-          ls -lh /tmp/france.osm.pbf
-
-      - name: Extraire les aires protégées
+      - name: Télécharger + filtrer + fusionner FR+ES+IT
         run: |
           set -e
           # Relations + ways : parcs nationaux, aires protégées, réserves.
-          osmium tags-filter /tmp/france.osm.pbf \
+          bash scripts/fetch-merge.sh /tmp/protected.osm.pbf "france spain italy" \
             wr/boundary=national_park,protected_area \
-            wr/leisure=nature_reserve \
-            -o /tmp/protected.osm.pbf --overwrite
+            wr/leisure=nature_reserve
           osmium export /tmp/protected.osm.pbf -f geojsonseq \
             --geometry-types=polygon -o /tmp/protected.geojsonseq --overwrite
           node scripts/osm-protected-to-input.mjs < /tmp/protected.geojsonseq > /tmp/protected-input.geojsonseq
