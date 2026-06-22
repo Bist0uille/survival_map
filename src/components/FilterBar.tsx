@@ -12,9 +12,6 @@ interface FilterBarProps {
   onToggleTrails: () => void
   showProtected: boolean
   onToggleProtected: () => void
-  resultCount: number
-  loading: boolean
-  error: string | null
 }
 
 interface ChipProps {
@@ -56,9 +53,6 @@ export function FilterBar({
   onToggleTrails,
   showProtected,
   onToggleProtected,
-  resultCount,
-  loading,
-  error,
 }: FilterBarProps) {
   return (
     <div className="pointer-events-none absolute left-0 right-0 top-14 z-10 flex flex-col gap-2 p-2">
@@ -87,19 +81,6 @@ export function FilterBar({
             onClick={() => onToggle(cat.id)}
           />
         ))}
-      </div>
-      <div className="pointer-events-none">
-        <span
-          className={`pointer-events-auto inline-block rounded-full px-3 py-1 text-xs font-medium shadow-sm ${
-            error ? 'bg-red-600 text-white' : 'bg-white/90 text-slate-600'
-          }`}
-        >
-          {loading
-            ? 'Chargement…'
-            : error
-              ? '⚠︎ Données indisponibles — réessaie'
-              : `${resultCount} point(s)`}
-        </span>
       </div>
     </div>
   )

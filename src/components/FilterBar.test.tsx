@@ -11,9 +11,6 @@ function setup(over = {}) {
     onToggleTrails: vi.fn(),
     showProtected: false,
     onToggleProtected: vi.fn(),
-    resultCount: 42,
-    loading: false,
-    error: null,
     ...over,
   }
   render(<FilterBar {...props} />)
@@ -21,11 +18,6 @@ function setup(over = {}) {
 }
 
 describe('<FilterBar>', () => {
-  it('affiche le compteur de points', () => {
-    setup()
-    expect(screen.getByText('42 point(s)')).toBeInTheDocument()
-  })
-
   it('expose le toggle « Sentiers & chemins » (icône) et le déclenche', async () => {
     const props = setup()
     // Inactif = icône seule : ciblé par son nom accessible (aria-label).
@@ -39,11 +31,6 @@ describe('<FilterBar>', () => {
     const btn = screen.getByRole('button', { name: /Bivouac/ })
     await userEvent.click(btn)
     expect(props.onToggleProtected).toHaveBeenCalledOnce()
-  })
-
-  it('affiche un message d’erreur quand error est défini', () => {
-    setup({ error: 'boom' })
-    expect(screen.getByText(/Données indisponibles/)).toBeInTheDocument()
   })
 
   it('catégorie inactive = icône seule, sans libellé visible', () => {
