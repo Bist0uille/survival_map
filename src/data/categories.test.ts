@@ -16,6 +16,20 @@ describe('categoryForTags', () => {
     expect(categoryForTags({ tourism: 'wilderness_hut' })?.id).toBe('refuge')
   })
 
+  it('range téléphone/prises publiques en « prises »', () => {
+    expect(categoryForTags({ amenity: 'device_charging_station' })?.id).toBe('power')
+    expect(categoryForTags({ power: 'outlet' })?.id).toBe('power')
+  })
+
+  it('garde une borne de recharge vélo mais exclut le pur-voiture', () => {
+    expect(categoryForTags({ amenity: 'charging_station', bicycle: 'yes' })?.id).toBe('power')
+    expect(
+      categoryForTags({ amenity: 'charging_station', bicycle: 'designated' })?.id,
+    ).toBe('power')
+    expect(categoryForTags({ amenity: 'charging_station' })).toBeNull()
+    expect(categoryForTags({ amenity: 'charging_station', motorcar: 'yes' })).toBeNull()
+  })
+
   it('renvoie null pour des tags inconnus', () => {
     expect(categoryForTags({ amenity: 'bank' })).toBeNull()
     expect(categoryForTags({})).toBeNull()
