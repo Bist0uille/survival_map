@@ -41,8 +41,12 @@ for c in $COUNTRIES; do
   test -s "$raw"
 
   echo "→ [$c] filtrage POI"
+  # Prises : charging_station (filtré ensuite sur bicycle=yes pour exclure les
+  # bornes voiture), device_charging_station (téléphone), power_supply, et
+  # power=outlet (prises publiques).
   osmium tags-filter "$raw" \
-    nwr/amenity=drinking_water,fountain,toilets,charging_station,public_bookcase \
+    nwr/amenity=drinking_water,fountain,toilets,charging_station,device_charging_station,power_supply,public_bookcase \
+    nwr/power=outlet \
     nwr/leisure=picnic_table \
     nwr/tourism=picnic_site,viewpoint,alpine_hut,wilderness_hut \
     nwr/shop=bakery \

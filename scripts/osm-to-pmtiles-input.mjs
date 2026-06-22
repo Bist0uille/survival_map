@@ -7,7 +7,10 @@ import { createInterface } from 'node:readline'
 const CATEGORIES = [
   { id: 'water', osm: [['amenity', 'drinking_water'], ['amenity', 'fountain']] },
   { id: 'toilets', osm: [['amenity', 'toilets']] },
-  { id: 'power', osm: [['amenity', 'charging_station']] },
+  // « Prises » : recharge téléphone/appareils + prises publiques. Les
+  // charging_station (souvent voiture) sont traitées à part dans categoryFor :
+  // on ne les garde que si bicycle=yes/designated (VAE), pas le pur-voiture.
+  { id: 'power', osm: [['amenity', 'device_charging_station'], ['amenity', 'power_supply'], ['power', 'outlet']] },
   { id: 'picnic', osm: [['leisure', 'picnic_table'], ['tourism', 'picnic_site']] },
   { id: 'books', osm: [['amenity', 'public_bookcase']] },
   { id: 'bakery', osm: [['shop', 'bakery']] },
@@ -21,6 +24,11 @@ const CATEGORIES = [
 const KEEP_TAGS = ['ele', 'opening_hours', 'access', 'fee', 'description', 'operator', 'website']
 
 function categoryFor(tags) {
+  // Recharge : on exclut les bornes uniquement voiture. Une charging_station
+  // n'est rangée dans « Prises » que si elle sert aux vélos (VAE).
+  if (tags.amenity === 'charging_station') {
+    return tags.bicycle === 'yes' || tags.bicycle === 'designated' ? 'power' : null
+  }
   for (const cat of CATEGORIES) {
     for (const [k, v] of cat.osm) if (tags[k] === v) return cat.id
   }

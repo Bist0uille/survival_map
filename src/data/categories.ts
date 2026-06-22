@@ -47,7 +47,13 @@ export const CATEGORIES: CategoryDef[] = [
     label: 'Prises',
     color: '#dc2626',
     icon: Plug,
-    osm: [{ key: 'amenity', value: 'charging_station' }],
+    // Recharge téléphone/appareils + prises publiques. Les bornes voiture
+    // (charging_station sans bicycle=yes) sont exclues, cf. categoryForTags.
+    osm: [
+      { key: 'amenity', value: 'device_charging_station' },
+      { key: 'amenity', value: 'power_supply' },
+      { key: 'power', value: 'outlet' },
+    ],
   },
   {
     id: 'picnic',
@@ -145,6 +151,13 @@ export function getCategory(id: string): CategoryDef {
  * Renvoie null si aucun tag connu (le POI est alors ignoré).
  */
 export function categoryForTags(tags: Record<string, string>): CategoryDef | null {
+  // Recharge : on exclut les bornes uniquement voiture. Une charging_station
+  // n'est rangée dans « Prises » que si elle sert aux vélos (VAE).
+  if (tags.amenity === 'charging_station') {
+    return tags.bicycle === 'yes' || tags.bicycle === 'designated'
+      ? getCategory('power')
+      : null
+  }
   for (const cat of CATEGORIES) {
     for (const t of cat.osm) {
       if (tags[t.key] === t.value) return cat
