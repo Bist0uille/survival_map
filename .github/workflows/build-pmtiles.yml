@@ -1,25 +1,22 @@
-# À copier dans .github/workflows/build-pmtiles.yml via l'interface web GitHub
-# (le token CLI n'a pas le scope `workflow` pour le pousser).
-# Construit public/pois.pmtiles (tous les POI de France) puis le commit.
-name: Construire PMTiles France
+# Construit pois.pmtiles + routes.pmtiles (FR + ES + IT) et les envoie sur
+# Cloudflare R2 (trop gros pour le repo à 3 pays → > 100 Mo).
+name: Construire PMTiles POI + Itinéraires (R2)
 
 on:
   schedule:
-    # Le 1er de chaque mois à 03:00 UTC (fichier volumineux → mensuel)
+    # Le 1er de chaque mois à 03:00 UTC (fichiers volumineux → mensuel)
     - cron: '0 3 1 * *'
   workflow_dispatch: {}
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # histoire complète pour git pull --rebase au commit
 
       - uses: actions/setup-node@v4
         with:
@@ -33,32 +30,31 @@ jobs:
           make -C /tmp/tippecanoe -j"$(nproc)"
           sudo make -C /tmp/tippecanoe install
 
-      - name: Télécharger l'extrait France (Geofabrik, repli miroir OSM-France)
-        run: |
-          set -e
-          for url in \
-            https://download.geofabrik.de/europe/france-latest.osm.pbf \
-            https://download.openstreetmap.fr/extracts/europe/france.osm.pbf ; do
-            echo "Essai : $url"
-            # --read-timeout : si le débit s'effondre (pas d'octet pendant 60s),
-            # on abandonne ce miroir et on tente le suivant.
-            if wget --tries=2 --read-timeout=60 --waitretry=20 -O /tmp/france.osm.pbf "$url"; then break; fi
-          done
-          test -s /tmp/france.osm.pbf
+      - name: Construire les PMTiles (télécharge FR+ES+IT, filtre, build)
+        run: bash scripts/process-osm.sh "france spain italy"
 
-      - name: Traiter l'OSM et construire le PMTiles
-        run: bash scripts/process-osm.sh /tmp/france.osm.pbf
-
-      - name: Commit si changé
+      - name: Envoyer sur Cloudflare R2 (si secrets présents)
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+          AWS_REQUEST_CHECKSUM_CALCULATION: when_required
+          AWS_RESPONSE_CHECKSUM_VALIDATION: when_required
         run: |
-          git config user.name "Bist0uille"
-          git config user.email "111542828+Bist0uille@users.noreply.github.com"
-          git add public/pois.pmtiles public/routes.pmtiles
-          # --cached détecte aussi les fichiers nouveaux (routes.pmtiles)
-          if git diff --cached --quiet; then
-            echo "PMTiles inchangés."
-          else
-            git commit -m "chore(data): build PMTiles France (POI + itinéraires)"
-            git pull --rebase origin main   # évite l'échec si main a avancé
-            git push
+          if [ -z "$R2_ACCESS_KEY_ID" ]; then
+            echo "Secrets R2 absents → upload sauté (mesure de taille seule)."
+            exit 0
           fi
+          curl -s "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o /tmp/awscliv2.zip
+          unzip -q /tmp/awscliv2.zip -d /tmp
+          sudo /tmp/aws/install --update
+          export AWS_ACCESS_KEY_ID="$R2_ACCESS_KEY_ID"
+          export AWS_SECRET_ACCESS_KEY="$R2_SECRET_ACCESS_KEY"
+          export AWS_DEFAULT_REGION=auto
+          for f in pois routes; do
+            aws s3 cp "/tmp/$f.pmtiles" "s3://$R2_BUCKET/$f.pmtiles" \
+              --endpoint-url "https://$R2_ACCOUNT_ID.r2.cloudflarestorage.com" \
+              --content-type application/octet-stream
+            echo "✅ $f.pmtiles envoyé sur R2."
+          done
