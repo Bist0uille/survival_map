@@ -1,14 +1,15 @@
-import { Play, Pause, Square, Save, Trash2 } from 'lucide-react'
+import { Play, Pause, Square, Save, Trash2, X } from 'lucide-react'
 import type { TrackRecorder } from '../hooks/useTrackRecorder'
 
 interface TrackPanelProps {
   rec: TrackRecorder
   onSave: () => void
   onDiscard: () => void
+  onClose: () => void
 }
 
 /** Panneau de contrôle du suivi de trace en direct (start/pause/stop/save). */
-export function TrackPanel({ rec, onSave, onDiscard }: TrackPanelProps) {
+export function TrackPanel({ rec, onSave, onDiscard, onClose }: TrackPanelProps) {
   const { status, stats, error } = rec
   const recording = status === 'recording'
   const paused = status === 'paused'
@@ -22,6 +23,15 @@ export function TrackPanel({ rec, onSave, onDiscard }: TrackPanelProps) {
 
   return (
     <div className="absolute bottom-6 left-1/2 z-30 w-[min(94vw,26rem)] -translate-x-1/2 rounded-2xl bg-white/95 p-3 shadow-xl">
+      {status === 'idle' && !hasTrack && (
+        <button
+          onClick={onClose}
+          aria-label="Fermer"
+          className="absolute right-2 top-2 text-slate-400 hover:text-slate-600"
+        >
+          <X size={20} />
+        </button>
+      )}
       <div className="mb-2 grid grid-cols-3 gap-2 text-center">
         <Stat label="Distance" value={`${stats.distanceKm} km`} />
         <Stat label="D+" value={`${stats.ascent} m`} />
