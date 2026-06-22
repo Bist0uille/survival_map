@@ -294,7 +294,12 @@ export function MapView({
     })
     map.current = m
 
-    m.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right')
+    // Boussole : un clic réoriente au nord (bearing 0) et remet la carte à plat
+    // (pitch 0) grâce à visualizePitch.
+    m.addControl(
+      new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }),
+      'bottom-right',
+    )
     m.addControl(
       new maplibregl.GeolocateControl({
         positionOptions: { enableHighAccuracy: true },
