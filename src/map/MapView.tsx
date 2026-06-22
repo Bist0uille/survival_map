@@ -27,14 +27,19 @@ maplibregl.addProtocol('pmtiles', pmtilesProtocol.tile)
 
 const POI_SOURCE = 'pois'
 const POI_LAYER = 'pois-icons'
-const PMTILES_PATH = '/pois.pmtiles'
+// POI FR+ES+IT hébergés sur R2 (>100 Mo → hors repo), comme paths/protected.
+const PMTILES_PATH =
+  import.meta.env.VITE_POIS_URL ||
+  'https://pub-1cff175e1c4641718e16b36f04ea91b1.r2.dev/pois.pmtiles'
 const SOURCE_LAYER = 'pois' // nom de couche produit par tippecanoe (-l pois)
 
 const ROUTES_SOURCE = 'routes'
 const ROUTES_LAYER = 'routes-line'
 const ROUTES_HL = 'routes-highlight'
 const ROUTES_HIT = 'routes-hit' // ligne transparente large = cible de clic
-const ROUTES_PATH = '/routes.pmtiles'
+const ROUTES_PATH =
+  import.meta.env.VITE_ROUTES_URL ||
+  'https://pub-1cff175e1c4641718e16b36f04ea91b1.r2.dev/routes.pmtiles'
 const ROUTES_SL = 'routes' // couche tippecanoe (-l routes)
 
 const TREKS_SOURCE = 'treks'
@@ -718,7 +723,7 @@ export function MapView({
           filter: filterExpr([...activeRef.current]),
         })
         // Base complète indisponible : on est retombé sur le repli local (Aude).
-        toast('Points limités à l’Aude (base complète indisponible)', 'info')
+        toast('Points limités à l’Aude (base FR/ES/IT indisponible ou hors-ligne)', 'info')
       }
       ready.current = true
 

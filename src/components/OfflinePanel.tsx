@@ -17,8 +17,13 @@ interface OfflinePanelProps {
   onClose: () => void
 }
 
-const POIS_URL = window.location.origin + '/pois.pmtiles'
-const ROUTES_URL = window.location.origin + '/routes.pmtiles'
+// POI et itinéraires (FR+ES+IT) hébergés sur R2 ; treks restent locaux.
+const POIS_URL =
+  import.meta.env.VITE_POIS_URL ||
+  'https://pub-1cff175e1c4641718e16b36f04ea91b1.r2.dev/pois.pmtiles'
+const ROUTES_URL =
+  import.meta.env.VITE_ROUTES_URL ||
+  'https://pub-1cff175e1c4641718e16b36f04ea91b1.r2.dev/routes.pmtiles'
 const TREKS_URL = window.location.origin + '/treks.pmtiles'
 
 export function OfflinePanel({ bounds, zoom, onClose }: OfflinePanelProps) {

@@ -18,7 +18,8 @@ export async function detectPmtiles(
   path: string,
   key: string,
 ): Promise<{ use: boolean; url: string; blob: Blob | null }> {
-  const url = window.location.origin + path
+  // `path` peut être relatif (même origine) ou une URL absolue (ex. R2).
+  const url = /^https?:\/\//.test(path) ? path : window.location.origin + path
   const blob = await getOfflineBlob(key)
   let use = false
   if (blob) {
