@@ -302,6 +302,8 @@ export function MapView({
       }),
       'bottom-right',
     )
+    // Échelle : repère rapide des distances selon le niveau de zoom.
+    m.addControl(new maplibregl.ScaleControl({ maxWidth: 120, unit: 'metric' }), 'bottom-right')
 
     // Compte les icônes réellement affichées des catégories actives, pour
     // coller à ce que l'utilisateur voit. queryRenderedFeatures respecte le
