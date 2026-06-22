@@ -82,6 +82,8 @@ interface MapViewProps {
   showPaths: boolean
   showProtected: boolean
   selectedRouteId: string | null
+  satellite: boolean
+  view3D: boolean
   onRouteSelect: (props: Record<string, unknown> | null) => void
   createMode: boolean
   waypoints: Array<[number, number]>
@@ -214,6 +216,8 @@ export function MapView({
   showPaths,
   showProtected,
   selectedRouteId,
+  satellite,
+  view3D,
   onRouteSelect,
   createMode,
   waypoints,
@@ -950,6 +954,28 @@ export function MapView({
     if (routesReady.current) m.setFilter(ROUTES_HL, hlFilter(selectedRouteId))
     if (treksReady.current) m.setFilter(TREKS_HL, hlFilter(selectedRouteId))
   }, [selectedRouteId])
+
+  // Vue satellite : bascule la visibilité de la couche raster Esri.
+  useEffect(() => {
+    const m = map.current
+    if (!m || !ready.current) return
+    m.setLayoutProperty('satellite', 'visibility', satellite ? 'visible' : 'none')
+  }, [satellite])
+
+  // Mode 3D : terrain (relief) + caméra inclinée. Désactivé → on remet à plat
+  // puis on retire le terrain. Le bearing est laissé tel quel (géré par la
+  // boussole).
+  useEffect(() => {
+    const m = map.current
+    if (!m || !ready.current) return
+    if (view3D) {
+      m.setTerrain({ source: 'terrain-dem', exaggeration: 1.3 })
+      m.easeTo({ pitch: 60, duration: 800 })
+    } else {
+      m.easeTo({ pitch: 0, duration: 600 })
+      m.setTerrain(null)
+    }
+  }, [view3D])
 
   // Points perso : marqueurs DOM (peu nombreux).
   useEffect(() => {
