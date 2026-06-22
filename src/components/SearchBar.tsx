@@ -14,7 +14,7 @@ interface SearchBarProps {
   onSelect: (place: Place) => void
 }
 
-/** Recherche de lieu via Nominatim (géocodage OSM), limitée à la France. */
+/** Recherche de lieu via Nominatim (géocodage OSM), France + Espagne + Italie. */
 export function SearchBar({ onSelect }: SearchBarProps) {
   const [q, setQ] = useState('')
   const [results, setResults] = useState<Place[]>([])
@@ -42,7 +42,7 @@ export function SearchBar({ onSelect }: SearchBarProps) {
       setLoading(true)
       try {
         const url =
-          'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&countrycodes=fr&q=' +
+          'https://nominatim.openstreetmap.org/search?format=jsonv2&limit=6&countrycodes=fr,es,it&q=' +
           encodeURIComponent(query)
         const res = await fetch(url, {
           signal: c.signal,
