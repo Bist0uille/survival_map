@@ -15,6 +15,7 @@ const INTERESTING_TAGS = [
   'opening_hours',
   'access',
   'fee',
+  'drinking_water',
   'description',
   'operator',
 ]

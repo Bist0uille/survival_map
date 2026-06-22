@@ -1,7 +1,8 @@
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import type { Map as MLMap } from 'maplibre-gl'
-import { CATEGORIES, CUSTOM_CATEGORY } from '../data/categories'
+import type { LucideIcon } from 'lucide-react'
+import { CATEGORIES, CUSTOM_CATEGORY, SUBTYPES, getCategory } from '../data/categories'
 
 const SIZE = 44 // taille logique de la pastille (px)
 const DPR = 2 // rendu 2x pour rester net sur écrans HiDPI
@@ -29,14 +30,22 @@ function loadImage(url: string): Promise<HTMLImageElement> {
 }
 
 /**
- * Enregistre dans la carte une image par catégorie (pastille colorée +
- * icône Lucide blanche), utilisée par la couche symbole des POI.
+ * Enregistre dans la carte une image par SOUS-TYPE (glyphe fin : douche, WC,
+ * croissant, caddie…) et par CATÉGORIE (repli pour les anciennes données /
+ * marqueurs perso). La couche POI utilise `iconId` avec repli sur `categoryId`.
+ * Pastille = couleur de la catégorie, glyphe = icône du sous-type.
  */
 export async function addCategoryIcons(map: MLMap): Promise<void> {
-  for (const cat of [...CATEGORIES, CUSTOM_CATEGORY]) {
-    if (map.hasImage(cat.id)) continue
+  // Sous-types d'abord (glyphe précis), puis catégories en repli : si un id est
+  // partagé (ex. « water »), c'est le sous-type qui prime.
+  const entries: Array<{ id: string; color: string; icon: LucideIcon }> = [
+    ...SUBTYPES.map((s) => ({ id: s.iconId, color: getCategory(s.categoryId).color, icon: s.icon })),
+    ...[...CATEGORIES, CUSTOM_CATEGORY].map((c) => ({ id: c.id, color: c.color, icon: c.icon })),
+  ]
+  for (const e of entries) {
+    if (map.hasImage(e.id)) continue
     const iconMarkup = renderToStaticMarkup(
-      createElement(cat.icon, {
+      createElement(e.icon, {
         color: '#ffffff',
         strokeWidth: 2.5,
         width: 22,
@@ -45,7 +54,7 @@ export async function addCategoryIcons(map: MLMap): Promise<void> {
     )
     const url =
       'data:image/svg+xml;charset=utf-8,' +
-      encodeURIComponent(buildSvg(cat.color, iconMarkup))
+      encodeURIComponent(buildSvg(e.color, iconMarkup))
     const img = await loadImage(url)
     const canvas = document.createElement('canvas')
     canvas.width = SIZE * DPR
@@ -54,6 +63,6 @@ export async function addCategoryIcons(map: MLMap): Promise<void> {
     if (!ctx) continue
     ctx.drawImage(img, 0, 0, SIZE * DPR, SIZE * DPR)
     const data = ctx.getImageData(0, 0, SIZE * DPR, SIZE * DPR)
-    map.addImage(cat.id, data, { pixelRatio: DPR })
+    map.addImage(e.id, data, { pixelRatio: DPR })
   }
 }

@@ -35,10 +35,10 @@ describe('<FilterBar>', () => {
 
   it('catégorie inactive = icône seule, sans libellé visible', () => {
     setup() // seul « water » est actif
-    // « Toilettes » est inactif → pas de texte visible (juste l'aria-label).
-    expect(screen.queryByText('Toilettes')).not.toBeInTheDocument()
+    // « Sanitaires » est inactif → pas de texte visible (juste l'aria-label).
+    expect(screen.queryByText('Sanitaires')).not.toBeInTheDocument()
     expect(
-      screen.getByRole('button', { name: 'Toilettes' }),
+      screen.getByRole('button', { name: 'Sanitaires' }),
     ).toBeInTheDocument()
   })
 
@@ -50,7 +50,7 @@ describe('<FilterBar>', () => {
 
   it('cliquer une catégorie bascule le filtre', async () => {
     const props = setup()
-    await userEvent.click(screen.getByRole('button', { name: 'Toilettes' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Sanitaires' }))
     expect(props.onToggle).toHaveBeenCalledWith('toilets')
   })
 
