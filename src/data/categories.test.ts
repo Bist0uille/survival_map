@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { categoryForTags, getCategory, CUSTOM_CATEGORY } from './categories'
+import { categoryForTags, subtypeForTags, getCategory, CUSTOM_CATEGORY } from './categories'
 
 describe('categoryForTags', () => {
   it('classe une fontaine en « eau »', () => {
@@ -34,6 +34,14 @@ describe('categoryForTags', () => {
     expect(categoryForTags({ tourism: 'hostel' })?.id).toBe('hostel')
   })
 
+  it('regroupe sanitaires et ravitaillement dans une même catégorie', () => {
+    expect(categoryForTags({ amenity: 'shower' })?.id).toBe('toilets')
+    expect(categoryForTags({ shop: 'supermarket' })?.id).toBe('bakery')
+    expect(categoryForTags({ amenity: 'restaurant' })?.id).toBe('bakery')
+    expect(categoryForTags({ tourism: 'camp_site' })?.id).toBe('refuge')
+    expect(categoryForTags({ natural: 'spring' })?.id).toBe('water')
+  })
+
   it('renvoie null pour des tags inconnus', () => {
     expect(categoryForTags({ amenity: 'bank' })).toBeNull()
     expect(categoryForTags({})).toBeNull()
@@ -41,6 +49,22 @@ describe('categoryForTags', () => {
 
   it('ignore une valeur de tag qui ne correspond pas', () => {
     expect(categoryForTags({ natural: 'tree' })).toBeNull()
+  })
+})
+
+describe('subtypeForTags', () => {
+  it('donne un iconId distinct par sous-type dans une même catégorie', () => {
+    expect(subtypeForTags({ shop: 'bakery' })?.iconId).toBe('bakery')
+    expect(subtypeForTags({ shop: 'supermarket' })?.iconId).toBe('grocery')
+    expect(subtypeForTags({ amenity: 'toilets' })?.iconId).toBe('toilets')
+    expect(subtypeForTags({ amenity: 'shower' })?.iconId).toBe('shower')
+  })
+
+  it('écarte les abris de bus (amenity=shelter + public_transport)', () => {
+    expect(subtypeForTags({ amenity: 'shelter' })?.iconId).toBe('shelter')
+    expect(
+      subtypeForTags({ amenity: 'shelter', shelter_type: 'public_transport' }),
+    ).toBeNull()
   })
 })
 

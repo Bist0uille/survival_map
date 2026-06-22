@@ -104,7 +104,9 @@ interface MapViewProps {
 }
 
 const ICON_LAYOUT = {
-  'icon-image': ['get', 'categoryId'],
+  // Icône par sous-type (iconId) ; repli sur categoryId pour les anciennes
+  // données pmtiles (avant l'ajout des sous-types).
+  'icon-image': ['coalesce', ['get', 'iconId'], ['get', 'categoryId']],
   'icon-size': ['interpolate', ['linear'], ['zoom'], 6, 0.22, 9, 0.38, 13, 0.6, 18, 0.9],
   'icon-allow-overlap': true,
   'icon-ignore-placement': true,

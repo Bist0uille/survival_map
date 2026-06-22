@@ -41,16 +41,16 @@ for c in $COUNTRIES; do
   test -s "$raw"
 
   echo "→ [$c] filtrage POI"
-  # Prises : charging_station (filtré ensuite sur bicycle=yes pour exclure les
-  # bornes voiture), device_charging_station (téléphone), power_supply, et
-  # power=outlet (prises publiques).
+  # Le tri fin (catégorie + icône, exclusions voiture/abri de bus) se fait dans
+  # osm-to-pmtiles-input.mjs ; ici on ratisse large par tag.
   osmium tags-filter "$raw" \
-    nwr/amenity=drinking_water,fountain,toilets,charging_station,device_charging_station,power_supply,public_bookcase \
+    nwr/amenity=drinking_water,fountain,toilets,shower,charging_station,device_charging_station,power_supply,public_bookcase,water_point,cafe,restaurant,fast_food,pharmacy,shelter \
     nwr/power=outlet \
+    nwr/man_made=water_tap \
     nwr/leisure=picnic_table \
-    nwr/tourism=picnic_site,viewpoint,alpine_hut,wilderness_hut,hostel \
-    nwr/shop=bakery \
-    nwr/natural=peak,rock,stone \
+    nwr/tourism=picnic_site,viewpoint,alpine_hut,wilderness_hut,hostel,camp_site \
+    nwr/shop=bakery,supermarket,convenience,grocery,laundry \
+    nwr/natural=peak,rock,stone,spring \
     nwr/waterway=waterfall \
     nwr/highway=rest_area \
     -o "/tmp/${c}.poi.pbf" --overwrite
