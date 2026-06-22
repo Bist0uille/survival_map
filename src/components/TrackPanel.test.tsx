@@ -21,16 +21,26 @@ function makeRec(over: Partial<TrackRecorder> = {}): TrackRecorder {
 }
 
 describe('<TrackPanel>', () => {
-  it('affiche le bouton Démarrer à l’état initial', () => {
-    render(<TrackPanel rec={makeRec()} onSave={vi.fn()} onDiscard={vi.fn()} />)
+  it('affiche le bouton Démarrer et la croix de fermeture à l’état initial', () => {
+    render(
+      <TrackPanel rec={makeRec()} onSave={vi.fn()} onDiscard={vi.fn()} onClose={vi.fn()} />,
+    )
     expect(screen.getByText('Démarrer')).toBeInTheDocument()
+    expect(screen.getByLabelText('Fermer')).toBeInTheDocument()
   })
 
   it('appelle start() au clic sur Démarrer', async () => {
     const rec = makeRec()
-    render(<TrackPanel rec={rec} onSave={vi.fn()} onDiscard={vi.fn()} />)
+    render(<TrackPanel rec={rec} onSave={vi.fn()} onDiscard={vi.fn()} onClose={vi.fn()} />)
     await userEvent.click(screen.getByText('Démarrer'))
     expect(rec.start).toHaveBeenCalledOnce()
+  })
+
+  it('appelle onClose() au clic sur la croix de fermeture', async () => {
+    const onClose = vi.fn()
+    render(<TrackPanel rec={makeRec()} onSave={vi.fn()} onDiscard={vi.fn()} onClose={onClose} />)
+    await userEvent.click(screen.getByLabelText('Fermer'))
+    expect(onClose).toHaveBeenCalledOnce()
   })
 
   it('montre les stats live en cours d’enregistrement', () => {
@@ -38,7 +48,7 @@ describe('<TrackPanel>', () => {
       status: 'recording',
       stats: { distanceKm: 3.4, ascent: 120, durationMin: 65, points: 50 },
     })
-    render(<TrackPanel rec={rec} onSave={vi.fn()} onDiscard={vi.fn()} />)
+    render(<TrackPanel rec={rec} onSave={vi.fn()} onDiscard={vi.fn()} onClose={vi.fn()} />)
     expect(screen.getByText('3.4 km')).toBeInTheDocument()
     expect(screen.getByText('120 m')).toBeInTheDocument()
     expect(screen.getByText('1 h 05')).toBeInTheDocument()
@@ -51,7 +61,7 @@ describe('<TrackPanel>', () => {
       status: 'idle',
       stats: { distanceKm: 5, ascent: 200, durationMin: 90, points: 100 },
     })
-    render(<TrackPanel rec={rec} onSave={onSave} onDiscard={vi.fn()} />)
+    render(<TrackPanel rec={rec} onSave={onSave} onDiscard={vi.fn()} onClose={vi.fn()} />)
     const save = screen.getByText('Enregistrer')
     expect(save).toBeInTheDocument()
     await userEvent.click(save)

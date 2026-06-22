@@ -389,19 +389,12 @@ function App() {
       )}
 
       {trackMode && (
-        <>
-          {/* Bouton fermer (visible tant qu'aucune trace n'est en attente) */}
-          {rec.status === 'idle' && rec.stats.points < 2 && (
-            <button
-              onClick={() => setTrackMode(false)}
-              className="absolute bottom-[120px] left-1/2 z-30 -translate-x-1/2 rounded-full bg-slate-700 px-3 py-1 text-xs text-white shadow"
-              aria-label="Fermer le suivi"
-            >
-              Fermer
-            </button>
-          )}
-          <TrackPanel rec={rec} onSave={saveTrack} onDiscard={discardTrack} />
-        </>
+        <TrackPanel
+          rec={rec}
+          onSave={saveTrack}
+          onDiscard={discardTrack}
+          onClose={() => setTrackMode(false)}
+        />
       )}
 
       {pending && (
