@@ -26,14 +26,14 @@ import { TrackPanel } from './components/TrackPanel'
 import type { GeoBounds } from './data/offline'
 import type { PersonalPoint, PersonalRoute, Place } from './types'
 
-const DEFAULT_ACTIVE = ['water']
-
 function App() {
-  const [active, setActive] = useState<Set<string>>(new Set(DEFAULT_ACTIVE))
+  // Aucune catégorie active au démarrage : l'utilisateur choisit ses filtres.
+  const [active, setActive] = useState<Set<string>>(new Set<string>())
   const [personalPoints, setPersonalPoints] = useState<PersonalPoint[]>([])
   const [personalRoutes, setPersonalRoutes] = useState<PersonalRoute[]>([])
   const [addMode, setAddMode] = useState(false)
-  const [count, setCount] = useState(0)
+  // Compteur d'icônes affichées (alimente MapView.onCount) ; plus affiché.
+  const [, setCount] = useState(0)
   const [flyTo, setFlyTo] = useState<Place | null>(null)
   const [showOffline, setShowOffline] = useState(false)
   // Couche unique « Sentiers & chemins » : pilote à la fois les sentiers
@@ -320,9 +320,6 @@ function App() {
         onToggleTrails={toggleTrails}
         showProtected={showProtected}
         onToggleProtected={() => setShowProtected((v) => !v)}
-        resultCount={count + personalPoints.length}
-        loading={false}
-        error={null}
       />
 
       {/* Vue satellite + mode 3D (haut droite). En ligne uniquement. */}
