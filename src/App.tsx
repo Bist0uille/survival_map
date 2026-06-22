@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { Plus, X, Download, Spline, Footprints, Tent } from 'lucide-react'
+import { Plus, X, Download, Spline, Footprints, Tent, Satellite, Mountain } from 'lucide-react'
 import { MapView } from './map/MapView'
 import { FilterBar } from './components/FilterBar'
 import { SearchBar } from './components/SearchBar'
@@ -41,6 +41,9 @@ function App() {
   // cliquables sans bouton dédié).
   const [showTrails, setShowTrails] = useState(false)
   const [showProtected, setShowProtected] = useState(false)
+  // Vue satellite et mode 3D (relief). En ligne uniquement.
+  const [satellite, setSatellite] = useState(false)
+  const [view3D, setView3D] = useState(false)
   const [selectedRoute, setSelectedRoute] = useState<RouteProps | null>(null)
   const [selectedPR, setSelectedPR] = useState<PersonalRoute | null>(null)
   const [pending, setPending] = useState<{ lat: number; lon: number } | null>(
@@ -68,6 +71,15 @@ function App() {
     getPersonalPoints().then(setPersonalPoints)
     getPersonalRoutes().then(setPersonalRoutes)
   }, [])
+
+  // Satellite et 3D nécessitent le réseau : hors-ligne, on repli sur la topo
+  // à plat.
+  useEffect(() => {
+    if (!online) {
+      setSatellite(false)
+      setView3D(false)
+    }
+  }, [online])
 
   // Recalcule le tracé (BRouter) quand les étapes changent (anti-rebond).
   useEffect(() => {
@@ -270,6 +282,8 @@ function App() {
         showPaths={showTrails}
         showProtected={showProtected}
         selectedRouteId={selectedRoute?.id ?? null}
+        satellite={satellite}
+        view3D={view3D}
         onRouteSelect={handleRouteSelect}
         createMode={createMode}
         waypoints={waypoints}
@@ -310,6 +324,30 @@ function App() {
         loading={false}
         error={null}
       />
+
+      {/* Vue satellite + mode 3D (haut droite). En ligne uniquement. */}
+      <button
+        onClick={() => setSatellite((v) => !v)}
+        disabled={!online}
+        className={`absolute right-3 top-28 z-20 flex h-11 w-11 items-center justify-center rounded-full shadow-lg transition disabled:opacity-40 ${
+          satellite ? 'bg-slate-700 text-white' : 'bg-white text-slate-700 hover:bg-slate-100'
+        }`}
+        aria-label="Vue satellite"
+        title="Vue satellite"
+      >
+        <Satellite size={20} />
+      </button>
+      <button
+        onClick={() => setView3D((v) => !v)}
+        disabled={!online}
+        className={`absolute right-3 top-40 z-20 flex h-11 w-11 items-center justify-center rounded-full shadow-lg transition disabled:opacity-40 ${
+          view3D ? 'bg-slate-700 text-white' : 'bg-white text-slate-700 hover:bg-slate-100'
+        }`}
+        aria-label="Vue 3D (relief)"
+        title="Vue 3D (relief)"
+      >
+        <Mountain size={20} />
+      </button>
 
       {!createMode && !trackMode && (
         <>
