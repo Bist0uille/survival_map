@@ -4,6 +4,8 @@
 
 Couverture **France · Espagne · Italie**. Aucun compte, aucun backend : tout est local dans ton navigateur.
 
+![Survival Map — carte topo du bassin d'Arcachon avec POI filtrés](docs/screenshot.png)
+
 ---
 
 ## ✨ Fonctionnalités
