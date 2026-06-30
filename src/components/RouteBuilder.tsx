@@ -8,6 +8,7 @@ import {
   TrendingUp,
   Clock,
   Loader2,
+  LocateFixed,
 } from 'lucide-react'
 import type { ComputedRoute } from '../data/routing'
 import { ElevationProfile } from './ElevationProfile'
@@ -24,6 +25,8 @@ interface RouteBuilderProps {
   draft: ComputedRoute | null
   computing: boolean
   error: string | null
+  locating: boolean
+  onUseMyLocation: () => void
   onUndo: () => void
   onClear: () => void
   onSave: (name: string) => void
@@ -35,6 +38,8 @@ export function RouteBuilder({
   draft,
   computing,
   error,
+  locating,
+  onUseMyLocation,
   onUndo,
   onClear,
   onSave,
@@ -60,9 +65,22 @@ export function RouteBuilder({
 
         <p className="mb-2 text-xs text-slate-500">
           {count === 0
-            ? 'Touche la carte pour poser le départ, puis les étapes — le tracé suit les chemins.'
+            ? 'Touche la carte pour poser le départ, ou pars de ta position — puis ajoute les étapes.'
             : `${count} point(s) · le tracé suit les sentiers`}
         </p>
+
+        <button
+          onClick={onUseMyLocation}
+          disabled={locating}
+          className="mb-2 flex w-full items-center justify-center gap-1.5 rounded-lg border border-green-700 py-2 text-xs font-medium text-green-700 hover:bg-green-50 disabled:opacity-50"
+        >
+          {locating ? (
+            <Loader2 size={14} className="animate-spin" />
+          ) : (
+            <LocateFixed size={14} />
+          )}
+          {count === 0 ? 'Partir de ma position' : 'Ajouter ma position'}
+        </button>
 
         <div className="mb-2 flex items-center gap-3 text-sm">
           {computing ? (

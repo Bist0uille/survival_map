@@ -55,6 +55,7 @@ function App() {
   const [draft, setDraft] = useState<ComputedRoute | null>(null)
   const [computing, setComputing] = useState(false)
   const [routeError, setRouteError] = useState<string | null>(null)
+  const [locating, setLocating] = useState(false)
   const [trackMode, setTrackMode] = useState(false)
   const [bivouac, setBivouac] = useState<{ lat: number; lon: number } | null>(
     null,
@@ -180,6 +181,32 @@ function App() {
   const addWaypoint = useCallback((lat: number, lon: number) => {
     setWaypoints((w) => [...w, [lon, lat]])
   }, [])
+
+  // Ajoute la position GPS actuelle comme étape de l'itinéraire (départ si
+  // c'est le premier point, sinon une étape supplémentaire).
+  const useMyLocation = useCallback(() => {
+    if (!('geolocation' in navigator)) {
+      setRouteError('Géolocalisation non supportée par cet appareil')
+      return
+    }
+    setLocating(true)
+    setRouteError(null)
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        addWaypoint(pos.coords.latitude, pos.coords.longitude)
+        setLocating(false)
+      },
+      (err) => {
+        setRouteError(
+          err.code === err.PERMISSION_DENIED
+            ? "Localisation refusée — autorise l'accès à ta position"
+            : 'Position introuvable, réessaie'
+        )
+        setLocating(false)
+      },
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 },
+    )
+  }, [addWaypoint])
 
   const saveRoute = useCallback(
     async (name: string) => {
@@ -416,6 +443,8 @@ function App() {
           draft={draft}
           computing={computing}
           error={routeError}
+          locating={locating}
+          onUseMyLocation={useMyLocation}
           onUndo={() => setWaypoints((w) => w.slice(0, -1))}
           onClear={() => setWaypoints([])}
           onSave={saveRoute}
