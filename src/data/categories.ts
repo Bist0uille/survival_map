@@ -24,12 +24,36 @@ import {
 } from 'lucide-react'
 import type { OsmTag } from '../types'
 
+/**
+ * Besoin = regroupement des catégories dans la barre de filtres, par usage
+ * réel (« Boire », « Dormir »…) plutôt que par vocabulaire OSM.
+ */
+export type NeedId = 'drink' | 'eat' | 'sleep' | 'wash' | 'care' | 'charge' | 'see' | 'read'
+
+export interface NeedDef {
+  id: NeedId
+  label: string
+}
+
+/** Ordre d'affichage dans la barre : les besoins vitaux d'abord. */
+export const NEEDS: NeedDef[] = [
+  { id: 'drink', label: 'Boire' },
+  { id: 'eat', label: 'Manger' },
+  { id: 'sleep', label: 'Dormir' },
+  { id: 'wash', label: 'Se laver' },
+  { id: 'care', label: 'Se soigner' },
+  { id: 'charge', label: 'Recharger' },
+  { id: 'see', label: 'Voir' },
+  { id: 'read', label: 'Lire' },
+]
+
 /** Catégorie = unité de FILTRE (un bouton de la barre) + couleur. */
 export interface CategoryDef {
   id: string
   label: string
   color: string
   icon: LucideIcon // icône représentative : chip de filtre + marqueur perso
+  need?: NeedId // groupe dans la barre de filtres (absent = hors groupes)
 }
 
 /**
@@ -45,22 +69,27 @@ export interface SubtypeDef {
 }
 
 export const CATEGORIES: CategoryDef[] = [
-  { id: 'water', label: 'Eau', color: '#2563eb', icon: Droplet },
-  { id: 'toilets', label: 'Sanitaires', color: '#7c3aed', icon: Toilet },
-  { id: 'power', label: 'Prises', color: '#dc2626', icon: Plug },
-  { id: 'picnic', label: 'Tables', color: '#c2410c', icon: Utensils },
-  { id: 'books', label: 'Boîte à livres', color: '#0891b2', icon: BookOpen },
-  { id: 'bakery', label: 'Ravitaillement', color: '#d97706', icon: ShoppingCart },
-  { id: 'peak', label: 'Sommet', color: '#78716c', icon: Mountain },
-  { id: 'waterfall', label: 'Cascade', color: '#0d9488', icon: Waves },
-  { id: 'viewpoint', label: 'Point de vue', color: '#ca8a04', icon: Eye },
-  { id: 'rock', label: 'Rocher remarquable', color: '#57534e', icon: Gem },
-  { id: 'refuge', label: 'Couchage & abris', color: '#16a34a', icon: Home },
-  { id: 'rest_area', label: 'Aire de repos', color: '#65a30d', icon: TreePine },
-  { id: 'hostel', label: 'Auberge de jeunesse', color: '#4f46e5', icon: BedDouble },
-  { id: 'pharmacy', label: 'Pharmacie', color: '#e11d48', icon: Cross },
-  { id: 'laundry', label: 'Laverie', color: '#0284c7', icon: WashingMachine },
+  { id: 'water', label: 'Eau', color: '#2563eb', icon: Droplet, need: 'drink' },
+  { id: 'toilets', label: 'Sanitaires', color: '#7c3aed', icon: Toilet, need: 'wash' },
+  { id: 'power', label: 'Prises', color: '#dc2626', icon: Plug, need: 'charge' },
+  { id: 'picnic', label: 'Tables', color: '#c2410c', icon: Utensils, need: 'eat' },
+  { id: 'books', label: 'Boîte à livres', color: '#0891b2', icon: BookOpen, need: 'read' },
+  { id: 'bakery', label: 'Ravitaillement', color: '#d97706', icon: ShoppingCart, need: 'eat' },
+  { id: 'peak', label: 'Sommet', color: '#78716c', icon: Mountain, need: 'see' },
+  { id: 'waterfall', label: 'Cascade', color: '#0d9488', icon: Waves, need: 'see' },
+  { id: 'viewpoint', label: 'Point de vue', color: '#ca8a04', icon: Eye, need: 'see' },
+  { id: 'rock', label: 'Rocher remarquable', color: '#57534e', icon: Gem, need: 'see' },
+  { id: 'refuge', label: 'Couchage & abris', color: '#16a34a', icon: Home, need: 'sleep' },
+  { id: 'rest_area', label: 'Aire de repos', color: '#65a30d', icon: TreePine, need: 'sleep' },
+  { id: 'hostel', label: 'Auberge de jeunesse', color: '#4f46e5', icon: BedDouble, need: 'sleep' },
+  { id: 'pharmacy', label: 'Pharmacie', color: '#e11d48', icon: Cross, need: 'care' },
+  { id: 'laundry', label: 'Laverie', color: '#0284c7', icon: WashingMachine, need: 'wash' },
 ]
+
+/** Catégories d'un besoin, dans l'ordre de CATEGORIES. */
+export function categoriesForNeed(need: NeedId): CategoryDef[] {
+  return CATEGORIES.filter((c) => c.need === need)
+}
 
 /** Catégorie générique pour les points perso sans correspondance */
 export const CUSTOM_CATEGORY: CategoryDef = {

@@ -20,6 +20,12 @@ const INTERESTING_TAGS = [
   'operator',
 ]
 
+/** "2024-03-12" (ou ISO complet) → "12/03/2024" ; valeur brute sinon. */
+function frDate(s: string): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s)
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : s
+}
+
 /**
  * Popup d'un POI à partir des propriétés (plates) d'une feature de la
  * couche — fonctionne pour une source GeoJSON comme pour les tuiles PMTiles.
@@ -37,11 +43,18 @@ export function featurePopupHtml(
         `<div class="text-slate-500"><b>${esc(k)}</b> : ${esc(String(p[k]))}</div>`,
     )
     .join('')
+  // Fraîcheur : check_date/survey:date voyagent dans les tuiles (offline) ;
+  // sinon un placeholder que MapView remplit en async via l'API OSM (en ligne).
+  const checked = p.check_date ?? p['survey:date']
+  const fresh = checked
+    ? `<div class="text-slate-500" style="font-size:0.72rem;margin-top:4px">✓ Vérifié sur le terrain le ${esc(frDate(String(checked)))}</div>`
+    : `<div data-freshness class="text-slate-400" style="font-size:0.72rem;margin-top:4px"></div>`
   return `
     <div style="min-width:140px">
       <div style="color:${cat.color};font-weight:600">${esc(name)}</div>
       <div class="text-slate-400" style="font-size:0.72rem;margin-bottom:4px">${esc(cat.label)}</div>
       ${rows}
+      ${fresh}
     </div>`
 }
 

@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest'
-import { categoryForTags, subtypeForTags, getCategory, CUSTOM_CATEGORY } from './categories'
+import {
+  categoryForTags,
+  subtypeForTags,
+  getCategory,
+  categoriesForNeed,
+  CATEGORIES,
+  NEEDS,
+  CUSTOM_CATEGORY,
+} from './categories'
 
 describe('categoryForTags', () => {
   it('classe une fontaine en « eau »', () => {
@@ -65,6 +73,30 @@ describe('subtypeForTags', () => {
     expect(
       subtypeForTags({ amenity: 'shelter', shelter_type: 'public_transport' }),
     ).toBeNull()
+  })
+})
+
+describe('besoins (groupes de la barre de filtres)', () => {
+  it('chaque catégorie appartient à un besoin déclaré', () => {
+    const needIds = new Set(NEEDS.map((n) => n.id))
+    for (const c of CATEGORIES) {
+      expect(c.need, `catégorie ${c.id} sans besoin`).toBeDefined()
+      expect(needIds.has(c.need!)).toBe(true)
+    }
+  })
+
+  it('chaque besoin a au moins une catégorie et l’union couvre tout', () => {
+    let total = 0
+    for (const n of NEEDS) {
+      const cats = categoriesForNeed(n.id)
+      expect(cats.length, `besoin ${n.id} vide`).toBeGreaterThan(0)
+      total += cats.length
+    }
+    expect(total).toBe(CATEGORIES.length)
+  })
+
+  it('le point perso reste hors groupes', () => {
+    expect(CUSTOM_CATEGORY.need).toBeUndefined()
   })
 })
 

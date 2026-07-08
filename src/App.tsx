@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { Plus, X, Download, Spline, Footprints, Tent, Satellite, Mountain } from 'lucide-react'
-import { MapView } from './map/MapView'
+import { MapView, type NearestQuery } from './map/MapView'
 import { FilterBar } from './components/FilterBar'
+import { NearestMenu } from './components/NearestMenu'
+import { WelcomePanel } from './components/WelcomePanel'
 import { SearchBar } from './components/SearchBar'
 import { AddPointForm } from './components/AddPointForm'
 import { OfflinePanel } from './components/OfflinePanel'
@@ -21,6 +23,9 @@ import {
 } from './data/db'
 import { computeRoute, summarizeRoute, type ComputedRoute } from './data/routing'
 import { downloadGpx } from './data/gpx'
+import { getPref, WELCOME_SEEN } from './data/prefs'
+import { toast } from './data/toast'
+import { getCurrentPositionAsync } from './hooks/useGeolocation'
 import { useTrackRecorder } from './hooks/useTrackRecorder'
 import { TrackPanel } from './components/TrackPanel'
 import type { GeoBounds } from './data/offline'
@@ -62,6 +67,12 @@ function App() {
   )
   const rec = useTrackRecorder()
   const online = useOnlineStatus()
+  // Bienvenue au premier lancement (flag localStorage, lu en synchrone).
+  const [showWelcome, setShowWelcome] = useState(() => getPref(WELCOME_SEEN) !== '1')
+  // « Le plus proche » : requête passée à MapView + origine GPS (pour « Y aller »).
+  const [nearestQuery, setNearestQuery] = useState<NearestQuery | null>(null)
+  const [nearestBusy, setNearestBusy] = useState(false)
+  const nearestOrigin = useRef<[number, number] | null>(null)
 
   const viewport = useRef<{ bounds: GeoBounds; zoom: number }>({
     bounds: { west: 2.9, south: 43.1, east: 3.1, north: 43.25 },
@@ -144,6 +155,19 @@ function App() {
     })
   }, [])
 
+  // Toggle d'un groupe de besoin : tout actif → tout off, sinon tout on.
+  const toggleGroup = useCallback((ids: string[]) => {
+    setActive((prev) => {
+      const next = new Set(prev)
+      const allOn = ids.every((id) => next.has(id))
+      for (const id of ids) {
+        if (allOn) next.delete(id)
+        else next.add(id)
+      }
+      return next
+    })
+  }, [])
+
   const handleMapClick = useCallback((lat: number, lon: number) => {
     setPending({ lat, lon })
     setAddMode(false)
@@ -184,29 +208,53 @@ function App() {
 
   // Ajoute la position GPS actuelle comme étape de l'itinéraire (départ si
   // c'est le premier point, sinon une étape supplémentaire).
-  const useMyLocation = useCallback(() => {
-    if (!('geolocation' in navigator)) {
-      setRouteError('Géolocalisation non supportée par cet appareil')
-      return
-    }
+  const useMyLocation = useCallback(async () => {
     setLocating(true)
     setRouteError(null)
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        addWaypoint(pos.coords.latitude, pos.coords.longitude)
-        setLocating(false)
-      },
-      (err) => {
-        setRouteError(
-          err.code === err.PERMISSION_DENIED
-            ? "Localisation refusée — autorise l'accès à ta position"
-            : 'Position introuvable, réessaie'
-        )
-        setLocating(false)
-      },
-      { enableHighAccuracy: true, timeout: 10000, maximumAge: 30000 },
-    )
+    try {
+      const pos = await getCurrentPositionAsync()
+      addWaypoint(pos.lat, pos.lon)
+    } catch (e) {
+      setRouteError(e instanceof Error ? e.message : 'Position introuvable, réessaie')
+    } finally {
+      setLocating(false)
+    }
   }, [addWaypoint])
+
+  // --- « Le plus proche » : GPS → catégorie visible → requête vers MapView ---
+  const handleNearest = useCallback(async (categoryId: string) => {
+    setNearestBusy(true)
+    try {
+      const pos = await getCurrentPositionAsync()
+      nearestOrigin.current = [pos.lon, pos.lat]
+      // Active le filtre pour que les icônes de la catégorie soient visibles.
+      setActive((prev) => new Set(prev).add(categoryId))
+      setNearestQuery((q) => ({ categoryId, lon: pos.lon, lat: pos.lat, seq: (q?.seq ?? 0) + 1 }))
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Position introuvable, réessaie', 'error')
+      setNearestBusy(false)
+    }
+  }, [])
+
+  const handleNearestResult = useCallback((found: boolean) => {
+    setNearestBusy(false)
+    if (!found)
+      toast('Rien trouvé autour de toi — vérifie ta zone hors-ligne ou réessaie en ligne', 'info')
+  }, [])
+
+  // « Y aller » depuis la fiche du POI trouvé : itinéraire GPS → POI via le
+  // créateur d'itinéraire existant (le calcul BRouter part automatiquement).
+  const handleRouteTo = useCallback((lat: number, lon: number) => {
+    const from = nearestOrigin.current
+    if (!from) return
+    setCreateMode(true)
+    setAddMode(false)
+    setSelectedRoute(null)
+    setSelectedPR(null)
+    setDraft(null)
+    setRouteError(null)
+    setWaypoints([from, [lon, lat]])
+  }, [])
 
   const saveRoute = useCallback(
     async (name: string) => {
@@ -327,6 +375,9 @@ function App() {
         onDeletePersonal={handleDeletePersonal}
         onCount={setCount}
         onViewport={handleViewport}
+        nearestQuery={nearestQuery}
+        onNearestResult={handleNearestResult}
+        onRouteTo={handleRouteTo}
       />
 
       <div className="pointer-events-none absolute left-0 right-0 top-0 z-30 p-2">
@@ -343,6 +394,7 @@ function App() {
       <FilterBar
         active={active}
         onToggle={toggleCategory}
+        onToggleGroup={toggleGroup}
         showTrails={showTrails}
         onToggleTrails={toggleTrails}
         showProtected={showProtected}
@@ -375,6 +427,9 @@ function App() {
 
       {!createMode && !trackMode && (
         <>
+          {/* Le point vital le plus proche de ma position */}
+          <NearestMenu busy={nearestBusy} onPick={handleNearest} />
+
           {/* Infos bivouac : soleil / lune / météo */}
           <button
             onClick={openBivouac}
@@ -485,6 +540,8 @@ function App() {
           onClose={() => setShowOffline(false)}
         />
       )}
+
+      {showWelcome && <WelcomePanel onClose={() => setShowWelcome(false)} />}
 
       {showTrails && selectedRoute && (
         <RouteInfo route={selectedRoute} onClose={() => setSelectedRoute(null)} />

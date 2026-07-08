@@ -7,6 +7,7 @@ function setup(over = {}) {
   const props = {
     active: new Set<string>(['water']),
     onToggle: vi.fn(),
+    onToggleGroup: vi.fn(),
     showTrails: false,
     onToggleTrails: vi.fn(),
     showProtected: false,
@@ -18,9 +19,8 @@ function setup(over = {}) {
 }
 
 describe('<FilterBar>', () => {
-  it('expose le toggle « Sentiers & chemins » (icône) et le déclenche', async () => {
+  it('expose le toggle « Sentiers & chemins » et le déclenche', async () => {
     const props = setup()
-    // Inactif = icône seule : ciblé par son nom accessible (aria-label).
     const btn = screen.getByRole('button', { name: /Sentiers/ })
     await userEvent.click(btn)
     expect(props.onToggleTrails).toHaveBeenCalledOnce()
@@ -33,18 +33,11 @@ describe('<FilterBar>', () => {
     expect(props.onToggleProtected).toHaveBeenCalledOnce()
   })
 
-  it('catégorie inactive = icône seule, sans libellé visible', () => {
+  it('affiche le libellé de chaque catégorie, active ou non', () => {
     setup() // seul « water » est actif
-    // « Sanitaires » est inactif → pas de texte visible (juste l'aria-label).
-    expect(screen.queryByText('Sanitaires')).not.toBeInTheDocument()
-    expect(
-      screen.getByRole('button', { name: 'Sanitaires' }),
-    ).toBeInTheDocument()
-  })
-
-  it('catégorie active = libellé visible', () => {
-    setup({ active: new Set(['water']) })
-    // « Eau » est actif → son libellé est affiché.
+    // Inactif : libellé quand même visible (lisibilité de la barre).
+    expect(screen.getByText('Sanitaires')).toBeInTheDocument()
+    // Actif : visible aussi.
     expect(screen.getByText('Eau')).toBeInTheDocument()
   })
 
@@ -54,8 +47,28 @@ describe('<FilterBar>', () => {
     expect(props.onToggle).toHaveBeenCalledWith('toilets')
   })
 
-  it('toggle de couche actif affiche son libellé', () => {
-    setup({ showTrails: true })
-    expect(screen.getByText('Sentiers & chemins')).toBeInTheDocument()
+  it('groupe les catégories par besoin avec un label de groupe', () => {
+    setup()
+    expect(screen.getByRole('button', { name: 'Tout « Dormir »' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Tout « Boire »' })).toBeInTheDocument()
+  })
+
+  it('cliquer un label de besoin bascule tout le groupe', async () => {
+    const props = setup()
+    await userEvent.click(screen.getByRole('button', { name: 'Tout « Dormir »' }))
+    expect(props.onToggleGroup).toHaveBeenCalledWith(['refuge', 'rest_area', 'hostel'])
+  })
+
+  it('marque le groupe pressé quand toutes ses catégories sont actives', () => {
+    setup({ active: new Set(['water']) })
+    // « Boire » ne contient que water → groupe entièrement actif.
+    expect(screen.getByRole('button', { name: 'Tout « Boire »' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    expect(screen.getByRole('button', { name: 'Tout « Dormir »' })).toHaveAttribute(
+      'aria-pressed',
+      'false',
+    )
   })
 })

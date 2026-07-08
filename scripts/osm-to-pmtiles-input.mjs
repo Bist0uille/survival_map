@@ -30,7 +30,7 @@ const SUBTYPES = [
   { iconId: 'pharmacy', categoryId: 'pharmacy', osm: [['amenity', 'pharmacy']] },
   { iconId: 'laundry', categoryId: 'laundry', osm: [['shop', 'laundry']] },
 ]
-const KEEP_TAGS = ['ele', 'opening_hours', 'access', 'fee', 'description', 'operator', 'website', 'drinking_water']
+const KEEP_TAGS = ['ele', 'opening_hours', 'access', 'fee', 'description', 'operator', 'website', 'drinking_water', 'check_date', 'survey:date']
 
 function subtypeFor(tags) {
   // Recharge : on exclut les bornes uniquement voiture. Une charging_station

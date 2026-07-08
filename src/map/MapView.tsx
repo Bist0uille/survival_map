@@ -18,6 +18,8 @@ import {
 } from './mapHelpers'
 import { toast } from '../data/toast'
 import { featurePopupHtml, personalPopupHtml } from '../components/popupHtml'
+import { fetchOsmTimestamp, formatFreshness } from '../data/freshness'
+import { findNearestPoi } from './nearest'
 import type { GeoBounds } from '../data/offline'
 import type { PersonalPoint, PersonalRoute, Place } from '../types'
 
@@ -77,6 +79,13 @@ const DRAFT_LAYER = 'draft-route-line'
 const LIVE_SOURCE = 'live-track' // trace GPS en cours d'enregistrement
 const LIVE_LAYER = 'live-track-line'
 
+export interface NearestQuery {
+  categoryId: string
+  lon: number
+  lat: number
+  seq: number // incrémenté à chaque demande : déclenche l'effet même catégorie
+}
+
 interface MapViewProps {
   active: Set<string>
   personalPoints: PersonalPoint[]
@@ -101,6 +110,34 @@ interface MapViewProps {
   onDeletePersonal: (id: string) => void
   onCount: (n: number) => void
   onViewport: (bounds: GeoBounds, zoom: number) => void
+  nearestQuery: NearestQuery | null
+  onNearestResult: (found: boolean) => void
+  onRouteTo: (lat: number, lon: number) => void
+}
+
+/**
+ * Ouvre la fiche d'un POI et, en ligne et sans check_date dans les tuiles,
+ * complète en async la ligne de fraîcheur via l'API OSM (placeholder
+ * [data-freshness] posé par featurePopupHtml — scopé au popup, pas au document).
+ */
+function openPoiPopup(
+  m: MLMap,
+  lnglat: [number, number],
+  props: Record<string, unknown>,
+  extraHtml = '',
+): maplibregl.Popup {
+  const popup = new maplibregl.Popup({ offset: 10 })
+    .setLngLat(lnglat)
+    .setHTML(featurePopupHtml(props) + extraHtml)
+    .addTo(m)
+  if (navigator.onLine && !props.check_date && !props['survey:date']) {
+    fetchOsmTimestamp(String(props.id ?? '')).then((ts) => {
+      if (!ts || !popup.isOpen()) return
+      const el = popup.getElement()?.querySelector('[data-freshness]')
+      if (el) el.textContent = `Donnée OSM modifiée le ${formatFreshness(ts)}`
+    })
+  }
+  return popup
 }
 
 const ICON_LAYOUT = {
@@ -237,6 +274,9 @@ export function MapView({
   onDeletePersonal,
   onCount,
   onViewport,
+  nearestQuery,
+  onNearestResult,
+  onRouteTo,
 }: MapViewProps) {
   const container = useRef<HTMLDivElement>(null)
   const map = useRef<MLMap | null>(null)
@@ -275,6 +315,11 @@ export function MapView({
   const cbRouteSelect = useRef(onRouteSelect)
   const cbAddWaypoint = useRef(onAddWaypoint)
   const cbSelectPR = useRef(onSelectPersonalRoute)
+  const cbNearestResult = useRef(onNearestResult)
+  const cbRouteTo = useRef(onRouteTo)
+  // true si la source POI est en tuiles vecteur (sourceLayer requis pour
+  // querySourceFeatures) ; false en repli GeoJSON Aude.
+  const poiIsVector = useRef(false)
   const addModeRef = useRef(addMode)
   const createModeRef = useRef(createMode)
   cbClick.current = onMapClick
@@ -284,6 +329,8 @@ export function MapView({
   cbRouteSelect.current = onRouteSelect
   cbAddWaypoint.current = onAddWaypoint
   cbSelectPR.current = onSelectPersonalRoute
+  cbNearestResult.current = onNearestResult
+  cbRouteTo.current = onRouteTo
   addModeRef.current = addMode
   createModeRef.current = createMode
   activeRef.current = active
@@ -704,6 +751,7 @@ export function MapView({
       // --- POI (icônes) : au-dessus des itinéraires. Fichier local si présent
       // (détection par signature "PMTiles"), sinon réseau, sinon repli Aude.
       const poi = await detectPmtiles(PMTILES_PATH, 'pois')
+      poiIsVector.current = poi.use
       if (poi.use) {
         pmtilesProtocol.add(new PMTiles(new CachedPmtilesSource(poi.url, poi.blob)))
         m.addSource(POI_SOURCE, { type: 'vector', url: 'pmtiles://' + poi.url })
@@ -733,10 +781,7 @@ export function MapView({
         const f = e.features?.[0]
         if (!f || f.geometry.type !== 'Point') return
         const [lon, lat] = f.geometry.coordinates
-        new maplibregl.Popup({ offset: 10 })
-          .setLngLat([lon, lat])
-          .setHTML(featurePopupHtml(f.properties))
-          .addTo(m)
+        openPoiPopup(m, [lon, lat], f.properties ?? {})
       })
       m.on('mouseenter', POI_LAYER, () => {
         m.getCanvas().style.cursor = 'pointer'
@@ -776,10 +821,16 @@ export function MapView({
       }
     })
 
-    // Suppression d'un point perso depuis le bouton dans la popup
+    // Boutons dans les popups (HTML string, pas React) : délégation de clic.
     m.getContainer().addEventListener('click', (ev) => {
-      const id = (ev.target as HTMLElement).getAttribute('data-delete-id')
+      const el = ev.target as HTMLElement
+      const id = el.getAttribute('data-delete-id')
       if (id) cbDelete.current(id)
+      const rt = el.getAttribute('data-route-to')
+      if (rt) {
+        const [lon, lat] = rt.split(',').map(Number)
+        if (Number.isFinite(lon) && Number.isFinite(lat)) cbRouteTo.current(lat, lon)
+      }
     })
 
     return () => {
@@ -992,6 +1043,43 @@ export function MapView({
       }
     }
   }, [view3D])
+
+  // Recherche « le plus proche » : déclenchée par App (seq incrémenté à
+  // chaque demande). La carte saute sur la position, dézoome au besoin, puis
+  // vole vers le résultat avec sa fiche ouverte (+ distance et « Y aller »).
+  useEffect(() => {
+    const m = map.current
+    const q = nearestQuery
+    if (!m || !q || !ready.current) return
+    let cancelled = false
+    ;(async () => {
+      const res = await findNearestPoi(m, [q.lon, q.lat], q.categoryId, {
+        sourceId: POI_SOURCE,
+        sourceLayer: poiIsVector.current ? SOURCE_LAYER : undefined,
+      })
+      if (cancelled) return
+      cbNearestResult.current(!!res)
+      if (!res) return
+      m.flyTo({ center: [res.lon, res.lat], zoom: 15 })
+      const distTxt =
+        res.distanceKm < 1
+          ? `${Math.round(res.distanceKm * 1000)} m`
+          : `${res.distanceKm.toFixed(1).replace('.', ',')} km`
+      // « Y aller » = itinéraire BRouter → réseau requis.
+      const goBtn = navigator.onLine
+        ? `<button data-route-to="${res.lon},${res.lat}" style="margin-top:6px;color:#15803d;font-size:0.8rem;font-weight:600;text-decoration:underline">Y aller (itinéraire)</button>`
+        : ''
+      openPoiPopup(
+        m,
+        [res.lon, res.lat],
+        res.props,
+        `<div class="text-slate-600" style="font-size:0.75rem;margin-top:4px">À ${distTxt} à vol d'oiseau</div>${goBtn}`,
+      )
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [nearestQuery])
 
   // Points perso : marqueurs DOM (peu nombreux).
   useEffect(() => {
