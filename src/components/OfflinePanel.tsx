@@ -25,16 +25,18 @@ const ROUTES_URL =
   import.meta.env.VITE_ROUTES_URL ||
   'https://pub-1cff175e1c4641718e16b36f04ea91b1.r2.dev/routes.pmtiles'
 const TREKS_URL = window.location.origin + '/treks.pmtiles'
+const SOCIAL_URL = window.location.origin + '/social.pmtiles'
 
 export function OfflinePanel({ bounds, zoom, onClose }: OfflinePanelProps) {
   const plan = useMemo(() => planTiles(bounds, zoom), [bounds, zoom])
   const [poiCached, setPoiCached] = useState<boolean | null>(null)
   const [routesCached, setRoutesCached] = useState<boolean | null>(null)
   const [treksCached, setTreksCached] = useState<boolean | null>(null)
+  const [socialCached, setSocialCached] = useState<boolean | null>(null)
   const [phase, setPhase] = useState<'confirm' | 'downloading' | 'done'>(
     'confirm',
   )
-  const [step, setStep] = useState<'poi' | 'routes' | 'treks' | 'tiles'>('poi')
+  const [step, setStep] = useState<'poi' | 'routes' | 'treks' | 'social' | 'tiles'>('poi')
   const [bytes, setBytes] = useState({ received: 0, total: 0 })
   const [tiles, setTiles] = useState({ done: 0, total: plan.total })
 
@@ -42,6 +44,7 @@ export function OfflinePanel({ bounds, zoom, onClose }: OfflinePanelProps) {
     hasOfflineBlob('pois').then(setPoiCached)
     hasOfflineBlob('routes').then(setRoutesCached)
     hasOfflineBlob('treks').then(setTreksCached)
+    hasOfflineBlob('social').then(setSocialCached)
   }, [])
 
   async function start() {
@@ -51,7 +54,7 @@ export function OfflinePanel({ bounds, zoom, onClose }: OfflinePanelProps) {
       cached: boolean | null,
       url: string,
       key: string,
-      s: 'poi' | 'routes' | 'treks',
+      s: 'poi' | 'routes' | 'treks' | 'social',
     ) => {
       if (cached) return
       setStep(s)
@@ -67,6 +70,7 @@ export function OfflinePanel({ bounds, zoom, onClose }: OfflinePanelProps) {
     await dl(poiCached, POIS_URL, 'pois', 'poi')
     await dl(routesCached, ROUTES_URL, 'routes', 'routes')
     await dl(treksCached, TREKS_URL, 'treks', 'treks')
+    await dl(socialCached, SOCIAL_URL, 'social', 'social')
     setStep('tiles')
     await downloadTiles(plan, (done, total) => setTiles({ done, total }))
     setPhase('done')
@@ -132,7 +136,8 @@ export function OfflinePanel({ bounds, zoom, onClose }: OfflinePanelProps) {
                 disabled={
                   poiCached === null ||
                   routesCached === null ||
-                  treksCached === null
+                  treksCached === null ||
+                  socialCached === null
                 }
                 className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-700 py-2 text-sm font-medium text-white hover:bg-green-800 disabled:opacity-50"
               >
@@ -152,7 +157,9 @@ export function OfflinePanel({ bounds, zoom, onClose }: OfflinePanelProps) {
                   ? 'Sentiers balisés (France)…'
                   : step === 'treks'
                     ? 'Fiches rando (Geotrek)…'
-                    : 'Fond de carte de la zone…'}{' '}
+                    : step === 'social'
+                      ? 'Points solidaires (aide alimentaire, fontaines)…'
+                      : 'Fond de carte de la zone…'}{' '}
               Ne ferme pas l'app.
             </p>
             {step === 'tiles' ? (

@@ -64,6 +64,8 @@ npm run lint         # eslint
 
 Les points d'intérêt, sentiers, chemins et espaces protégés sont pré-construits depuis **OpenStreetMap** (et **Geotrek** pour les fiches rando) en fichiers **PMTiles**, puis hébergés sur **Cloudflare R2** (trop volumineux pour le dépôt). Le client les lit directement via leurs URLs publiques `*.r2.dev`.
 
+La couche **« solidaire »** (`public/social.pmtiles`, workflow `build-social.yml`) agrège des données ouvertes : **aide alimentaire** via [data·inclusion](https://data.inclusion.gouv.fr) (Licence Ouverte etalab-2.0) et **fontaines à boire / toilettes publiques** via l'open data de Paris, Bordeaux Métropole, Toulouse Métropole et Île-de-France Mobilités (ODbL). Les fiches refuges/points d'eau s'enrichissent au clic via l'**API [Refuges.info](https://www.refuges.info)** (CC-BY-SA, consultation en direct sans redistribution).
+
 La (re)construction des PMTiles est automatisée par les workflows GitHub Actions (`.github/workflows/build-*.yml`). Les accès R2 d'écriture sont fournis via des **secrets GitHub** (`R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_ACCOUNT_ID`) — ils ne sont jamais stockés dans le dépôt.
 
 ---
@@ -82,6 +84,9 @@ Cette app affiche des données tierces dont l'**attribution est obligatoire** :
 - Fond topo © **[OpenTopoMap](https://opentopomap.org)** — **CC-BY-SA**
 - Imagerie satellite © **Esri World Imagery** (Esri, Maxar, …)
 - Itinéraires via **[BRouter](https://brouter.de)** · météo via **[Open-Meteo](https://open-meteo.com)** · fiches **Geotrek**
+- Aide alimentaire © **[data·inclusion](https://data.inclusion.gouv.fr)** — **Licence Ouverte etalab-2.0**
+- Fontaines & toilettes © **Ville de Paris, Bordeaux Métropole, Toulouse Métropole, Île-de-France Mobilités** — **ODbL**
+- Fiches refuges © **[Refuges.info](https://www.refuges.info)** — **CC-BY-SA 2.0** (consultation API au clic)
 
 Merci de conserver ces mentions dans toute redistribution.
 

@@ -1,0 +1,64 @@
+# Construit public/social.pmtiles : aide alimentaire (data·inclusion, Licence
+# Ouverte) + fontaines et toilettes publiques (open data Paris/Bordeaux/
+# Toulouse/IDFM, ODbL). Léger : appels API + tippecanoe, pas d'OSM France.
+name: Construire PMTiles social
+
+on:
+  schedule:
+    - cron: '0 5 * * 1' # chaque lundi 05:00 UTC (data·inclusion publie en début de semaine)
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Installer tippecanoe
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y build-essential libsqlite3-dev zlib1g-dev
+          git clone --depth 1 https://github.com/felt/tippecanoe.git /tmp/tippecanoe
+          make -C /tmp/tippecanoe -j"$(nproc)"
+          sudo make -C /tmp/tippecanoe install
+
+      - name: Récupérer les points sociaux
+        run: node scripts/fetch-social.mjs > /tmp/social.geojsonseq
+
+      - name: Garde-fou volume
+        run: |
+          N=$(wc -l < /tmp/social.geojsonseq)
+          echo "$N points"
+          # Si tout a échoué (< 1000 points), on ne remplace pas le fichier existant.
+          if [ "$N" -lt 1000 ]; then echo "Trop peu de points, abandon."; exit 1; fi
+
+      - name: Construire social.pmtiles
+        run: |
+          mkdir -p public
+          tippecanoe -o public/social.pmtiles -l social \
+            -Z6 -z14 -r1 --drop-densest-as-needed --maximum-tile-bytes=2500000 --force \
+            /tmp/social.geojsonseq
+          ls -lh public/social.pmtiles
+
+      - name: Commit si changé
+        run: |
+          git config user.name "Bist0uille"
+          git config user.email "111542828+Bist0uille@users.noreply.github.com"
+          git add public/social.pmtiles
+          if git diff --cached --quiet; then
+            echo "social.pmtiles inchangé."
+          else
+            git commit -m "chore(data): build PMTiles social (aide alimentaire + fontaines/WC)"
+            git pull --rebase origin main
+            git push
+          fi

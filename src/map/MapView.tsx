@@ -19,9 +19,10 @@ import {
 import { toast } from '../data/toast'
 import { featurePopupHtml, personalPopupHtml, checkinSectionHtml } from '../components/popupHtml'
 import { fetchOsmTimestamp, formatFreshness } from '../data/freshness'
+import { fetchRefugeInfo } from '../data/refugesInfo'
 import { checkinsToFC, type CheckinRecord, type Verdict } from '../data/checkinLogic'
 import type { CheckinMap } from '../data/checkins'
-import { findNearestPoi } from './nearest'
+import { findNearestPoi, type NearestResult } from './nearest'
 import type { GeoBounds } from '../data/offline'
 import type { PersonalPoint, PersonalRoute, Place } from '../types'
 
@@ -75,6 +76,16 @@ const PROTECTED_SL = 'protected'
 
 const CHECKIN_SOURCE = 'checkins-badges' // badges de fraîcheur communautaires
 const CHECKIN_LAYER = 'checkins-badges-circle'
+
+// Couche « sociale » : aide alimentaire (data·inclusion) + fontaines/toilettes
+// municipales (open data ODbL). Construite par scripts/fetch-social.mjs, dans
+// le repo comme treks (fichier léger).
+const SOCIAL_SOURCE = 'social'
+const SOCIAL_LAYER = 'social-icons'
+const SOCIAL_PATH = '/social.pmtiles'
+const SOCIAL_SL = 'social'
+const SOCIAL_ATTRIBUTION =
+  'Aide alim. © <a href="https://data.inclusion.gouv.fr" target="_blank" rel="noopener">data·inclusion</a> (Licence Ouverte) · Fontaines/WC © Paris, Bordeaux, Toulouse, IDFM (ODbL)'
 
 const PR_SOURCE = 'perso-routes' // itinéraires créés par l'utilisateur
 const PR_LAYER = 'perso-routes-line'
@@ -147,11 +158,40 @@ function openPoiPopup(
     .setLngLat(lnglat)
     .setHTML(featurePopupHtml(props) + extraHtml + section)
     .addTo(m)
-  if (navigator.onLine && !props.check_date && !props['survey:date']) {
+  // Fraîcheur OSM : seulement pour les données OSM (pas les sources open data).
+  if (navigator.onLine && !props.source && !props.check_date && !props['survey:date']) {
     fetchOsmTimestamp(String(props.id ?? '')).then((ts) => {
       if (!ts || !popup.isOpen()) return
       const el = popup.getElement()?.querySelector('[data-freshness]')
       if (el) el.textContent = `Donnée OSM modifiée le ${formatFreshness(ts)}`
+    })
+  }
+  // Enrichissement Refuges.info (refuges et eau, en ligne) : fiche liée,
+  // places, eau, date — consultation attribuée, pas de redistribution.
+  const catId = String(props.categoryId ?? '')
+  if (navigator.onLine && (catId === 'refuge' || catId === 'water')) {
+    fetchRefugeInfo(lnglat[0], lnglat[1]).then((info) => {
+      if (!info || !popup.isOpen()) return
+      const el = popup.getElement()?.querySelector('[data-refuges]')
+      if (!el) return
+      const a = document.createElement('a')
+      a.href = info.url
+      a.target = '_blank'
+      a.rel = 'noopener'
+      a.style.textDecoration = 'underline'
+      a.textContent = `Refuges.info : ${info.nom}`
+      const bits = [
+        info.type,
+        info.places ? `${info.places} places` : null,
+        info.eau,
+        info.dateMaj ? `maj ${formatFreshness(info.dateMaj)}` : null,
+      ]
+        .filter(Boolean)
+        .join(' · ')
+      el.textContent = ''
+      el.append('⛰ ', a)
+      if (bits) el.append(` — ${bits}`)
+      ;(el as HTMLElement).style.marginTop = '4px'
     })
   }
   return popup
@@ -339,6 +379,7 @@ export function MapView({
   const cbCheckin = useRef(onCheckin)
   const checkinsRef = useRef(checkins)
   const checkinReady = useRef(false)
+  const socialReady = useRef(false)
   // true si la source POI est en tuiles vecteur (sourceLayer requis pour
   // querySourceFeatures) ; false en repli GeoJSON Aude.
   const poiIsVector = useRef(false)
@@ -399,7 +440,9 @@ export function MapView({
     // posées (icon-allow-overlap => toutes les icônes sont placées).
     const recomputeCount = () => {
       if (!ready.current) return
-      const feats = m.queryRenderedFeatures({ layers: [POI_LAYER] })
+      const layers = [POI_LAYER]
+      if (m.getLayer(SOCIAL_LAYER)) layers.push(SOCIAL_LAYER)
+      const feats = m.queryRenderedFeatures({ layers })
       const ids = new Set<string>()
       for (const f of feats) ids.add(String(f.properties?.id ?? f.id))
       cbCount.current(ids.size)
@@ -842,6 +885,44 @@ export function MapView({
         m.getCanvas().style.cursor = addModeRef.current ? 'crosshair' : ''
       })
 
+      // --- Couche sociale : aide alimentaire + fontaines/WC municipaux.
+      // Mêmes icônes/filtres/fiches que les POI OSM ; absente tant que le
+      // premier build CI n'a pas produit le fichier → skip silencieux.
+      try {
+        const social = await detectPmtiles(SOCIAL_PATH, 'social')
+        if (social.use) {
+          pmtilesProtocol.add(new PMTiles(new CachedPmtilesSource(social.url, social.blob)))
+          m.addSource(SOCIAL_SOURCE, {
+            type: 'vector',
+            url: 'pmtiles://' + social.url,
+            attribution: SOCIAL_ATTRIBUTION,
+          })
+          m.addLayer({
+            id: SOCIAL_LAYER,
+            type: 'symbol',
+            source: SOCIAL_SOURCE,
+            'source-layer': SOCIAL_SL,
+            layout: ICON_LAYOUT,
+            filter: filterExpr([...activeRef.current]),
+          })
+          socialReady.current = true
+          m.on('click', SOCIAL_LAYER, (e) => {
+            const f = e.features?.[0]
+            if (!f || f.geometry.type !== 'Point') return
+            const [lon, lat] = f.geometry.coordinates
+            openPoiPopup(m, [lon, lat], f.properties ?? {}, null)
+          })
+          m.on('mouseenter', SOCIAL_LAYER, () => {
+            m.getCanvas().style.cursor = 'pointer'
+          })
+          m.on('mouseleave', SOCIAL_LAYER, () => {
+            m.getCanvas().style.cursor = addModeRef.current ? 'crosshair' : ''
+          })
+        }
+      } catch {
+        // Fichier social absent ou illisible : l'app vit sans.
+      }
+
       scheduleCount()
 
       // Couches lourdes : on ne les charge qu'au démarrage si déjà activées.
@@ -991,6 +1072,7 @@ export function MapView({
     const m = map.current
     if (!m || !ready.current) return
     m.setFilter(POI_LAYER, filterExpr([...active]))
+    if (socialReady.current) m.setFilter(SOCIAL_LAYER, filterExpr([...active]))
     recomputeRef.current()
   }, [active])
 
@@ -1118,11 +1200,21 @@ export function MapView({
     if (!m || !q || !ready.current) return
     let cancelled = false
     ;(async () => {
-      const res = await findNearestPoi(m, [q.lon, q.lat], q.categoryId, {
+      const res1 = await findNearestPoi(m, [q.lon, q.lat], q.categoryId, {
         sourceId: POI_SOURCE,
         sourceLayer: poiIsVector.current ? SOURCE_LAYER : undefined,
       })
       if (cancelled) return
+      // Deuxième passe sur la couche sociale (fontaines/WC/aide alimentaire).
+      let res2: NearestResult | null = null
+      if (socialReady.current) {
+        res2 = await findNearestPoi(m, [q.lon, q.lat], q.categoryId, {
+          sourceId: SOCIAL_SOURCE,
+          sourceLayer: SOCIAL_SL,
+        })
+        if (cancelled) return
+      }
+      const res = res1 && res2 ? (res1.distanceKm <= res2.distanceKm ? res1 : res2) : (res1 ?? res2)
       cbNearestResult.current(!!res)
       if (!res) return
       m.flyTo({ center: [res.lon, res.lat], zoom: 15 })

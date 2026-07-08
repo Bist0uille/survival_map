@@ -44,18 +44,22 @@ export function featurePopupHtml(
         `<div class="text-slate-500"><b>${esc(k)}</b> : ${esc(String(p[k]))}</div>`,
     )
     .join('')
-  // Fraîcheur : check_date/survey:date voyagent dans les tuiles (offline) ;
-  // sinon un placeholder que MapView remplit en async via l'API OSM (en ligne).
+  // Fraîcheur : données open data (props.source) → ligne source + date de mise
+  // à jour ; données OSM → check_date des tuiles (offline) ou placeholder que
+  // MapView remplit en async via l'API OSM (en ligne).
   const checked = p.check_date ?? p['survey:date']
-  const fresh = checked
-    ? `<div class="text-slate-500" style="font-size:0.72rem;margin-top:4px">✓ Vérifié sur le terrain le ${esc(frDate(String(checked)))}</div>`
-    : `<div data-freshness class="text-slate-400" style="font-size:0.72rem;margin-top:4px"></div>`
+  const fresh = p.source
+    ? `<div class="text-slate-400" style="font-size:0.72rem;margin-top:4px">Donnée ${esc(String(p.source))}${p.source_date ? ' · mise à jour le ' + esc(frDate(String(p.source_date))) : ''}</div>`
+    : checked
+      ? `<div class="text-slate-500" style="font-size:0.72rem;margin-top:4px">✓ Vérifié sur le terrain le ${esc(frDate(String(checked)))}</div>`
+      : `<div data-freshness class="text-slate-400" style="font-size:0.72rem;margin-top:4px"></div>`
   return `
     <div style="min-width:140px">
       <div style="color:${cat.color};font-weight:600">${esc(name)}</div>
       <div class="text-slate-400" style="font-size:0.72rem;margin-bottom:4px">${esc(cat.label)}</div>
       ${rows}
       ${fresh}
+      <div data-refuges class="text-slate-500" style="font-size:0.72rem"></div>
     </div>`
 }
 

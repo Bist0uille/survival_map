@@ -85,6 +85,12 @@ describe('besoins (groupes de la barre de filtres)', () => {
     }
   })
 
+  it('l’aide alimentaire est rangée sous « Manger »', () => {
+    const meal = CATEGORIES.find((c) => c.id === 'meal')
+    expect(meal?.need).toBe('eat')
+    expect(meal?.label).toBe('Aide alimentaire')
+  })
+
   it('chaque besoin a au moins une catégorie et l’union couvre tout', () => {
     let total = 0
     for (const n of NEEDS) {

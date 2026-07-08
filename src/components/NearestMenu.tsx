@@ -6,7 +6,7 @@ import { getCategory } from '../data/categories'
  * Besoins vitaux proposés par le bouton « le plus proche » : liste fixe (les
  * filtres actifs sont vides au démarrage — précisément le cas d'urgence).
  */
-const VITAL_IDS = ['water', 'toilets', 'refuge', 'power', 'bakery', 'pharmacy']
+const VITAL_IDS = ['water', 'toilets', 'refuge', 'power', 'meal', 'bakery', 'pharmacy']
 
 interface NearestMenuProps {
   busy: boolean

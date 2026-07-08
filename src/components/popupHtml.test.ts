@@ -20,6 +20,21 @@ describe('featurePopupHtml', () => {
     expect(html).not.toContain('Vérifié sur le terrain')
   })
 
+  it('affiche la source open data à la place de la fraîcheur OSM', () => {
+    const html = featurePopupHtml({
+      categoryId: 'meal',
+      name: 'Resto solidaire',
+      source: 'data·inclusion',
+      source_date: '2026-06-01',
+    })
+    expect(html).toContain('Donnée data·inclusion · mise à jour le 01/06/2026')
+    expect(html).not.toContain('data-freshness')
+  })
+
+  it('inclut le placeholder refuges.info', () => {
+    expect(featurePopupHtml({ categoryId: 'refuge' })).toContain('data-refuges')
+  })
+
   it('échappe le HTML des tags OSM', () => {
     const html = featurePopupHtml({
       categoryId: 'water',

@@ -8,6 +8,7 @@ import {
   Croissant,
   ShoppingCart,
   Coffee,
+  Soup,
   Mountain,
   Waves,
   Eye,
@@ -75,6 +76,9 @@ export const CATEGORIES: CategoryDef[] = [
   { id: 'picnic', label: 'Tables', color: '#c2410c', icon: Utensils, need: 'eat' },
   { id: 'books', label: 'Boîte à livres', color: '#0891b2', icon: BookOpen, need: 'read' },
   { id: 'bakery', label: 'Ravitaillement', color: '#d97706', icon: ShoppingCart, need: 'eat' },
+  // Aide alimentaire solidaire (source data·inclusion, pas OSM — voir
+  // scripts/fetch-social.mjs qui pose categoryId/iconId directement).
+  { id: 'meal', label: 'Aide alimentaire', color: '#ea580c', icon: Soup, need: 'eat' },
   { id: 'peak', label: 'Sommet', color: '#78716c', icon: Mountain, need: 'see' },
   { id: 'waterfall', label: 'Cascade', color: '#0d9488', icon: Waves, need: 'see' },
   { id: 'viewpoint', label: 'Point de vue', color: '#ca8a04', icon: Eye, need: 'see' },
@@ -186,6 +190,8 @@ export const SUBTYPES: SubtypeDef[] = [
   { iconId: 'hostel', categoryId: 'hostel', icon: BedDouble, osm: [{ key: 'tourism', value: 'hostel' }] },
   { iconId: 'pharmacy', categoryId: 'pharmacy', icon: Cross, osm: [{ key: 'amenity', value: 'pharmacy' }] },
   { iconId: 'laundry', categoryId: 'laundry', icon: WashingMachine, osm: [{ key: 'shop', value: 'laundry' }] },
+  // Non-OSM : l'iconId est posé par le pipeline social, aucun tag à matcher.
+  { iconId: 'meal', categoryId: 'meal', icon: Soup, osm: [] },
 ]
 
 const BY_ID: Record<string, CategoryDef> = Object.fromEntries(
