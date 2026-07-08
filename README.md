@@ -1,5 +1,7 @@
 # Survival Map 🏕️
 
+**➡️ App en ligne : [survimap.com](https://survimap.com)**
+
 **PWA de rando & bivouac** — une carte topo qui marche **hors-ligne**, pour préparer une sortie et survivre en bivouac : points d'eau, abris, refuges, sommets, cascades, points de vue… plus tes **points perso** et tes **itinéraires** qui suivent les sentiers.
 
 Couverture **France · Espagne · Italie**. Aucun compte, aucun backend : tout est local dans ton navigateur.
@@ -68,7 +70,7 @@ La (re)construction des PMTiles est automatisée par les workflows GitHub Action
 
 ## 📦 Déploiement
 
-Pensé pour **Vercel** : framework auto-détecté (Vite), build `npm run build`, sortie `dist/`.
+Déployé sur **Vercel** — production : **[survimap.com](https://survimap.com)** (domaine custom, `www` en canonique). Framework auto-détecté (Vite), build `npm run build`, sortie `dist/`.
 
 ---
 
