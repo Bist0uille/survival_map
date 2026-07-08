@@ -17,8 +17,10 @@ import {
   personalMarkerEl,
 } from './mapHelpers'
 import { toast } from '../data/toast'
-import { featurePopupHtml, personalPopupHtml } from '../components/popupHtml'
+import { featurePopupHtml, personalPopupHtml, checkinSectionHtml } from '../components/popupHtml'
 import { fetchOsmTimestamp, formatFreshness } from '../data/freshness'
+import { checkinsToFC, type CheckinRecord, type Verdict } from '../data/checkinLogic'
+import type { CheckinMap } from '../data/checkins'
 import { findNearestPoi } from './nearest'
 import type { GeoBounds } from '../data/offline'
 import type { PersonalPoint, PersonalRoute, Place } from '../types'
@@ -71,6 +73,9 @@ const PROTECTED_FILL = 'protected-fill'
 const PROTECTED_LINE = 'protected-outline'
 const PROTECTED_SL = 'protected'
 
+const CHECKIN_SOURCE = 'checkins-badges' // badges de fraîcheur communautaires
+const CHECKIN_LAYER = 'checkins-badges-circle'
+
 const PR_SOURCE = 'perso-routes' // itinéraires créés par l'utilisateur
 const PR_LAYER = 'perso-routes-line'
 const PR_HIT = 'perso-routes-hit'
@@ -113,22 +118,34 @@ interface MapViewProps {
   nearestQuery: NearestQuery | null
   onNearestResult: (found: boolean) => void
   onRouteTo: (lat: number, lon: number) => void
+  checkins: CheckinMap
+  onCheckin: (id: string, verdict: Verdict, lon: number, lat: number) => void
 }
 
 /**
- * Ouvre la fiche d'un POI et, en ligne et sans check_date dans les tuiles,
- * complète en async la ligne de fraîcheur via l'API OSM (placeholder
- * [data-freshness] posé par featurePopupHtml — scopé au popup, pas au document).
+ * Ouvre la fiche d'un POI : contenu + section check-in communautaire, et,
+ * en ligne et sans check_date dans les tuiles, complète en async la ligne de
+ * fraîcheur via l'API OSM (placeholder [data-freshness] posé par
+ * featurePopupHtml — scopé au popup, pas au document).
  */
 function openPoiPopup(
   m: MLMap,
   lnglat: [number, number],
   props: Record<string, unknown>,
+  checkin: CheckinRecord | null,
   extraHtml = '',
 ): maplibregl.Popup {
+  const section = checkinSectionHtml(
+    String(props.id ?? ''),
+    lnglat[0],
+    lnglat[1],
+    checkin,
+    Date.now(),
+    navigator.onLine,
+  )
   const popup = new maplibregl.Popup({ offset: 10 })
     .setLngLat(lnglat)
-    .setHTML(featurePopupHtml(props) + extraHtml)
+    .setHTML(featurePopupHtml(props) + extraHtml + section)
     .addTo(m)
   if (navigator.onLine && !props.check_date && !props['survey:date']) {
     fetchOsmTimestamp(String(props.id ?? '')).then((ts) => {
@@ -277,6 +294,8 @@ export function MapView({
   nearestQuery,
   onNearestResult,
   onRouteTo,
+  checkins,
+  onCheckin,
 }: MapViewProps) {
   const container = useRef<HTMLDivElement>(null)
   const map = useRef<MLMap | null>(null)
@@ -317,6 +336,9 @@ export function MapView({
   const cbSelectPR = useRef(onSelectPersonalRoute)
   const cbNearestResult = useRef(onNearestResult)
   const cbRouteTo = useRef(onRouteTo)
+  const cbCheckin = useRef(onCheckin)
+  const checkinsRef = useRef(checkins)
+  const checkinReady = useRef(false)
   // true si la source POI est en tuiles vecteur (sourceLayer requis pour
   // querySourceFeatures) ; false en repli GeoJSON Aude.
   const poiIsVector = useRef(false)
@@ -331,6 +353,8 @@ export function MapView({
   cbSelectPR.current = onSelectPersonalRoute
   cbNearestResult.current = onNearestResult
   cbRouteTo.current = onRouteTo
+  cbCheckin.current = onCheckin
+  checkinsRef.current = checkins
   addModeRef.current = addMode
   createModeRef.current = createMode
   activeRef.current = active
@@ -748,6 +772,32 @@ export function MapView({
             : ''
       })
 
+      // --- Badges de fraîcheur communautaires : cercles colorés SOUS les
+      // icônes POI (la couche POI est ajoutée après, donc au-dessus).
+      m.addSource(CHECKIN_SOURCE, {
+        type: 'geojson',
+        data: checkinsToFC(checkinsRef.current, Date.now()),
+      })
+      m.addLayer({
+        id: CHECKIN_LAYER,
+        type: 'circle',
+        source: CHECKIN_SOURCE,
+        paint: {
+          'circle-radius': ['interpolate', ['linear'], ['zoom'], 6, 3, 13, 8, 18, 12],
+          'circle-color': [
+            'match',
+            ['get', 'freshness'],
+            'confirmed', '#16a34a',
+            'gone', '#dc2626',
+            '#94a3b8',
+          ],
+          'circle-opacity': 0.55,
+          'circle-stroke-color': '#ffffff',
+          'circle-stroke-width': 1,
+        } as unknown as maplibregl.CircleLayerSpecification['paint'],
+      })
+      checkinReady.current = true
+
       // --- POI (icônes) : au-dessus des itinéraires. Fichier local si présent
       // (détection par signature "PMTiles"), sinon réseau, sinon repli Aude.
       const poi = await detectPmtiles(PMTILES_PATH, 'pois')
@@ -781,7 +831,9 @@ export function MapView({
         const f = e.features?.[0]
         if (!f || f.geometry.type !== 'Point') return
         const [lon, lat] = f.geometry.coordinates
-        openPoiPopup(m, [lon, lat], f.properties ?? {})
+        const props = f.properties ?? {}
+        const rec = checkinsRef.current[String(props.id ?? '')] ?? null
+        openPoiPopup(m, [lon, lat], props, rec)
       })
       m.on('mouseenter', POI_LAYER, () => {
         m.getCanvas().style.cursor = 'pointer'
@@ -830,6 +882,19 @@ export function MapView({
       if (rt) {
         const [lon, lat] = rt.split(',').map(Number)
         if (Number.isFinite(lon) && Number.isFinite(lat)) cbRouteTo.current(lat, lon)
+      }
+      const verdict = el.getAttribute('data-checkin')
+      if (verdict === 'ok' || verdict === 'gone') {
+        const poiId = el.getAttribute('data-checkin-id')
+        const ll = (el.getAttribute('data-checkin-ll') ?? '').split(',').map(Number)
+        if (poiId && Number.isFinite(ll[0]) && Number.isFinite(ll[1])) {
+          // Feedback immédiat : boutons désactivés le temps du POST.
+          el.closest('div')?.querySelectorAll('button[data-checkin]').forEach((b) => {
+            ;(b as HTMLButtonElement).disabled = true
+            ;(b as HTMLButtonElement).style.opacity = '0.5'
+          })
+          cbCheckin.current(poiId, verdict, ll[0], ll[1])
+        }
       }
     })
 
@@ -1073,6 +1138,7 @@ export function MapView({
         m,
         [res.lon, res.lat],
         res.props,
+        checkinsRef.current[String(res.props.id ?? '')] ?? null,
         `<div class="text-slate-600" style="font-size:0.75rem;margin-top:4px">À ${distTxt} à vol d'oiseau</div>${goBtn}`,
       )
     })()
@@ -1080,6 +1146,14 @@ export function MapView({
       cancelled = true
     }
   }, [nearestQuery])
+
+  // Badges de fraîcheur : la source suit la prop checkins.
+  useEffect(() => {
+    const m = map.current
+    if (!m || !checkinReady.current) return
+    const src = m.getSource(CHECKIN_SOURCE) as maplibregl.GeoJSONSource | undefined
+    src?.setData(checkinsToFC(checkins, Date.now()))
+  }, [checkins])
 
   // Points perso : marqueurs DOM (peu nombreux).
   useEffect(() => {

@@ -13,6 +13,7 @@
     "fetch-osm": "node scripts/fetch-osm.mjs"
   },
   "dependencies": {
+    "@upstash/redis": "^1.38.0",
     "dexie": "^4.4.4",
     "lucide-react": "^0.460.0",
     "maplibre-gl": "^4.7.1",

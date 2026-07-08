@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { featurePopupHtml } from './popupHtml'
+import { featurePopupHtml, checkinSectionHtml } from './popupHtml'
+import type { CheckinRecord } from '../data/checkinLogic'
 
 describe('featurePopupHtml', () => {
   it('affiche la vérification terrain quand check_date est présent', () => {
@@ -28,5 +29,34 @@ describe('featurePopupHtml', () => {
     expect(html).not.toContain('<script>')
     expect(html).toContain('&lt;script&gt;')
     expect(html).not.toContain('<b>x</b>')
+  })
+})
+
+describe('checkinSectionHtml', () => {
+  const NOW = 1_800_000_000_000
+  const rec: CheckinRecord = { ok: 3, gone: 0, lastOk: NOW - 86_400_000, lastGone: null, lon: 3, lat: 43 }
+
+  it('affiche l’état et les boutons en ligne', () => {
+    const html = checkinSectionHtml('n12', 3, 43, rec, NOW, true)
+    expect(html).toContain('Confirmé il y a 1 j (3 confirmations)')
+    expect(html).toContain('data-checkin="ok"')
+    expect(html).toContain('data-checkin="gone"')
+    expect(html).toContain('data-checkin-id="n12"')
+    expect(html).toContain('data-checkin-ll="3,43"')
+  })
+
+  it('masque les boutons hors-ligne mais garde l’état', () => {
+    const html = checkinSectionHtml('n12', 3, 43, rec, NOW, false)
+    expect(html).toContain('Confirmé')
+    expect(html).not.toContain('data-checkin=')
+  })
+
+  it('invite au premier signalement sans historique', () => {
+    const html = checkinSectionHtml('n12', 3, 43, null, NOW, true)
+    expect(html).toContain("Personne n'a encore confirmé")
+  })
+
+  it('ne propose rien pour un id synthétique', () => {
+    expect(checkinSectionHtml('x9', 3, 43, null, NOW, true)).toBe('')
   })
 })

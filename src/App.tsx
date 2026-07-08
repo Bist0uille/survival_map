@@ -23,6 +23,8 @@ import {
 } from './data/db'
 import { computeRoute, summarizeRoute, type ComputedRoute } from './data/routing'
 import { downloadGpx } from './data/gpx'
+import { fetchAllCheckins, postCheckin, type CheckinMap } from './data/checkins'
+import type { Verdict } from './data/checkinLogic'
 import { getPref, WELCOME_SEEN } from './data/prefs'
 import { toast } from './data/toast'
 import { getCurrentPositionAsync } from './hooks/useGeolocation'
@@ -73,6 +75,8 @@ function App() {
   const [nearestQuery, setNearestQuery] = useState<NearestQuery | null>(null)
   const [nearestBusy, setNearestBusy] = useState(false)
   const nearestOrigin = useRef<[number, number] | null>(null)
+  // Check-ins communautaires (badges de fraîcheur).
+  const [checkins, setCheckins] = useState<CheckinMap>({})
 
   const viewport = useRef<{ bounds: GeoBounds; zoom: number }>({
     bounds: { west: 2.9, south: 43.1, east: 3.1, north: 43.25 },
@@ -82,6 +86,7 @@ function App() {
   useEffect(() => {
     getPersonalPoints().then(setPersonalPoints)
     getPersonalRoutes().then(setPersonalRoutes)
+    fetchAllCheckins().then(setCheckins)
   }, [])
 
   // Satellite et 3D nécessitent le réseau : hors-ligne, on repli sur la topo
@@ -242,6 +247,17 @@ function App() {
       toast('Rien trouvé autour de toi — vérifie ta zone hors-ligne ou réessaie en ligne', 'info')
   }, [])
 
+  // Check-in anonyme depuis la fiche d'un POI (« ça existe / disparu »).
+  const handleCheckin = useCallback(async (id: string, verdict: Verdict, lon: number, lat: number) => {
+    try {
+      const record = await postCheckin(id, verdict, lon, lat)
+      setCheckins((prev) => ({ ...prev, [id]: record }))
+      toast(verdict === 'ok' ? 'Merci ! Point confirmé ✓' : 'Merci ! Disparition signalée', 'success')
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Signalement impossible pour le moment', 'error')
+    }
+  }, [])
+
   // « Y aller » depuis la fiche du POI trouvé : itinéraire GPS → POI via le
   // créateur d'itinéraire existant (le calcul BRouter part automatiquement).
   const handleRouteTo = useCallback((lat: number, lon: number) => {
@@ -378,6 +394,8 @@ function App() {
         nearestQuery={nearestQuery}
         onNearestResult={handleNearestResult}
         onRouteTo={handleRouteTo}
+        checkins={checkins}
+        onCheckin={handleCheckin}
       />
 
       <div className="pointer-events-none absolute left-0 right-0 top-0 z-30 p-2">

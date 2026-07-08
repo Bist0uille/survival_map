@@ -1,4 +1,5 @@
 import { getCategory } from '../data/categories'
+import { freshnessLabel, freshnessOf, type CheckinRecord } from '../data/checkinLogic'
 import type { PersonalPoint } from '../types'
 
 /** Échappe le HTML pour éviter toute injection depuis les tags OSM. */
@@ -56,6 +57,34 @@ export function featurePopupHtml(
       ${rows}
       ${fresh}
     </div>`
+}
+
+/**
+ * Section « check-in » de la fiche POI : état communautaire du point +
+ * boutons de signalement (en ligne uniquement — l'écriture exige le réseau).
+ * Les data-attributes sont gérés par le listener délégué de MapView.
+ */
+export function checkinSectionHtml(
+  id: string,
+  lon: number,
+  lat: number,
+  rec: CheckinRecord | null,
+  now: number,
+  online: boolean,
+): string {
+  if (!/^[nwa]\d+$/.test(id)) return '' // ids synthétiques : pas de check-in
+  const label = rec ? freshnessLabel(rec, now) : null
+  const color = rec && freshnessOf(rec, now) === 'gone' ? '#dc2626' : '#16a34a'
+  const status = label
+    ? `<div style="font-size:0.72rem;color:${color};font-weight:600">${esc(label)}</div>`
+    : `<div class="text-slate-400" style="font-size:0.72rem">Personne n'a encore confirmé ce point</div>`
+  const btn = (verdict: string, txt: string, clr: string) =>
+    `<button data-checkin="${verdict}" data-checkin-id="${esc(id)}" data-checkin-ll="${lon},${lat}"
+      style="flex:1;border:1px solid ${clr};color:${clr};border-radius:8px;padding:3px 6px;font-size:0.72rem;font-weight:600;background:white">${txt}</button>`
+  const buttons = online
+    ? `<div style="display:flex;gap:6px;margin-top:5px">${btn('ok', '✓ Ça existe', '#15803d')}${btn('gone', '✗ Disparu', '#b91c1c')}</div>`
+    : ''
+  return `<div style="margin-top:7px;border-top:1px solid #e2e8f0;padding-top:6px">${status}${buttons}</div>`
 }
 
 export function personalPopupHtml(p: PersonalPoint): string {
