@@ -1,5 +1,7 @@
 import { Redis } from '@upstash/redis'
-import { validateCheckinBody, applyCheckin, type CheckinRecord } from '../src/data/checkinLogic'
+// Extension .js explicite : requise par le runtime ESM des Vercel Functions
+// (l'import extensionless casse au déploiement avec ERR_MODULE_NOT_FOUND).
+import { validateCheckinBody, applyCheckin, type CheckinRecord } from '../src/data/checkinLogic.js'
 
 /**
  * POST /api/checkin — enregistre un check-in anonyme { id, verdict, lon, lat }.

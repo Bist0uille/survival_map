@@ -1,5 +1,5 @@
 import { Redis } from '@upstash/redis'
-import type { CheckinRecord } from '../src/data/checkinLogic'
+import type { CheckinRecord } from '../src/data/checkinLogic.js'
 
 /**
  * GET /api/checkins — tous les check-ins agrégés { [poiId]: CheckinRecord }.
