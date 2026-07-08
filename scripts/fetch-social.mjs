@@ -67,10 +67,20 @@ export async function* csvRows(chunks) {
   }
 }
 
+// Pertinence (audit du 08/07/2026 sur 13 999 services « alimentation ») :
+// seul le type `aide-materielle` correspond à de l'aide alimentaire réelle
+// (Restos du Cœur, Croix-Rouge, Secours populaire, épiceries solidaires,
+// colis). Le reste est du bruit pour une carte de survie : `accompagnement`
+// (dont 13 366 lignes ma-boussole-aidants = orientation des aidants vers les
+// CCAS/mairies), `aide-financiere` (dispositifs sur dossier type FAJD/MASP),
+// `atelier`/`information`/`formation` (ateliers budget, tri de vêtements…).
+const DI_KEPT_TYPES = new Set(['aide-materielle'])
+
 /** Mappe une ligne service data·inclusion → Feature (ou null si hors sujet). */
 export function mapDiService(header, row) {
   const g = (k) => row[header.indexOf(k)] ?? ''
   if (!g('thematiques').includes(DI_THEME)) return null
+  if (!DI_KEPT_TYPES.has(g('type'))) return null
   const lon = Number(g('longitude'))
   const lat = Number(g('latitude'))
   if (!Number.isFinite(lon) || !Number.isFinite(lat) || (lon === 0 && lat === 0)) return null
@@ -85,7 +95,7 @@ export function mapDiService(header, row) {
   }
   if (g('horaires_accueil')) props.opening_hours = g('horaires_accueil').slice(0, 200)
   if (g('frais')) props.fee = g('frais')
-  const desc = [g('adresse'), g('code_postal') + ' ' + g('commune'), g('description')]
+  const desc = ['Distribution / colis', g('adresse'), g('code_postal') + ' ' + g('commune'), g('description')]
     .map((s) => String(s).trim())
     .filter(Boolean)
     .join(' · ')
@@ -268,7 +278,7 @@ async function main() {
       for (const f of features) stdout.write(JSON.stringify(f) + '\n')
       total += features.length
       stderr.write(
-        `data·inclusion : ${features.length} points d'aide alimentaire (${noCoords} écartés sans coordonnées, ${scanned} services lus)\n`,
+        `data·inclusion : ${features.length} points d'aide alimentaire (${noCoords} écartés — type non retenu ou sans coordonnées, ${scanned} services lus)\n`,
       )
       break
     } catch (e) {

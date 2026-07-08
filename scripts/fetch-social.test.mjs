@@ -43,7 +43,8 @@ const HEADER = [
 
 function diRow(over = {}) {
   const base = {
-    id: 'src--42', structure_id: 'st-1', nom: 'Distribution repas',
+    id: 'src--42', structure_id: 'st-1', source: 'dora', nom: 'Distribution repas',
+    type: 'aide-materielle',
     thematiques: "['equipement-et-alimentation--alimentation']",
     frais: 'gratuit', commune: 'Narbonne', code_postal: '11100',
     adresse: '1 rue du Test', longitude: '3.003', latitude: '43.184',
@@ -69,12 +70,23 @@ describe('mapDiService', () => {
     })
     expect(f.geometry.coordinates).toEqual([3.003, 43.184])
     expect(f.properties.description).toContain('1 rue du Test')
+    // Le type de service ouvre la description : l'utilisateur sait à quoi s'attendre.
+    expect(f.properties.description).toMatch(/^Distribution \/ colis/)
   })
 
   it('écarte sans coordonnées ou hors thématique', () => {
     expect(mapDiService(HEADER, diRow({ longitude: '', latitude: '' }))).toBeNull()
     expect(mapDiService(HEADER, diRow({ longitude: '0', latitude: '0' }))).toBeNull()
     expect(mapDiService(HEADER, diRow({ thematiques: "['sante--soins']" }))).toBeNull()
+  })
+
+  it('ne garde que l’aide matérielle réelle (distributions, colis, épiceries)', () => {
+    // Orientation aidants (ma-boussole = type accompagnement), dispositifs sur
+    // dossier, ateliers : écartés — pas de quoi manger sur place.
+    expect(mapDiService(HEADER, diRow({ type: 'accompagnement' }))).toBeNull()
+    expect(mapDiService(HEADER, diRow({ type: 'aide-financiere' }))).toBeNull()
+    expect(mapDiService(HEADER, diRow({ type: 'atelier' }))).toBeNull()
+    expect(mapDiService(HEADER, diRow({ type: '' }))).toBeNull()
   })
 })
 
