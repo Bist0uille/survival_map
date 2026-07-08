@@ -969,8 +969,10 @@ export function MapView({
     m.setLayoutProperty('satellite', 'visibility', satellite ? 'visible' : 'none')
   }, [satellite])
 
-  // Mode 3D : terrain (relief) + caméra inclinée. Désactivé → on remet à plat
-  // puis on retire le terrain. Le bearing est laissé tel quel (géré par la
+  // Mode 3D : terrain (relief) + caméra inclinée. Désactivé → on remet à plat,
+  // et on ne retire le terrain qu'à la fin de l'animation : setTerrain(null)
+  // remet l'élévation à 0 immédiatement, ce qui casse le easeTo en cours et
+  // laisse la vue inclinée. Le bearing est laissé tel quel (géré par la
   // boussole).
   useEffect(() => {
     const m = map.current
@@ -979,8 +981,15 @@ export function MapView({
       m.setTerrain({ source: 'terrain-dem', exaggeration: 1.3 })
       m.easeTo({ pitch: 60, duration: 800 })
     } else {
+      if (!m.getTerrain()) return
+      let cancelled = false
       m.easeTo({ pitch: 0, duration: 600 })
-      m.setTerrain(null)
+      m.once('moveend', () => {
+        if (!cancelled) m.setTerrain(null)
+      })
+      return () => {
+        cancelled = true
+      }
     }
   }, [view3D])
 
