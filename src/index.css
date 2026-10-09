@@ -19,3 +19,17 @@ body {
   padding: 0.7rem 0.9rem;
   font-size: 0.85rem;
 }
+.location-heading-beam {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  left: 50%;
+  top: 50%;
+  margin: -50px 0 0 -50px;
+  pointer-events: none;
+  border-radius: 50%;
+  background: conic-gradient(from -35deg, rgb(51 136 255 / 35%) 0deg, rgb(51 136 255 / 12%) 35deg, rgb(51 136 255 / 35%) 70deg, transparent 70deg);
+  mask-image: radial-gradient(circle, transparent 7px, black 8px, transparent 50px);
+  -webkit-mask-image: radial-gradient(circle, transparent 7px, black 8px, transparent 50px);
+}
+

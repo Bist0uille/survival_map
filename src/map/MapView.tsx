@@ -7,6 +7,7 @@ import { TOPO_STYLE, NARBONNE } from './style'
 import { getCategory } from '../data/categories'
 import { addCategoryIcons } from './categoryIcons'
 import { CachedPmtilesSource } from './cachedSource'
+import { attachLocationHeading } from './locationHeading'
 import {
   EMPTY_FC,
   detectPmtiles,
@@ -423,13 +424,12 @@ export function MapView({
       new maplibregl.NavigationControl({ showCompass: true, visualizePitch: true }),
       'bottom-right',
     )
-    m.addControl(
-      new maplibregl.GeolocateControl({
+    const geolocate = new maplibregl.GeolocateControl({
         positionOptions: { enableHighAccuracy: true },
         trackUserLocation: true,
-      }),
-      'bottom-right',
-    )
+      })
+    m.addControl(geolocate, 'bottom-right')
+    const removeLocationHeading = attachLocationHeading(m, geolocate)
     // Échelle : repère rapide des distances selon le niveau de zoom.
     m.addControl(new maplibregl.ScaleControl({ maxWidth: 120, unit: 'metric' }), 'bottom-right')
 
@@ -445,6 +445,14 @@ export function MapView({
       const feats = m.queryRenderedFeatures({ layers })
       const ids = new Set<string>()
       for (const f of feats) ids.add(String(f.properties?.id ?? f.id))
+      // A freshness badge only belongs on a POI currently visible on the map.
+      // Check-ins have no category, so leaving them unfiltered creates orphan dots.
+      if (checkinReady.current) {
+        const filter = ['in', ['get', 'id'], ['literal', [...ids].sort()]] as maplibregl.FilterSpecification
+        if (JSON.stringify(m.getFilter(CHECKIN_LAYER)) !== JSON.stringify(filter)) {
+          m.setFilter(CHECKIN_LAYER, filter)
+        }
+      }
       cbCount.current(ids.size)
     }
     // Anti-rebond : les tuiles vecteur arrivent par paquets, on recalcule
@@ -825,6 +833,7 @@ export function MapView({
         id: CHECKIN_LAYER,
         type: 'circle',
         source: CHECKIN_SOURCE,
+        filter: ['in', ['get', 'id'], ['literal', []]],
         paint: {
           'circle-radius': ['interpolate', ['linear'], ['zoom'], 6, 3, 13, 8, 18, 12],
           'circle-color': [
@@ -980,6 +989,8 @@ export function MapView({
     })
 
     return () => {
+      removeLocationHeading()
+      if (countTimer) clearTimeout(countTimer)
       ro.disconnect()
       m.remove()
       map.current = null
@@ -1072,6 +1083,9 @@ export function MapView({
     const m = map.current
     if (!m || !ready.current) return
     m.setFilter(POI_LAYER, filterExpr([...active]))
+    if (checkinReady.current) {
+      m.setFilter(CHECKIN_LAYER, ['in', ['get', 'id'], ['literal', []]])
+    }
     if (socialReady.current) m.setFilter(SOCIAL_LAYER, filterExpr([...active]))
     recomputeRef.current()
   }, [active])
