@@ -53,7 +53,8 @@ describe.skipIf(!enabled)('atomic Redis scripts against isolated Redis', () => {
 
   it('caps persistent records and prunes expired records before admission', async () => {
     expect((await vote('n99', 'a', 'ok', 1800000000000, 1))[0]).toBe('full')
-    const now = 1800000000000 + 184 * 86400000
+    // n13 was refreshed eight days later in the preceding scenario.
+    const now = 1800000000000 + 192 * 86400000
     expect((await vote('n99', 'b', 'ok', now, 1))[0]).toBe('ok')
     expect(await redis('HLEN', key('records'))).toBe(1)
   })
