@@ -28,7 +28,7 @@ body {
   margin: -50px 0 0 -50px;
   pointer-events: none;
   border-radius: 50%;
-  background: conic-gradient(from -35deg, rgb(51 136 255 / 35%) 0deg, rgb(51 136 255 / 12%) 35deg, rgb(51 136 255 / 35%) 70deg, transparent 70deg);
+  background: conic-gradient(from -35deg, rgb(37 99 235 / 45%) 0deg, rgb(37 99 235 / 18%) 35deg, rgb(37 99 235 / 45%) 70deg, transparent 70deg);
   mask-image: radial-gradient(circle, transparent 7px, black 8px, transparent 50px);
   -webkit-mask-image: radial-gradient(circle, transparent 7px, black 8px, transparent 50px);
 }
