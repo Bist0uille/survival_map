@@ -19,7 +19,7 @@ const server = http.createServer(async (req, res) => {
   if (!file.startsWith(root + path.sep)) { res.writeHead(403); res.end(); return }
   try {
     const data = await fs.readFile(file)
-    const type = { '.js': 'text/javascript', '.css': 'text/css', '.html': 'text/html', '.webmanifest': 'application/manifest+json' }[path.extname(file)] ?? 'application/octet-stream'
+    const type = { '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.html': 'text/html', '.webmanifest': 'application/manifest+json' }[path.extname(file)] ?? 'application/octet-stream'
     res.setHeader('Content-Type', type); res.end(data)
   } catch { res.writeHead(404); res.end() }
 })

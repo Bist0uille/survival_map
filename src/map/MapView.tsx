@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react'
 import * as maplibregl from 'maplibre-gl'
+import mapWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
 import type { Map as MLMap, Marker as MLMarker } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { Protocol, PMTiles } from 'pmtiles'
@@ -28,6 +29,9 @@ import type { GeoBounds } from '../data/offline'
 import type { PersonalPoint, PersonalRoute, Place } from '../types'
 
 // Enregistre le protocole pmtiles auprès de MapLibre (une seule fois).
+// Vite doit émettre le worker séparément : l'URL relative par défaut de
+// MapLibre pointe sinon vers un fichier absent du bundle de production.
+maplibregl.setWorkerUrl(mapWorkerUrl)
 const pmtilesProtocol = new Protocol()
 maplibregl.addProtocol('pmtiles', pmtilesProtocol.tile)
 

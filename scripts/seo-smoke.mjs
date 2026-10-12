@@ -16,12 +16,33 @@ const server = http.createServer(async (req, res) => {
   const file = path.resolve(root, '.' + url.pathname + (url.pathname.endsWith('/') ? 'index.html' : ''))
   if (!file.startsWith(root + path.sep)) { res.writeHead(403); res.end(); return }
   try {
-    const type = { '.js': 'text/javascript', '.css': 'text/css', '.html': 'text/html', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.svg': 'image/svg+xml' }[path.extname(file)] ?? 'application/octet-stream'
+    const type = { '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.html': 'text/html', '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.svg': 'image/svg+xml' }[path.extname(file)] ?? 'application/octet-stream'
     res.setHeader('Content-Type', type); res.end(await fs.readFile(file))
   } catch { res.writeHead(404); res.end() }
 })
 await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))
 const origin = process.env.SEO_TEST_ORIGIN ?? `http://127.0.0.1:${server.address().port}`
+// Inspect React's map ref only in the browser test; no debug API in the app.
+async function renderedPois(page) {
+  await page.waitForSelector('.maplibregl-canvas')
+  await page.evaluate(() => {
+    const el = document.querySelector('.maplibregl-map')
+    let fiber = el[Object.keys(el).find((key) => key.startsWith('__reactFiber'))]
+    for (; fiber; fiber = fiber.return) {
+      for (let hook = fiber.memoizedState; hook; hook = hook.next) {
+        const candidate = hook.memoizedState?.current
+        if (candidate && typeof candidate.queryRenderedFeatures === 'function') {
+          window.poiTestMap = candidate
+          return
+        }
+      }
+    }
+    throw new Error('Map instance not found')
+  })
+  await page.waitForFunction(() => window.poiTestMap.getLayer('pois-icons') &&
+    window.poiTestMap.queryRenderedFeatures({ layers: ['pois-icons'] }).length > 0, { timeout: 45000 })
+  return page.evaluate(() => window.poiTestMap.queryRenderedFeatures({ layers: ['pois-icons'] }).map((feature) => feature.properties.categoryId))
+}
 let browser
 try {
   browser = await puppeteer.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true,
@@ -50,10 +71,16 @@ try {
   await page.waitForSelector('.maplibregl-canvas')
   assert.equal(await page.$eval('button[aria-label="Eau"]', (el) => el.getAttribute('aria-pressed')), 'true')
   assert.equal(await page.$eval('button[aria-label="Ravitaillement"]', (el) => el.getAttribute('aria-pressed')), 'false')
+  const waterPois = await renderedPois(page)
+  assert.ok(waterPois.every((category) => category === 'water'))
   // A controlling service worker must leave the static guide HTML intact.
   await page.evaluate(async () => { await navigator.serviceWorker.ready })
   await page.reload()
   await page.waitForFunction(() => !!navigator.serviceWorker.controller)
+  await page.goto(origin + pages[1].map)
+  const cyclingPois = await renderedPois(page)
+  assert.ok(cyclingPois.every((category) => ['water', 'bakery', 'picnic'].includes(category)))
+  assert.ok(cyclingPois.includes('bakery'), 'Ravitaillement POIs must actually render')
   await page.goto(origin + '/randonnee-bivouac/')
   assert.equal(await page.$eval('h1', (el) => el.textContent), pages[2].heading)
   await Promise.all([page.waitForNavigation(), page.click('a.cta')])
@@ -61,9 +88,11 @@ try {
   for (const label of ['Eau', 'Ravitaillement', 'Couchage & abris', 'Sentiers & chemins', 'Bivouac réglementé']) {
     assert.equal(await page.$eval(`button[aria-label="${label}"]`, (el) => el.getAttribute('aria-pressed')), 'true', label)
   }
+  const hikingPois = await renderedPois(page)
+  assert.ok(hikingPois.every((category) => ['water', 'bakery', 'refuge'].includes(category)))
   assert.deepEqual(errors, [])
   assert.deepEqual(violations, [])
-  console.log(JSON.stringify({ guidesWithoutJavaScript: pages.length, mobileOverflow: false, filteredMapLinks: true, serviceWorkerNavigation: true, pageErrors: errors, cspViolations: violations }))
+  console.log(JSON.stringify({ guidesWithoutJavaScript: pages.length, mobileOverflow: false, filteredMapLinks: true, renderedPois: { water: waterPois.length, cycling: cyclingPois.length, hiking: hikingPois.length }, serviceWorkerNavigation: true, pageErrors: errors, cspViolations: violations }))
 } finally {
   await browser?.close()
   await new Promise((resolve) => server.close(resolve))

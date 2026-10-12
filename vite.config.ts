@@ -38,6 +38,8 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Le worker MapLibre est un module .mjs, nécessaire aussi hors ligne.
+        globPatterns: ['**/*.{js,mjs,wasm,css,html}'],
         // Les guides sont de vraies pages HTML, pas des écrans de l'application.
         // Évite que le service worker les remplace par la carte après une visite.
         navigateFallbackDenylist: [
