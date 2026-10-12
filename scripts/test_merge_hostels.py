@@ -45,8 +45,21 @@ class MergeTests(unittest.TestCase):
         original = osm(name='MIJE Fourcy', website='https://www.mije.com/')
         candidate = dt(name='Auberge MIJE Fauconnier', lon=2.3613, website='https://www.mije.com/')
         additions, report = m.merge_candidates([candidate], [original])
-        self.assertEqual(len(additions), 1)
+        self.assertEqual(additions, [])
+        self.assertEqual(len(report['ambiguous']), 1)
         self.assertEqual(report['merged'], [])
+
+    def test_close_expanded_name_and_language_url_match(self):
+        original = osm(name='Jo & Joe', website='https://www.joandjoe.com/en/paris-gentilly')
+        additions, report = m.merge_candidates([dt(name='JO&JOE Paris - Gentilly', website='https://joandjoe.com/fr/paris-gentilly')], [original])
+        self.assertEqual(additions, [])
+        self.assertEqual(len(report['merged']), 1)
+
+    def test_suspected_duplicate_with_coordinate_drift_not_inserted(self):
+        original = osm(name='Village Montmartre')
+        additions, report = m.merge_candidates([dt(name='Village Montmartre Boutique Hostel', lon=2.362)], [original])
+        self.assertEqual(additions, [])
+        self.assertEqual(len(report['ambiguous']), 1)
 
     def test_shared_chain_domain_not_identity(self):
         original = osm(name='The People Nation', website='https://thepeoplehostel.com/')

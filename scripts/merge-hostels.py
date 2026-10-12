@@ -42,7 +42,9 @@ def website(value):
         url = urllib.parse.urlsplit(value)
         if url.scheme not in ('https', 'http') or not url.hostname or url.username or url.password:
             return ''
-        return (url.hostname.lower().removeprefix('www.') + url.path.rstrip('/')).lower()
+        # Same establishment URLs often differ only by /fr/ or /en/ placement.
+        parts = [p.lower() for p in url.path.split('/') if p and p.lower() not in ('fr', 'en', 'es', 'it', 'de', 'nl')]
+        return url.hostname.lower().removeprefix('www.') + ('/' + '/'.join(parts) if parts else '')
     except ValueError:
         return ''
 
@@ -61,6 +63,10 @@ def score(a, b):
     ap, bp = a['properties'], b['properties']
     exact = any(normal(x) == normal(y) and len(words(x)) > 0 for x in aliases(a) for y in aliases(b))
     token_match = any(words(x) and words(x) == words(y) for x in aliases(a) for y in aliases(b))
+    partial = any(words(x) and words(y) and (words(x) <= words(y) or words(y) <= words(x))
+                  for x in aliases(a) for y in aliases(b))
+    shared_distinctive = any(len(words(x) & words(y)) >= 2 and (words(x) <= words(y) or words(y) <= words(x))
+                             for x in aliases(a) for y in aliases(b))
     # Same address only counts when both a house number and street are available.
     address = all(ap.get(k) and normal(ap[k]) == normal(bp.get(k, ''))
                   for k in ('addr:housenumber', 'addr:street'))
@@ -77,6 +83,8 @@ def score(a, b):
         return 90
     if site_specific and (overlap or metres < 30):
         return 90
+    if metres < 30 and (shared_distinctive or (same_url and partial)):
+        return 85
     return 0
 
 
@@ -193,7 +201,11 @@ def merge_candidates(candidates, osm):
             # identity (no OSM check-in on the wrong category), use its location.
             candidate['geometry'] = target['geometry']
             candidate['properties']['related_osm_id'] = target['properties']['id']
-        elif any(distance(candidate, f) < 75 for f in nearby):
+        elif any(distance(candidate, f) < 75 or
+                 any(words(x) & words(y) for x in aliases(candidate) for y in aliases(f)) or
+                 (website(candidate['properties'].get('website', '')) and
+                  website(candidate['properties'].get('website', '')) == website(f['properties'].get('website', '')))
+                 for f in nearby):
             # Close but different identity: never guess, including neighbouring MIJEs.
             ambiguous(candidate, 'nearby_without_identity_match', nearby)
             continue
@@ -234,6 +246,8 @@ def osm_context(path):
         props['id'] = str(p.get('@id', f.get('id', '')))
         props['categoryId'] = 'hostel' if p['tourism'] == 'hostel' else 'lodging-context'
         props['website'] = p.get('website', p.get('contact:website', ''))
+        for key in ('housenumber', 'street'):
+            props['addr:' + key] = p.get('addr:' + key, p.get('contact:' + key, ''))
         result.append(point(lon, lat, props))
     return result
 
