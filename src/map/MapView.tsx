@@ -415,7 +415,7 @@ export function MapView({
       style: TOPO_STYLE,
       center: NARBONNE,
       zoom: 12,
-      attributionControl: { customAttribution: '<a href="/privacy.html" target="_blank" rel="noopener">Confidentialité</a>' },
+      attributionControl: { customAttribution: '<a href="/guides/">Guides</a> · <a href="/privacy.html" target="_blank" rel="noopener">Confidentialité</a>' },
     })
     map.current = m
 

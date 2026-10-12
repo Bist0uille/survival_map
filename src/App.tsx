@@ -32,10 +32,11 @@ import { useTrackRecorder } from './hooks/useTrackRecorder'
 import { TrackPanel } from './components/TrackPanel'
 import type { GeoBounds } from './data/offline'
 import type { PersonalPoint, PersonalRoute, Place } from './types'
+import { mapEntry } from './data/mapEntry'
 
 function App() {
-  // Aucune catégorie active au démarrage : l'utilisateur choisit ses filtres.
-  const [active, setActive] = useState<Set<string>>(new Set<string>())
+  // Les guides peuvent ouvrir des filtres ; l'accueil conserve la carte vide.
+  const [active, setActive] = useState(() => mapEntry(window.location.search).active)
   const [personalPoints, setPersonalPoints] = useState<PersonalPoint[]>([])
   const [personalRoutes, setPersonalRoutes] = useState<PersonalRoute[]>([])
   const [addMode, setAddMode] = useState(false)
@@ -46,8 +47,8 @@ function App() {
   // Couche unique « Sentiers & chemins » : pilote à la fois les sentiers
   // balisés (routes), les chemins bruts (paths) et les fiches Geotrek (treks,
   // cliquables sans bouton dédié).
-  const [showTrails, setShowTrails] = useState(false)
-  const [showProtected, setShowProtected] = useState(false)
+  const [showTrails, setShowTrails] = useState(() => mapEntry(window.location.search).trails)
+  const [showProtected, setShowProtected] = useState(() => mapEntry(window.location.search).protected)
   // Vue satellite et mode 3D (relief). En ligne uniquement.
   const [satellite, setSatellite] = useState(false)
   const [view3D, setView3D] = useState(false)

@@ -10,10 +10,10 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'apple-touch-icon.png', 'og-image.png'],
       manifest: {
-        name: 'Survival Map — rando & bivouac',
-        short_name: 'Survival Map',
+        name: 'Survimap — eau, vélo et randonnée',
+        short_name: 'Survimap',
         description:
-          'Carte topo pour la rando et le bivouac : eau, abris, prises, jolis spots autour de toi.',
+          'Fontaines, ravitaillement à vélo, refuges et sentiers sur une carte gratuite.',
         theme_color: '#15803d',
         background_color: '#f8fafc',
         display: 'standalone',
@@ -38,6 +38,18 @@ export default defineConfig({
         ],
       },
       workbox: {
+        // Les guides sont de vraies pages HTML, pas des écrans de l'application.
+        // Évite que le service worker les remplace par la carte après une visite.
+        navigateFallbackDenylist: [
+          /^\/guides(?:\/|$)/,
+          /^\/fontaines-eau-potable(?:\/|$)/,
+          /^\/ravitaillement-velo(?:\/|$)/,
+          /^\/randonnee-bivouac(?:\/|$)/,
+          /^\/boulangeries-autour-de-moi(?:\/|$)/,
+          /^\/refuges-abris-randonnee(?:\/|$)/,
+          /^\/carte-randonnee-hors-ligne(?:\/|$)/,
+          /^\/privacy\.html$/,
+        ],
         // Cache runtime des tuiles topo + réponses Overpass déjà visitées
         // => premier niveau d'offline sur les zones déjà ouvertes.
         runtimeCaching: [

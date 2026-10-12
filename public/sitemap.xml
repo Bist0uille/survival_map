@@ -1,7 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://survimap.com/</loc>
-    <changefreq>monthly</changefreq>
-  </url>
+  <url><loc>https://survimap.com/</loc></url>
+  <url><loc>https://survimap.com/guides/</loc></url>
+  <url><loc>https://survimap.com/fontaines-eau-potable/</loc></url>
+  <url><loc>https://survimap.com/ravitaillement-velo/</loc></url>
+  <url><loc>https://survimap.com/randonnee-bivouac/</loc></url>
+  <url><loc>https://survimap.com/boulangeries-autour-de-moi/</loc></url>
+  <url><loc>https://survimap.com/refuges-abris-randonnee/</loc></url>
+  <url><loc>https://survimap.com/carte-randonnee-hors-ligne/</loc></url>
+  <url><loc>https://survimap.com/privacy.html</loc></url>
 </urlset>

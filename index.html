@@ -8,21 +8,21 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
     <meta name="theme-color" content="#15803d" />
-    <title>Survival Map — rando & bivouac</title>
+    <title>Survimap — Fontaines, ravitaillement vélo et randonnée</title>
     <meta
       name="description"
-      content="Carte topo gratuite pour la rando et le bivouac : points d'eau, abris, refuges, itinéraires qui suivent les sentiers, météo — et tout fonctionne hors-ligne. France, Espagne, Italie."
+      content="Trouvez fontaines, boulangeries, points d’eau et refuges sur Survimap. Une carte gratuite pour la ville, le voyage à vélo et la randonnée avec bivouac."
     />
     <link rel="canonical" href="https://survimap.com/" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://survimap.com/" />
-    <meta property="og:site_name" content="Survival Map" />
-    <meta property="og:title" content="Survival Map — rando & bivouac" />
+    <meta property="og:site_name" content="Survimap" />
+    <meta property="og:title" content="Survimap — Fontaines, ravitaillement vélo et randonnée" />
     <meta
       property="og:description"
-      content="Carte topo gratuite pour la rando et le bivouac : points d'eau, abris, refuges, itinéraires, météo — hors-ligne. France, Espagne, Italie."
+      content="Fontaines en ville, boulangeries à vélo, eau et refuges en randonnée : préparez vos arrêts avec une carte gratuite, sans compte."
     />
     <meta property="og:image" content="https://survimap.com/og-image.png" />
     <meta property="og:image:width" content="1200" />
@@ -30,10 +30,10 @@
     <meta property="og:locale" content="fr_FR" />
 
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Survival Map — rando & bivouac" />
+    <meta name="twitter:title" content="Survimap — Fontaines, ravitaillement vélo et randonnée" />
     <meta
       name="twitter:description"
-      content="Carte topo gratuite pour la rando et le bivouac : points d'eau, abris, refuges, itinéraires, météo — hors-ligne."
+      content="Fontaines en ville, boulangeries à vélo, eau et refuges en randonnée : préparez vos arrêts avec une carte gratuite, sans compte."
     />
     <meta name="twitter:image" content="https://survimap.com/og-image.png" />
 
@@ -41,13 +41,24 @@
       {
         "@context": "https://schema.org",
         "@type": "WebApplication",
-        "name": "Survival Map",
+        "name": "Survimap",
+        "alternateName": "Survival Map",
         "url": "https://survimap.com/",
-        "description": "Carte topo gratuite pour la randonnée et le bivouac : points d'eau, abris, refuges, itinéraires qui suivent les sentiers, météo, hors-ligne. Couverture France, Espagne, Italie.",
+        "description": "Carte gratuite pour repérer fontaines, points d’eau, commerces de ravitaillement, refuges et sentiers en ville, à vélo ou en randonnée. France, Espagne, Italie. Consultation hors ligne après téléchargement des données.",
         "applicationCategory": "TravelApplication",
         "operatingSystem": "Web",
         "inLanguage": "fr",
         "offers": { "@type": "Offer", "price": "0", "priceCurrency": "EUR" }
+      }
+    </script>
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebSite",
+        "name": "Survimap",
+        "alternateName": "Survival Map",
+        "url": "https://survimap.com/",
+        "inLanguage": "fr"
       }
     </script>
     <!-- CSS critique inline : garantit la hauteur AVANT le bundle CSS,
@@ -65,10 +76,15 @@
     <div id="root"></div>
     <noscript>
       <p>
-        <strong>Survival Map</strong> — carte topo gratuite pour la randonnée et le bivouac :
-        points d'eau, abris, refuges, itinéraires qui suivent les sentiers, météo, utilisable
-        hors-ligne. Couverture France, Espagne, Italie. JavaScript est nécessaire pour afficher
+        <strong>Survimap</strong> — carte gratuite pour trouver fontaines, boulangeries,
+        points d'eau, abris, refuges et sentiers. Consultation hors ligne après téléchargement
+        des données. Couverture France, Espagne, Italie. JavaScript est nécessaire pour afficher
         la carte : <a href="https://survimap.com/">survimap.com</a>.
+      </p>
+      <p>Consultez nos guides sans JavaScript :
+        <a href="/fontaines-eau-potable/">fontaines et points d’eau</a>,
+        <a href="/ravitaillement-velo/">ravitaillement à vélo</a>,
+        <a href="/randonnee-bivouac/">randonnée et bivouac</a>.
       </p>
     </noscript>
     <script type="module" src="/src/main.tsx"></script>

@@ -61,6 +61,12 @@ export function WelcomePanel({ onClose }: WelcomePanelProps) {
         >
           C'est parti
         </button>
+        <nav aria-label="Guides pratiques" className="mt-3 flex justify-center gap-3 text-xs text-green-800 underline">
+          <a href="/fontaines-eau-potable/">Fontaines</a>
+          <a href="/ravitaillement-velo/">À vélo</a>
+          <a href="/randonnee-bivouac/">Bivouac</a>
+          <a href="/guides/">Tous les guides</a>
+        </nav>
       </div>
     </div>
   )
