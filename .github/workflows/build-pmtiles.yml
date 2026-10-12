@@ -38,7 +38,7 @@ jobs:
       - name: Construire les PMTiles (télécharge FR+ES+IT, filtre, build)
         run: bash scripts/process-osm.sh "france spain italy"
 
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: tiles
           retention-days: 1
@@ -47,7 +47,7 @@ jobs:
             /tmp/pois.pmtiles
             /tmp/routes.pmtiles
       - name: Rapport de fusion des auberges (sources, ajouts, cas ambigus)
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: hostel-merge-report
           retention-days: 90
