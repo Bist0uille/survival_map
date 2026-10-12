@@ -34,8 +34,8 @@ export function WelcomePanel({ onClose }: WelcomePanelProps) {
               <Droplet size={15} />
             </span>
             <span>
-              <b>Filtre par besoin</b> — boire, manger, dormir, se laver, recharger… dans la barre
-              du haut.
+              <b>Filtre par besoin</b> — Eau, Manger et Dormir en haut. Le bouton Plus ouvre
+              toutes les catégories.
             </span>
           </li>
           <li className="flex items-start gap-3">
