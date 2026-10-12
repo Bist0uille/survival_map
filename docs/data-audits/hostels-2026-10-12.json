@@ -1,0 +1,1347 @@
+{
+  "osm_timestamp": "2026-10-12T15:48:31Z",
+  "cities": {
+    "Paris": {
+      "bbox": [
+        48.815,
+        2.224,
+        48.902,
+        2.47
+      ],
+      "datatourisme": [
+        {
+          "name": "JO&JOE Paris - Gentilly",
+          "strict": true,
+          "lat": 48.816303,
+          "lon": 2.338204,
+          "updated": "2026-09-01",
+          "producer": "Paris je t'aime - Office de Tourisme",
+          "contacts": "#https://www.joandjoe.com/fr/paris-gentilly",
+          "description": "JO&JOE propose un hébergement hybride entre auberge de jeunesse et hôtel, avec des chambres individuelles ou partagées et une cuisine offrant plats frais, cocktails et mur à bière en libre-service. JO&JOE Paris - Gentilly est idéalement situé en face du plus grand campus parisien, proche de la cité universitaire internationale et du Stade Charlety. C'est l'endroit parfait pour découvrir la capitale, avec un accès facile en RER B au centre de Paris et aux aéroports.",
+          "types": "https://www.datatourisme.fr/ontology/core#PlaceOfInterest|https://www.datatourisme.fr/ontology/core#PointOfInterest|https://www.datatourisme.fr/ontology/core#Accommodation|https://www.datatourisme.fr/ontology/core#CollectiveAccommodation|https://www.datatourisme.fr/ontology/core#YouthHostelAndInternationalCenter|http://schema.org/Accommodation|http://schema.org/LodgingBusiness|http://schema.org/Hostel",
+          "url": "https://data.datatourisme.fr/19/c68b1780-20cd-31e0-ab37-d581cf3f603a"
+        },
+        {
+          "name": "Hôtel Cis Paris Kellermann",
+          "strict": true,
+          "lat": 48.81969,
+          "lon": 2.3566933,
+          "updated": "2026-09-01",
+          "producer": "Paris je t'aime - Office de Tourisme",
+          "contacts": "#http://www.cisp.fr/",
+          "description": "En plein cœur de la capitale, dans un cadre calme et verdoyant, séjournez dans l'une des 175 chambres de l'Hôtel Cis Paris Kellermann. Profitez du petit-déjeuner, du déjeuner et du dîner au self-service ou au restaurant Le Figuier. Besoin d'organiser une réunion ? Pas de souci, l'hôtel dispose de 6 salles pour jusqu'à 80 personnes. Un service est dédié aux groupes pour rendre leur séjour inoubliable !",
+          "types": "https://www.datatourisme.fr/ontology/core#PlaceOfInterest|https://www.datatourisme.fr/ontology/core#PointOfInterest|https://www.datatourisme.fr/ontology/core#Accommodation|https://www.datatourisme.fr/ontology/core#CollectiveAccommodation|https://www.datatourisme.fr/ontology/core#YouthHostelAndInternationalCenter|http://schema.org/Accommodation|http://schema.org/LodgingBusiness|http://schema.org/Hostel",
+          "url": "https://data.datatourisme.fr/19/89311b70-e397-3f4c-9d62-b8345601d225"
+        },
+        {
+          "name": "Auberge de Jeunesse HI Paris Yves Robert",
+          "strict": true,
+          "lat": 48.88862,
+          "lon": 2.3629243,
+          "updated": "2026-09-01",
+          "producer": "Paris je t'aime - Office de Tourisme",
+          "contacts": "#https://www.hifrance.org/auberges-de-jeunesse/paris-yves-robert/",
+          "description": "L'auberge de jeunesse HI Paris-Yves Robert, près de la butte Montmartre, propose un séjour éco-citoyen abordable au cœur de Paris. Ambiance chaleureuse pour découvrir la ville. Explorez Montmartre, prenez le funiculaire pour le Sacré-Cœur et la place du Tertre. Chambres de 1 à 6 lits, terrasse avec jardin aquatique, salle de spectacle, café/bar et restaurant sur place. Labellisée \"Accueil Vélo\", une expérience respectueuse et riche en découvertes.",
+          "types": "https://www.datatourisme.fr/ontology/core#PlaceOfInterest|https://www.datatourisme.fr/ontology/core#PointOfInterest|https://www.datatourisme.fr/ontology/core#Accommodation|https://www.datatourisme.fr/ontology/core#CollectiveAccommodation|https://www.datatourisme.fr/ontology/core#YouthHostelAndInternationalCenter|http://schema.org/Accommodation|http://schema.org/LodgingBusiness|http://schema.org/Hostel",
+          "url": "https://data.datatourisme.fr/19/408077d9-3121-32c8-9bcb-044f064d7bfc"
+        },
+        {
+          "name": "FIAP Paris",
+          "strict": true,
+          "lat": 48.830475,
+          "lon": 2.338066,
+          "updated": "2026-09-01",
+          "producer": "Paris je t'aime - Office de Tourisme",
+          "contacts": "#https://www.fiap.paris/",
+          "description": "Situé au cœur de Paris, le FIAP est un centre d’hébergement et de séminaires unique, propice aux rencontres interculturelles. Avec son ambiance chaleureuse et son architecture moderne, il offre un cadre idéal pour des échanges enrichissants entre participants du monde entier. Un lieu incontournable pour ceux en quête de partage et d'ouverture sur le monde.",
+          "types": "https://www.datatourisme.fr/ontology/core#PlaceOfInterest|https://www.datatourisme.fr/ontology/core#PointOfInterest|https://www.datatourisme.fr/ontology/core#Accommodation|https://www.datatourisme.fr/ontology/core#CollectiveAccommodation|https://www.datatourisme.fr/ontology/core#YouthHostelAndInternationalCenter|http://schema.org/Accommodation|http://schema.org/LodgingBusiness|http://schema.org/Hostel",
+          "url": "https://data.datatourisme.fr/19/9787a2ad-e500-3ddb-9b8c-ae8a3c585b43"
+        },
+        {
+          "name": "JO&JOE Paris Nation",
+          "strict": true,
+          "lat": 48.85245,
+          "lon": 2.4009538,
+          "updated": "2026-09-01",
+          "producer": "Paris je t'aime - Office de Tourisme",
+          "contacts": "#http://www.joandjoe.com/paris-nation/",
+          "description": "JO&JOE, le compromis entre hôtel et auberge de jeunesse à Paris. Espaces modernes, design, événements artistiques et musicaux inédits. Lieu de partage interculturel dans le quartier bohème du XXe arrondissement. Proche des transports en commun. Restaurant bar chaleureux, cuisine artisanale et locale. Chambres privées, dortoirs avec salles de bain attenantes ou partagées. Rooftop de 110 m² avec bar pour profiter d'un moment convivial. Profitez de Paris à prix abordable avec JO&JOE.",
+          "types": "https://www.datatourisme.fr/ontology/core#PlaceOfInterest|https://www.datatourisme.fr/ontology/core#PointOfInterest|https://www.datatourisme.fr/ontology/core#Accommodation|https://www.datatourisme.fr/ontology/core#CollectiveAccommodation|https://www.datatourisme.fr/ontology/core#YouthHostelAndInternationalCenter|http://schema.org/Accommodation|http://schema.org/LodgingBusiness|http://schema.org/Hostel",
+          "url": "https://data.datatourisme.fr/19/4a06f60f-b0eb-3d82-819f-ff8d2bb3b762"
+        },
+        {
+          "name": "Auberge de jeunesse MIJE Fauconnier",
+          "strict": true,
+          "lat": 48.854023,
+          "lon": 2.3596802,
+          "updated": "2026-09-01",
+          "producer": "Paris je t'aime - Office de Tourisme",
+          "contacts": "#https://www.mije.com/auberge-jeunesse-paris/fauconnier",
+          "description": "Au cœur du Marais à Paris se situe l'auberge de jeunesse MIJE Fauconnier, l'une des trois adresses de la chaîne MIJE. Idéalement placée, elle accueille une clientèle diversifiée dans un cadre sécurisé, proposant des chambres de 3 à 9 lits avec petit-déjeuner continental inclus. Sa localisation centrale permet un accès facile aux lieux touristiques tels que Notre Dame, l'Hôtel de Ville, l'île de la Cité ou le Louvre. Profitez de ce quartier dynamique lors de votre séjour.",
+          "types": "https://www.datatourisme.fr/ontology/core#PlaceOfInterest|https://www.datatourisme.fr/ontology/core#PointOfInterest|https://www.datatourisme.fr/ontology/core#Accommodation|https://www.datatourisme.fr/ontology/core#CollectiveAccommodation|https://www.datatourisme.fr/ontology/core#YouthHostelAndInternationalCenter|http://schema.org/Accommodation|http://schema.org/LodgingBusiness|http://schema.org/Hostel",
+          "url": "https://data.datatourisme.fr/19/b574cae7-ff7b-3e24-81c6-87357b8699ba"
+        },
+        {
+          "name": "Auberge de Jeunesse Paris Yves Robert",
+          "strict": true,
+          "lat": 48.888115,
+          "lon": 2.362747,
+          "updated": "2026-04-09",
+          "producer": "Choose Paris Region",
+          "contacts": "#https://www.hifrance.org/auberges-de-jeunesse/paris-yves-robert/",
+          "description": "Au cœur de Paris, profitez des services de l’Auberge de jeunesse Paris - Yves Robert, un espace de verdure dans un éco-quartier tout proche de la Butte Montmartre et des principaux sites touristiques de la capitale.",
+          "types": "https://www.datatourisme.fr/ontology/core#PlaceOfInterest|https://www.datatourisme.fr/ontology/core#PointOfInterest|https://www.datatourisme.fr/ontology/core#Accommodation|https://www.datatourisme.fr/ontology/core#CollectiveAccommodation|https://www.datatourisme.fr/ontology/core#CollectiveHostel|http://schema.org/Accommodation|http://schema.org/LodgingBusiness|http://schema.org/Hostel",
+          "url": "https://data.datatourisme.fr/13/a131a739-b86e-3acd-a0ab-59471240cd88"
+        },
+        {
+          "name": "Aloha Hostel by Hiphophostels",
+          "strict": true,
+          "lat": 48.84218,
+          "lon": 2.304602,
+          "updated": "2026-09-01",
+          "producer": "Paris je t'aime - Office de Tourisme",
+          "contacts": "#http://www.aloha.fr/",
+          "description": "Situé dans un quartier résidentiel, Aloha Hostel est proche des principaux lieux touristiques de Paris. Le concept d'hébergement bon marché est ici réinventé avec des chambres récemment rénovées pour 4 personnes ou des chambres doubles privées. Pas de contrainte horaire, juste un couvre-feu à 2h du matin. Les tarifs débutent à 25€ par nuit et par personne, petit-déjeuner inclus. Une adhésion au réseau est requise pour accéder à Internet et à la presse internationale.",
+          "types": "https://www.datatourisme.fr/ontology/core#PlaceOfInterest|https://www.datatourisme.fr/ontology/core#PointOfInterest|https://www.datatourisme.fr/ontology/core#Accommodation|https://www.datatourisme.fr/ontology/core#CollectiveAccommodation|https://www.datatourisme.fr/ontology/core#YouthHostelAndInternationalCenter|http://schema.org/Accommodation|http://schema.org/LodgingBusiness|http://schema.org/Hostel",
+          "url": "https://data.datatourisme.fr/19/4dcba4cc-4176-3203-b59a-2017e0e30371"
+        },
+        {
+          "name": "Plug-Inn Boutique Hostel by Hiphophostels",
+          "strict": true,
+          "lat": 48.885433,
+          "lon": 2.335197,
+          "updated": "2026-09-01",
+          "producer": "Paris je t'aime - Office de Tourisme",
+          "contacts": "#http://hiphophostels.com/fr/auberges/plug-inn/",
+          "description": "Cet établissement historique met à disposition de ses clients 56 lits répartis comme suit : des dortoirs à 33 €, des chambres doubles ou twin à 60 €, et des chambres triples à 90 €. Le petit déjeuner est disponible en supplément. Les langues parlées par le personnel sont le français, l'anglais, l'italien et l'arabe. Profitez d'un séjour confortable et convivial dans cet ancien hôtel aux tarifs attractifs et à la diversité linguistique appréciable.",
+          "types": "https://www.datatourisme.fr/ontology/core#PlaceOfInterest|https://www.datatourisme.fr/ontology/core#PointOfInterest|https://www.datatourisme.fr/ontology/core#Accommodation|https://www.datatourisme.fr/ontology/core#CollectiveAccommodation|https://www.datatourisme.fr/ontology/core#YouthHostelAndInternationalCenter|http://schema.org/Accommodation|http://schema.org/LodgingBusiness|http://schema.org/Hostel",
+          "url": "https://data.datatourisme.fr/19/ec3b648f-b508-3f55-b092-2c17cbb79431"
+        },
+        {
+          "name": "Oops Design Hostel by Hiphophostels",
+          "strict": true,
+          "lat": 48.834076,
+          "lon": 2.3533862,
+          "updated": "2026-09-01",
+          "producer": "Paris je t'aime - Office de Tourisme",
+          "contacts": "#http://www.oops-paris.com/",
+          "description": "Hébergement entièrement rénové avec salle de bain privative dans chaque chambre. Accès gratuit au Wi-Fi et à Internet. Capacité de 99 lits. Tarifs à partir de 29 euros par personne/nuit en dortoir. Petit-déjeuner à 4€ en réservation et 6€ en dernière minute. Profitez d'un confort moderne à prix abordable lors de votre séjour.",
+          "types": "https://www.datatourisme.fr/ontology/core#PlaceOfInterest|https://www.datatourisme.fr/ontology/core#PointOfInterest|https://www.datatourisme.fr/ontology/core#Accommodation|https://www.datatourisme.fr/ontology/core#CollectiveAccommodation|https://www.datatourisme.fr/ontology/core#YouthHostelAndInternationalCenter|http://schema.org/Accommodation|http://schema.org/LodgingBusiness|http://schema.org/Hostel",
+          "url": "https://data.datatourisme.fr/19/6e2d6a51-faf8-31eb-9e8e-8a6271979692"
+        },
+        {
+          "name": "Le Régent Montmartre",
+          "strict": true,
+          "lat": 48.88275,
+          "lon": 2.3450809,
+          "updated": "2026-09-01",
+          "producer": "Paris je t'aime - Office de Tourisme",
+          "contacts": "#http://www.leregent.com/",
+          "description": "Idéalement situé au cœur du 9ème arrondissement de Paris, Le Regent est entre la Gare du Nord, le Moulin Rouge et Pigalle. Cette auberge de jeunesse propose des tarifs attractifs sans compromis sur la qualité : cuisine équipée, salle de jeux, dortoirs ou chambres privées pour 2, 3 ou 4 personnes. Profitez de la connexion internet, Wifi et presse anglaise et française. Les chambres aux 5ème et 6ème étages offrent une vue imprenable. Une expérience inoubliable au Regent !",
+          "types": "https://www.datatourisme.fr/ontology/core#PlaceOfInterest|https://www.datatourisme.fr/ontology/core#PointOfInterest|https://www.datatourisme.fr/ontology/core#Accommodation|https://www.datatourisme.fr/ontology/core#CollectiveAccommodation|https://www.datatourisme.fr/ontology/core#YouthHostelAndInternationalCenter|http://schema.org/Accommodation|http://schema.org/LodgingBusiness|http://schema.org/Hostel",
+          "url": "https://data.datatourisme.fr/19/745f9fb2-dc8b-390d-8fad-d0c528523c26"
+        },
+        {
+          "name": "Young and Happy Latin Quater by Hiphophostels",
+          "strict": true,
+          "lat": 48.8422147,
+          "lon": 2.3496825,
+          "updated": "2026-09-01",
+          "producer": "Paris je t'aime - Office de Tourisme",
+          "contacts": "#http://www.youngandhappy.fr/",
+          "description": "Au cœur du Quartier Latin, le Young and Happy Latin Quarter by Hiphophostels est le premier hostel indépendant de Paris. Avec 30 ans d'expérience, il accueille une clientèle internationale dans une ambiance conviviale. Son équipe bilingue, tarifs compétitifs et son bar favorisent les rencontres. Proche de la Seine, de Notre-Dame et de la station de métro Place Monge (ligne 7) pour explorer facilement la ville.",
+          "types": "https://www.datatourisme.fr/ontology/core#PlaceOfInterest|https://www.datatourisme.fr/ontology/core#PointOfInterest|https://www.datatourisme.fr/ontology/core#Accommodation|https://www.datatourisme.fr/ontology/core#CollectiveAccommodation|https://www.datatourisme.fr/ontology/core#YouthHostelAndInternationalCenter|http://schema.org/Accommodation|http://schema.org/LodgingBusiness|http://schema.org/Hostel",
+          "url": "https://data.datatourisme.fr/19/23752bac-3613-348f-8375-10fc46a24f43"
+        },
+        {
+          "name": "Le Village Montmartre by Hiphophostels",
+          "strict": true,
+          "lat": 48.88394,
+          "lon": 2.3443146,
+          "updated": "2026-09-01",
+          "producer": "Paris je t'aime - Office de Tourisme",
+          "contacts": "#http://www.villagehostel.fr/",
+          "description": "Idéalement situé près du Moulin Rouge, le Village Montmartre offre une ambiance conviviale avec vue sur le Sacré-Cœur depuis la terrasse ou les chambres supérieures. Que vous choisissiez chambres rénovées ou dortoirs modernes, notre établissement saura satisfaire une clientèle internationale. Profitez de bons moments dans notre salle commune ou explorez la vie nocturne du quartier des Abbesses. Bienvenue au Village Montmartre, votre adresse parisienne idéale.",
+          "types": "https://www.datatourisme.fr/ontology/core#PlaceOfInterest|https://www.datatourisme.fr/ontology/core#PointOfInterest|https://www.datatourisme.fr/ontology/core#Accommodation|https://www.datatourisme.fr/ontology/core#CollectiveAccommodation|https://www.datatourisme.fr/ontology/core#YouthHostelAndInternationalCenter|http://schema.org/Accommodation|http://schema.org/LodgingBusiness|http://schema.org/Hostel",
+          "url": "https://data.datatourisme.fr/19/4ec88829-3785-378a-9aff-4747f68ef589"
+        },
+        {
+          "name": "The People Paris Belleville",
+          "strict": true,
+          "lat": 48.8700982,
+          "lon": 2.378902824,
+          "updated": "2026-09-01",
+          "producer": "Paris je t'aime - Office de Tourisme",
+          "contacts": "#https://www.thepeoplehostel.com/fr/destinations/paris-belleville/",
+          "description": "The People Paris Belleville est une auberge de jeunesse de 162 lits (dortoirs 2-8 lits et chambres doubles), dotée d’un bar-restaurant ouvert en continu, terrasse, service festif (jazz, DJ, karaoké), située au 59 boulevard de Belleville, Paris 11e.",
+          "types": "https://www.datatourisme.fr/ontology/core#PlaceOfInterest|https://www.datatourisme.fr/ontology/core#PointOfInterest|https://www.datatourisme.fr/ontology/core#Accommodation|https://www.datatourisme.fr/ontology/core#CollectiveAccommodation|https://www.datatourisme.fr/ontology/core#YouthHostelAndInternationalCenter|http://schema.org/Accommodation|http://schema.org/LodgingBusiness|http://schema.org/Hostel",
+          "url": "https://data.datatourisme.fr/19/8e6f9546-567c-3687-a26d-c13498082217"
+        },
+        {
+          "name": "Caulaincourt Square Hostel by Hiphophostels",
+          "strict": true,
+          "lat": 48.88985,
+          "lon": 2.335896,
+          "updated": "2026-09-01",
+          "producer": "Paris je t'aime - Office de Tourisme",
+          "contacts": "#http://caulaincourt.com/?lang=fr",
+          "description": "Notre établissement dispose de 99 lits répartis dans des chambres de 1 à 3 lits, offrant ainsi un large choix d'hébergement. Les tarifs varient entre 38 et 86€ pour une chambre individuelle, permettant à chacun de trouver une formule adaptée à ses besoins et son budget. Pour les voyageurs en quête d'économies, des dortoirs sont également disponibles à partir de seulement 24€. Profitez de nos installations confortables à des prix attractifs pour un séjour agréable et abordable.",
+          "types": "https://www.datatourisme.fr/ontology/core#PlaceOfInterest|https://www.datatourisme.fr/ontology/core#PointOfInterest|https://www.datatourisme.fr/ontology/core#Accommodation|https://www.datatourisme.fr/ontology/core#CollectiveAccommodation|https://www.datatourisme.fr/ontology/core#YouthHostelAndInternationalCenter|http://schema.org/Accommodation|http://schema.org/LodgingBusiness|http://schema.org/Hostel",
+          "url": "https://data.datatourisme.fr/19/14e2450b-b1b1-3423-8346-85dc98d00771"
+        },
+        {
+          "name": "3 Ducks Boutique Hostel by Hiphophostels",
+          "strict": true,
+          "lat": 48.843605,
+          "lon": 2.292335,
+          "updated": "2026-09-01",
+          "producer": "Paris je t'aime - Office de Tourisme",
+          "contacts": "#http://www.3ducks.fr/",
+          "description": "Idéalement situé en centre-ville, ce lieu offre un hébergement convivial avec 120 lits disponibles, allant de 2 à 8 personnes pour un confort et une intimité appréciables. Les tarifs attractifs débutent à 29€ par personne et par nuit en dortoir. Pensez à réserver votre petit-déjeuner à 4€ en avance pour bien commencer la journée, ou à 6€ en dernière minute pour les adeptes de la grasse matinée. Parfait pour entamer une journée riche en découvertes ou en activités dans la ville.",
+          "types": "https://www.datatourisme.fr/ontology/core#PlaceOfInterest|https://www.datatourisme.fr/ontology/core#PointOfInterest|https://www.datatourisme.fr/ontology/core#Accommodation|https://www.datatourisme.fr/ontology/core#CollectiveAccommodation|https://www.datatourisme.fr/ontology/core#YouthHostelAndInternationalCenter|http://schema.org/Accommodation|http://schema.org/LodgingBusiness|http://schema.org/Hostel",
+          "url": "https://data.datatourisme.fr/19/35aef823-8e07-3453-91a2-0015a50e4148"
+        },
+        {
+          "name": "Vintage Paris Gare du Nord by Hiphophostels",
+          "strict": true,
+          "lat": 48.88177,
+          "lon": 2.3471944,
+          "updated": "2026-09-01",
+          "producer": "Paris je t'aime - Office de Tourisme",
+          "contacts": "#http://www.vintage-hostel.com/",
+          "description": "Idéalement situé dans le 9ème arrondissement de Paris, Le Vintage propose des dortoirs mixtes ou non, des chambres simples ou doubles, des soirées à thèmes, le wifi gratuit, une salle de sport et une vue imprenable sur les toits de Paris. Chaque matin, profitez d'un délicieux petit-déjeuner et de l'assistance de l'équipe. Avec ses 13 chambres doubles, 4 chambres économiques, 3 chambres twin et 3 chambres quadruples, Le Vintage vous offre un séjour inoubliable à Paris.",
+          "types": "https://www.datatourisme.fr/ontology/core#PlaceOfInterest|https://www.datatourisme.fr/ontology/core#PointOfInterest|https://www.datatourisme.fr/ontology/core#Accommodation|https://www.datatourisme.fr/ontology/core#CollectiveAccommodation|https://www.datatourisme.fr/ontology/core#YouthHostelAndInternationalCenter|http://schema.org/Accommodation|http://schema.org/LodgingBusiness|http://schema.org/Hostel",
+          "url": "https://data.datatourisme.fr/19/a0f15ed6-8493-3d7c-9a64-d5e213ff3a32"
+        },
+        {
+          "name": "La maison des mines et des ponts et chaussées",
+          "strict": true,
+          "lat": 48.841953,
+          "lon": 2.3410978,
+          "updated": "2026-09-01",
+          "producer": "Paris je t'aime - Office de Tourisme",
+          "contacts": "#http://www.maisondesmines.com/",
+          "description": "La maison des mines et des ponts et chaussées, au cœur du Quartier Latin, accueille les étudiants de Paris-Tech tout au long de l'année scolaire. De juin à septembre, elle devient une résidence estivale avec 200 chambres, idéale pour explorer Paris. Les réservations ouvrent en début d'année avec des tarifs abordables de 35€ (chambre double) à 45€ (chambre individuelle), plus 5€ pour une salle de bain privée. Profitez de cette opportunité pour un séjour authentique à Paris.",
+          "types": "https://www.datatourisme.fr/ontology/core#PlaceOfInterest|https://www.datatourisme.fr/ontology/core#PointOfInterest|https://www.datatourisme.fr/ontology/core#Accommodation|https://www.datatourisme.fr/ontology/core#CollectiveAccommodation|https://www.datatourisme.fr/ontology/core#YouthHostelAndInternationalCenter|http://schema.org/Accommodation|http://schema.org/LodgingBusiness|http://schema.org/Hostel",
+          "url": "https://data.datatourisme.fr/19/a3958caf-0d6f-3893-81db-01b8851fedee"
+        },
+        {
+          "name": "Première Classe Hosho Paris Sud Porte d'Italie",
+          "strict": true,
+          "lat": 48.815212,
+          "lon": 2.3592496,
+          "updated": "2026-09-01",
+          "producer": "Paris je t'aime - Office de Tourisme",
+          "contacts": "#https://hosho-paris-sud-porte-italie.premiereclasse.com/fr-fr/",
+          "description": "Profitez du confort à petit prix à l'hôtel Première Classe Hosho Paris Sud Porte d'Italie. Chambres innovantes de 4, 6 ou 8 lits avec salle de douche privative et WC séparés 24h/24 via bornes interactives. Petit déjeuner varié à volonté, wifi gratuit, distributeurs de boissons et en-cas. Idéal pour voyages d'affaires ou vacances en France ou en Europe.",
+          "types": "https://www.datatourisme.fr/ontology/core#PlaceOfInterest|https://www.datatourisme.fr/ontology/core#PointOfInterest|https://www.datatourisme.fr/ontology/core#Accommodation|https://www.datatourisme.fr/ontology/core#CollectiveAccommodation|https://www.datatourisme.fr/ontology/core#YouthHostelAndInternationalCenter|http://schema.org/Accommodation|http://schema.org/LodgingBusiness|http://schema.org/Hostel",
+          "url": "https://data.datatourisme.fr/19/10f4dd93-66ae-3791-b50b-03681db55748"
+        },
+        {
+          "name": "Auberge de jeunesse MIJE Fourcy",
+          "strict": true,
+          "lat": 48.854618,
+          "lon": 2.3591695,
+          "updated": "2026-09-01",
+          "producer": "Paris je t'aime - Office de Tourisme",
+          "contacts": "#https://www.mije.com/auberge-jeunesse-paris/fourcy",
+          "description": "L'auberge de jeunesse MIJE Fourcy, dans le quartier du Marais à Paris, propose des chambres partagées de 3 à 10 lits et des chambres privées jusqu'à 10 lits. Les tarifs abordables comprennent petit déjeuner et dîners. Idéalement située pour visiter les sites touristiques, l'auberge offre 60 chambres et 206 lits de qualité à partir de 33,50€ par nuit. Avec salles de réunion, self-restaurant, cour intérieure et bagagerie gratuite, MIJE Fourcy est parfait pour séjourner à Paris.",
+          "types": "https://www.datatourisme.fr/ontology/core#PlaceOfInterest|https://www.datatourisme.fr/ontology/core#PointOfInterest|https://www.datatourisme.fr/ontology/core#Accommodation|https://www.datatourisme.fr/ontology/core#CollectiveAccommodation|https://www.datatourisme.fr/ontology/core#YouthHostelAndInternationalCenter|http://schema.org/Accommodation|http://schema.org/LodgingBusiness|http://schema.org/Hostel",
+          "url": "https://data.datatourisme.fr/19/58bebf1c-29bb-3e14-b261-9f58c6615449"
+        },
+        {
+          "name": "Auberge de jeunesse MIJE Maubuisson",
+          "strict": true,
+          "lat": 48.855343,
+          "lon": 2.3553712,
+          "updated": "2026-09-01",
+          "producer": "Paris je t'aime - Office de Tourisme",
+          "contacts": "#https://www.mije.com/auberge-jeunesse-paris/maubuisson",
+          "description": "La MIJE Maubuisson, au cœur du Marais, propose des chambres partagées de 3 à 7 lits et des chambres privées jusqu'à 7 lits. Petit-déjeuner continental inclus et dîners abordables. Proche de Notre Dame et de l'Hôtel de Ville, point de départ idéal pour découvrir Paris. 29 chambres accueillant 99 personnes, cadre sécurisé et convivial chargé d'histoire. Profitez des musées, boutiques et restaurants du quartier. À partir de 34 € la nuit en chambre partagée dès 4 personnes.",
+          "types": "https://www.datatourisme.fr/ontology/core#PlaceOfInterest|https://www.datatourisme.fr/ontology/core#PointOfInterest|https://www.datatourisme.fr/ontology/core#Accommodation|https://www.datatourisme.fr/ontology/core#CollectiveAccommodation|https://www.datatourisme.fr/ontology/core#YouthHostelAndInternationalCenter|http://schema.org/Accommodation|http://schema.org/LodgingBusiness|http://schema.org/Hostel",
+          "url": "https://data.datatourisme.fr/19/b39a1215-7f56-3d1a-81b9-30b6df9db989"
+        }
+      ],
+      "osm": [
+        {
+          "id": "node/251474119",
+          "lat": 48.8423193,
+          "lon": 2.3496779,
+          "edited": "2014-04-13T15:57:55Z",
+          "tags": {
+            "name": "Young and Happy Hostel",
+            "tourism": "hostel"
+          }
+        },
+        {
+          "id": "node/252863244",
+          "lat": 48.8421541,
+          "lon": 2.3046648,
+          "edited": "2024-12-04T14:16:25Z",
+          "tags": {
+            "check_date": "2024-12-04",
+            "contact:city": "Paris",
+            "contact:housenumber": "1",
+            "contact:phone": "+33 1 42 73 03 03",
+            "contact:postcode": "75015",
+            "contact:street": "Rue Borromée",
+            "name": "Aloha Youth Hostel",
+            "tourism": "hostel"
+          }
+        },
+        {
+          "id": "node/274247570",
+          "lat": 48.8911737,
+          "lon": 2.376409,
+          "edited": "2026-07-30T09:34:28Z",
+          "tags": {
+            "addr:city": "Paris",
+            "addr:housenumber": "188",
+            "addr:postcode": "75019",
+            "addr:street": "Rue de Crimée",
+            "check_date": "2026-06-29",
+            "internet_access": "wlan",
+            "name": "City Inn Paris",
+            "name:en": "City Inn Paris",
+            "phone": "+33 1 40 36 75 29",
+            "ref:FR:SIRET": "40751181500042",
+            "self_service": "partially",
+            "tourism": "hostel",
+            "website": "https://cityinnparis.top/",
+            "wheelchair": "no",
+            "wikidata": "Q111113733"
+          }
+        },
+        {
+          "id": "node/332431640",
+          "lat": 48.8885148,
+          "lon": 2.3788605,
+          "edited": "2026-08-08T12:20:13Z",
+          "tags": {
+            "air_conditioning": "no",
+            "bathroom:privacy": "partial",
+            "branch": "Paris Canal",
+            "brand": "St Christopher's Inn",
+            "brand:wikidata": "Q111019180",
+            "check_date": "2026-07-26",
+            "guest_house": "hostel",
+            "level": "-1;0;1;2;3;4;5;6",
+            "name": "St Christopher's Inn",
+            "reservation": "yes",
+            "toilets:wheelchair": "yes",
+            "tourism": "hostel",
+            "website": "https://www.st-christophers.co.uk/canal-hostel",
+            "wheelchair": "yes"
+          }
+        },
+        {
+          "id": "node/1780671034",
+          "lat": 48.8318638,
+          "lon": 2.3045427,
+          "edited": "2026-10-07T15:45:26Z",
+          "tags": {
+            "check_date": "2026-10-07",
+            "contact:city": "Paris",
+            "contact:housenumber": "62",
+            "contact:postcode": "75015",
+            "contact:street": "Rue des Morillons",
+            "contact:website": "https://artyparis.fr/",
+            "name": "Arty Paris",
+            "source": "cadastre-dgi-fr source : Direction Générale des Impôts - Cadastre. Mise à jour : 2012",
+            "tourism": "hostel",
+            "wheelchair": "no"
+          }
+        },
+        {
+          "id": "node/1783419493",
+          "lat": 48.8340146,
+          "lon": 2.3534243,
+          "edited": "2026-07-16T20:06:05Z",
+          "tags": {
+            "check_date": "2025-04-26",
+            "check_date:internet_access": "2025-04-26",
+            "contact:phone": "+33 1 47 07 47 00",
+            "contact:website": "https://oops-paris.com",
+            "internet_access": "wlan",
+            "internet_access:fee": "no",
+            "name": "Oops!",
+            "ref:FR:SIRET": "54207876100013",
+            "smoking": "no",
+            "tourism": "hostel",
+            "wheelchair": "yes"
+          }
+        },
+        {
+          "id": "node/2131789817",
+          "lat": 48.8893962,
+          "lon": 2.4008732,
+          "edited": "2022-05-04T16:00:49Z",
+          "tags": {
+            "name": "CPH pre st gervais - Association Aurore",
+            "name:fr": "My Home",
+            "tourism": "hostel"
+          }
+        },
+        {
+          "id": "node/2311230666",
+          "lat": 48.8886172,
+          "lon": 2.3628833,
+          "edited": "2026-07-28T17:43:30Z",
+          "tags": {
+            "addr:city": "Paris",
+            "addr:housenumber": "20",
+            "addr:postcode": "75018",
+            "addr:street": "Esplanade Nathalie Sarraute",
+            "alt_name": "Auberge de jeunesse Paris - Yves Robert",
+            "beds": "330",
+            "contact:email": "paris.yves-robert@hifrance.org",
+            "contact:phone": "+33 1 40 38 87 90",
+            "contact:website": "https://www.hifrance.org/auberges-de-jeunesse/paris-yves-robert/",
+            "internet_access": "wlan",
+            "internet_access:fee": "customers",
+            "name": "Auberge de jeunesse Yves Robert",
+            "name:eu": "Yves Robert Gazte Atepetxea",
+            "old_name": "Auberge de jeunesse Paris-Pajol",
+            "opening_hours": "24/7",
+            "operator": "FUAJ",
+            "reservation": "yes",
+            "tourism": "hostel",
+            "wheelchair": "yes",
+            "wikidata": "Q109293311"
+          }
+        },
+        {
+          "id": "node/2383363275",
+          "lat": 48.8839493,
+          "lon": 2.3443151,
+          "edited": "2019-03-07T10:03:35Z",
+          "tags": {
+            "addr:housenumber": "20",
+            "addr:street": "Rue d'Orsel",
+            "name": "Le Village Hostel",
+            "phone": "+33 142 64 22 02",
+            "tourism": "hostel",
+            "website": "https://www.villagehostel.fr/"
+          }
+        },
+        {
+          "id": "node/2974188656",
+          "lat": 48.8596575,
+          "lon": 2.4078391,
+          "edited": "2026-07-30T09:18:37Z",
+          "tags": {
+            "addr:housenumber": "80",
+            "addr:street": "Rue Vitruve",
+            "check_date": "2022-08-28",
+            "email": "paris.le-dartagnan@hifrance.org",
+            "guest_house": "hostel",
+            "name": "Auberge de jeunesse Hi Paris Le d'Artagnan",
+            "phone": "+33 1 40 32 34 56",
+            "tourism": "hostel",
+            "website": "https://www.hifrance.org/auberges-de-jeunesse/paris-le-dartagnan/",
+            "wikidata": "Q111113704"
+          }
+        },
+        {
+          "id": "node/3809327557",
+          "lat": 48.8916219,
+          "lon": 2.3449588,
+          "edited": "2022-12-07T21:34:47Z",
+          "tags": {
+            "contact:city": "Paris",
+            "contact:housenumber": "62",
+            "contact:postcode": "75018",
+            "contact:street": "Rue Ramey",
+            "internet_access": "yes",
+            "internet_access:fee": "no",
+            "name": "Le Montclair",
+            "smoking": "no",
+            "tourism": "hostel",
+            "wheelchair": "no"
+          }
+        },
+        {
+          "id": "node/4006941735",
+          "lat": 48.8700169,
+          "lon": 2.3788692,
+          "edited": "2026-02-08T17:01:09Z",
+          "tags": {
+            "addr:city": "Paris",
+            "addr:housenumber": "59",
+            "addr:postcode": "75011",
+            "addr:street": "Boulevard de Belleville",
+            "branch": "Belleville",
+            "brand": "The People",
+            "brand:wikidata": "Q130213669",
+            "check_date": "2025-01-25",
+            "internet_access": "wlan",
+            "name": "The People",
+            "phone": "+33 1 43 55 09 97",
+            "tourism": "hostel",
+            "website": "https://www.thepeoplehostel.com/fr/destinations/paris-belleville/",
+            "wheelchair": "no"
+          }
+        },
+        {
+          "id": "node/4257206191",
+          "lat": 48.8676986,
+          "lon": 2.3665353,
+          "edited": "2016-06-21T18:44:05Z",
+          "tags": {
+            "internet_access": "wlan",
+            "name": "Labored",
+            "tourism": "hostel"
+          }
+        },
+        {
+          "id": "node/4261983789",
+          "lat": 48.8866143,
+          "lon": 2.3613321,
+          "edited": "2018-06-09T13:09:22Z",
+          "tags": {
+            "tourism": "hostel"
+          }
+        },
+        {
+          "id": "node/4513191889",
+          "lat": 48.8872135,
+          "lon": 2.3729957,
+          "edited": "2025-07-05T10:57:07Z",
+          "tags": {
+            "addr:city": "Paris",
+            "addr:housenumber": "48",
+            "addr:postcode": "75019",
+            "addr:street": "Avenue de Flandre",
+            "check_date": "2025-07-05",
+            "name": "Hôtel Tilde",
+            "phone": "+33 1 40 36 25 69",
+            "tourism": "hostel"
+          }
+        },
+        {
+          "id": "node/4519649589",
+          "lat": 48.8776389,
+          "lon": 2.3340807,
+          "edited": "2026-07-28T12:46:10Z",
+          "tags": {
+            "addr:city": "Paris",
+            "addr:housenumber": "1",
+            "addr:postcode": "75009",
+            "addr:street": "Rue de la Tour des Dames",
+            "guest_house": "hostel",
+            "internet_access": "yes",
+            "internet_access:fee": "yes",
+            "name": "BVJ Opéra Montmartre",
+            "opening_hours": "24/7",
+            "operator": "BJV",
+            "phone": "+33 1 42 36 88 18",
+            "tourism": "hostel",
+            "website": "https://www.bvjhostelparis.com/auberge/bvj-opera-montmartre-3/",
+            "wikidata": "Q111113684"
+          }
+        },
+        {
+          "id": "node/4835000937",
+          "lat": 48.8840449,
+          "lon": 2.3503808,
+          "edited": "2022-12-16T21:31:55Z",
+          "tags": {
+            "addr:city": "Paris",
+            "addr:housenumber": "122",
+            "addr:postcode": "75018",
+            "addr:street": "Boulevard de la Chapelle",
+            "guest_house": "hostel",
+            "name": "Jacobs Inn Hostel",
+            "phone": "+33 1 42 23 45 64",
+            "tourism": "hostel"
+          }
+        },
+        {
+          "id": "node/4893886770",
+          "lat": 48.894838,
+          "lon": 2.346068,
+          "edited": "2017-06-03T14:34:07Z",
+          "tags": {
+            "name": "Foyer d'étudiants - Chemin Neuf",
+            "name:en": "Student House - Chemin Neuf",
+            "tourism": "hostel"
+          }
+        },
+        {
+          "id": "node/5125829523",
+          "lat": 48.879756,
+          "lon": 2.3435941,
+          "edited": "2026-05-07T11:25:56Z",
+          "tags": {
+            "name": "Woodstock",
+            "tourism": "hostel",
+            "website": "https://woodstock.fr/"
+          }
+        },
+        {
+          "id": "node/5550553222",
+          "lat": 48.8435427,
+          "lon": 2.2925222,
+          "edited": "2024-03-10T17:42:14Z",
+          "tags": {
+            "addr:city": "Paris",
+            "addr:housenumber": "6",
+            "addr:postcode": "75015",
+            "addr:street": "Place Étienne Pernet",
+            "air_conditioning": "yes",
+            "contact:facebook": "https://www.facebook.com/3Ducks/",
+            "email": "backpack@3ducks.fr",
+            "image": "https://3ducks.fr/gallery/",
+            "internet_access": "yes",
+            "internet_access:fee": "customers",
+            "name": "3 Ducks Hostel",
+            "name:en": "3 ducks",
+            "operator": "Les Hostelines",
+            "phone": "+33148420405",
+            "tourism": "hostel",
+            "website": "https://3ducks.fr/"
+          }
+        },
+        {
+          "id": "node/6370585139",
+          "lat": 48.8658528,
+          "lon": 2.3087027,
+          "edited": "2023-08-28T10:06:02Z",
+          "tags": {
+            "addr:city": "Paris",
+            "addr:housenumber": "10",
+            "addr:postcode": "75008",
+            "addr:street": "Rue François 1er",
+            "contact:city": "Paris",
+            "contact:housenumber": "10",
+            "contact:postcode": "75008",
+            "contact:street": "Rue François 1er",
+            "contact:website": "https://adveniat-paris.org/fr/",
+            "internet_access": "yes",
+            "name": "Adveniat",
+            "tourism": "hostel"
+          }
+        },
+        {
+          "id": "node/6388594692",
+          "lat": 48.8621857,
+          "lon": 2.3488295,
+          "edited": "2026-07-02T01:15:33Z",
+          "tags": {
+            "addr:floor": "0",
+            "addr:housenumber": "83",
+            "addr:street": "Rue Rambuteau",
+            "check_date": "2026-01-30",
+            "contact:city": "Paris",
+            "contact:email": "contact@handsomehotelparis.com",
+            "contact:housenumber": "83",
+            "contact:phone": "+33 1 45 08 98 26",
+            "contact:postcode": "75001",
+            "contact:street": "Rue Rambuteau",
+            "level": "0",
+            "name": "Handsome Hotel",
+            "operator": "Elegancia Hotels",
+            "ref:FR:SIRET": "58208191500016",
+            "survey:date": "2025-04-22",
+            "tourism": "hostel",
+            "wheelchair": "no"
+          }
+        },
+        {
+          "id": "node/7717421060",
+          "lat": 48.8266734,
+          "lon": 2.3727031,
+          "edited": "2026-07-18T09:09:37Z",
+          "tags": {
+            "amenity": "coworking_space",
+            "internet_access": "wlan",
+            "internet_access:fee": "no",
+            "name": "Le Coffice",
+            "phone": "+33 1 43 44 30 19",
+            "ref:FR:SIRET": "85074630600016",
+            "tourism": "hostel",
+            "website": "https://www.le-coffice.fr/",
+            "wheelchair": "no"
+          }
+        },
+        {
+          "id": "node/8710239717",
+          "lat": 48.8657932,
+          "lon": 2.4064235,
+          "edited": "2021-07-22T21:11:29Z",
+          "tags": {
+            "addr:housenumber": "15",
+            "addr:postcode": "75020",
+            "addr:street": "Rue Géo Chavez",
+            "email": "kisskisslovelove@caramail.com",
+            "fixme": "site web n'existe plus, vérifier sur terrain",
+            "internet_access": "wlan",
+            "name": "Hostel BourgHamon",
+            "tourism": "hostel",
+            "website": "http://hostelbourghamon.com"
+          }
+        },
+        {
+          "id": "node/9442546748",
+          "lat": 48.8854519,
+          "lon": 2.335188,
+          "edited": "2026-10-10T00:44:37Z",
+          "tags": {
+            "addr:city": "Paris",
+            "addr:housenumber": "7",
+            "addr:postcode": "75018",
+            "addr:street": "Rue Aristide Bruant",
+            "email": "bonjour@plug-inn.fr",
+            "name": "Plug Inn Montmartre",
+            "operator": "Hiphophostels",
+            "phone": "+33 1 42 58 42 58",
+            "tourism": "hostel",
+            "website": "https://www.plug-inn.fr/",
+            "wikidata": "Q111113666"
+          }
+        },
+        {
+          "id": "node/9530104541",
+          "lat": 48.8898513,
+          "lon": 2.3357992,
+          "edited": "2025-11-09T13:16:20Z",
+          "tags": {
+            "contact:housenumber": "2",
+            "contact:street": "Square Caulaincourt",
+            "name": "Caulaincourt Square Hotel",
+            "phone": "+33146064606",
+            "ref:FR:SIRET": "60204356400015",
+            "tourism": "hostel",
+            "website": "https://caulaincourt.com/"
+          }
+        },
+        {
+          "id": "node/9713284961",
+          "lat": 48.8476969,
+          "lon": 2.3973227,
+          "edited": "2026-02-08T16:59:22Z",
+          "tags": {
+            "addr:housenumber": "28 bis",
+            "addr:postcode": "75012",
+            "addr:street": "Place de la Nation",
+            "branch": "Paris Nation",
+            "brand": "The People",
+            "brand:wikidata": "Q130213669",
+            "name": "The People",
+            "phone": "+33 9 78 36 20 28",
+            "tourism": "hostel",
+            "website": "https://www.thepeoplehostel.com/fr/destinations/paris-nation/"
+          }
+        },
+        {
+          "id": "node/10879419305",
+          "lat": 48.8939146,
+          "lon": 2.3367049,
+          "edited": "2025-10-20T20:34:19Z",
+          "tags": {
+            "addr:housenumber": "108",
+            "addr:street": "Rue Damrémont",
+            "check_date": "2025-10-20",
+            "name": "Beau M Paris",
+            "phone": "+33 1 84 74 34 25",
+            "tourism": "hostel",
+            "website": "https://www.beaumhostel.com"
+          }
+        },
+        {
+          "id": "node/12137512437",
+          "lat": 48.8547611,
+          "lon": 2.3591747,
+          "edited": "2024-08-26T12:01:33Z",
+          "tags": {
+            "check_date": "2024-08-25",
+            "name": "MIJE Fourcy",
+            "name:zh": "MIJE 國際青旅",
+            "phone": "+33 1 42 74 23 45",
+            "tourism": "hostel",
+            "website": "https://www.mije.com/auberge-jeunesse-paris/fourcy"
+          }
+        },
+        {
+          "id": "node/12587222901",
+          "lat": 48.8666935,
+          "lon": 2.3800277,
+          "edited": "2025-04-22T09:00:40Z",
+          "tags": {
+            "check_date": "2025-04-22",
+            "name": "Fraternity Hotel",
+            "tourism": "hostel"
+          }
+        },
+        {
+          "id": "node/13233879401",
+          "lat": 48.8912437,
+          "lon": 2.2556732,
+          "edited": "2025-10-26T12:58:07Z",
+          "tags": {
+            "addr:housenumber": "12",
+            "addr:postcode": "92400",
+            "addr:street": "Rue de l'Industrie",
+            "email": "ladefense.info@staycity.com",
+            "internet_access": "wlan",
+            "name": "Staycity Aparthotel, Paris, La Défense",
+            "phone": "+33 1 86 65 82 90",
+            "tourism": "hostel",
+            "website": "https://www.staycity.com/paris/la-defense"
+          }
+        },
+        {
+          "id": "node/14132590614",
+          "lat": 48.8163658,
+          "lon": 2.338137,
+          "edited": "2026-08-29T05:22:54Z",
+          "tags": {
+            "addr:housenumber": "89-91",
+            "brand": "Jo & Joe",
+            "changing_table": "yes",
+            "email": "paris@joandjoe.com",
+            "internet_access": "wlan",
+            "internet_access:fee": "no",
+            "level": "0-7",
+            "name": "Jo & Joe",
+            "operator": "Accor Hotels",
+            "phone": "+33 1 84 23 37 60",
+            "smoking": "no",
+            "toilets": "yes",
+            "toilets:access": "customers",
+            "toilets:disposal": "flush",
+            "toilets:handwashing": "yes",
+            "toilets:paper_supplied": "yes",
+            "toilets:position": "seated",
+            "toilets:wheelchair": "no",
+            "tourism": "hostel",
+            "website": "https://www.joandjoe.com/en/paris-gentilly"
+          }
+        },
+        {
+          "id": "node/14270077712",
+          "lat": 48.885295,
+          "lon": 2.3759355,
+          "edited": "2026-10-10T08:45:42Z",
+          "tags": {
+            "addr:housenumber": "13",
+            "addr:street": "Rue de la Moselle",
+            "check_date": "2026-10-10",
+            "contact:facebook": "https://www.facebook.com/hostelle/",
+            "contact:instagram": "https://www.instagram.com/hostelle_paris",
+            "description": "Hostelle is the all-women only hostel in Paris",
+            "email": "info@hostelle.fr",
+            "name": "Hostelle",
+            "payment:cash": "yes",
+            "payment:credit_cards": "yes",
+            "payment:debit_cards": "yes",
+            "phone": "+33 9 85 13 81 50",
+            "tourism": "hostel",
+            "website": "https://hostelle.fr/",
+            "wheelchair": "yes"
+          }
+        },
+        {
+          "id": "way/55545735",
+          "lat": 48.8553104,
+          "lon": 2.3553806,
+          "edited": "2025-10-23T07:38:38Z",
+          "tags": {
+            "addr:city": "Paris",
+            "addr:housenumber": "12",
+            "addr:postcode": "75004",
+            "addr:street": "Rue des Barres",
+            "building": "yes",
+            "building:levels": "4",
+            "name": "Auberge Maubuisson",
+            "operator": "MIJE",
+            "roof:levels": "1",
+            "source": "cadastre-dgi-fr source : Direction Générale des Impôts - Cadastre. Mise à jour : 2010",
+            "tourism": "hostel",
+            "website": "https://www.mije.com/auberge-jeunesse-paris/maubuisson"
+          }
+        },
+        {
+          "id": "way/60541641",
+          "lat": 48.8446658,
+          "lon": 2.3399835,
+          "edited": "2026-07-28T15:32:24Z",
+          "tags": {
+            "architect": "Charly Knight",
+            "building": "yes",
+            "building:levels": "7",
+            "email": "infos@fie.fr",
+            "fax": "+33143542345",
+            "name": "Foyer International des Étudiantes",
+            "phone": "+33143544963",
+            "source": "cadastre-dgi-fr source : Direction Générale des Impôts - Cadastre ; mise à jour : 2010",
+            "source:architect": "survey",
+            "start_date": "1928",
+            "tourism": "hostel",
+            "website": "https://www.fie.fr/",
+            "wikidata": "Q139854561"
+          }
+        },
+        {
+          "id": "way/63199790",
+          "lat": 48.8826165,
+          "lon": 2.3690961,
+          "edited": "2026-07-28T17:58:24Z",
+          "tags": {
+            "building": "yes",
+            "building:levels": "8",
+            "check_date": "2026-01-11",
+            "contact:city": "Paris",
+            "contact:email": "contact@peaceandlovehostel.com",
+            "contact:housenumber": "245",
+            "contact:phone": "+33 1 46 07 65 11",
+            "contact:postcode": "75010",
+            "contact:street": "Rue La Fayette",
+            "contact:website": "https://www.peaceandlovehostel.com/",
+            "internet_access": "wlan",
+            "name": "Peace & Love",
+            "ref:FR:SIRET": "41129526400013",
+            "source": "cadastre-dgi-fr source : Direction Générale des Impôts - Cadastre. Mise à jour : 2010",
+            "tourism": "hostel",
+            "wheelchair": "limited",
+            "wikidata": "Q111113710"
+          }
+        },
+        {
+          "id": "way/63201192",
+          "lat": 48.8782513,
+          "lon": 2.3694182,
+          "edited": "2026-07-28T17:58:21Z",
+          "tags": {
+            "addr:city": "Paris",
+            "addr:housenumber": "9-11",
+            "addr:postcode": "75010",
+            "addr:street": "Place du Colonel Fabien",
+            "building": "hotel",
+            "building:colour": "grey",
+            "building:levels": "8",
+            "check_date": "2025-11-23",
+            "contact:website": "https://generatorhostels.com/destinations/paris",
+            "height": "31.97",
+            "internet_access": "yes",
+            "name": "Generator Hostels",
+            "roof:levels": "0",
+            "source": "cadastre-dgi-fr source : Direction Générale des Impôts - Cadastre. Mise à jour : 2010",
+            "tourism": "hostel",
+            "wheelchair": "yes",
+            "wikidata": "Q111113654"
+          }
+        },
+        {
+          "id": "way/63203469",
+          "lat": 48.8791694,
+          "lon": 2.3579809,
+          "edited": "2026-01-14T07:05:39Z",
+          "tags": {
+            "architect": "E. J. Hart",
+            "branch": "Paris Gare du Nord",
+            "brand": "St Christopher's Inn",
+            "brand:wikidata": "Q111019180",
+            "building": "hotel",
+            "building:levels": "6",
+            "contact:city": "Paris",
+            "contact:housenumber": "5",
+            "contact:phone": "+33 1 70 08 52 20",
+            "contact:postcode": "75010",
+            "contact:street": "Rue de Dunkerque",
+            "contact:website": "https://www.st-christophers.co.uk/paris/gare-du-nord-hostel/",
+            "internet_access": "wlan",
+            "internet_access:fee": "no",
+            "name": "St Christopher's Inn",
+            "panoramax": "daf32e28-fe9e-4a88-8955-7180a9e48b3f",
+            "ref:FR:SIRET": "49776350800031",
+            "roof:levels": "0",
+            "roof:shape": "gabled",
+            "smoking": "outside",
+            "source": "cadastre-dgi-fr source : Direction Générale des Impôts - Cadastre. Mise à jour : 2010",
+            "tourism": "hostel"
+          }
+        },
+        {
+          "id": "way/63638147",
+          "lat": 48.8557883,
+          "lon": 2.3814445,
+          "edited": "2026-01-15T12:49:21Z",
+          "tags": {
+            "building": "yes",
+            "building:levels": "5",
+            "check_date": "2026-01-15",
+            "name": "LPL",
+            "payment:cash": "yes",
+            "payment:credit_cards": "yes",
+            "payment:debit_cards": "yes",
+            "payment:visa": "yes",
+            "phone": "+33 1 43487082",
+            "roof:levels": "1",
+            "source": "cadastre-dgi-fr source : Direction Générale des Impôts - Cadastre. Mise à jour : 2010",
+            "tourism": "hostel"
+          }
+        },
+        {
+          "id": "way/78006320",
+          "lat": 48.884444,
+          "lon": 2.3490936,
+          "edited": "2024-09-07T13:41:39Z",
+          "tags": {
+            "building": "hotel",
+            "building:levels": "6",
+            "source": "cadastre-dgi-fr source : Direction Générale des Impôts - Cadastre. Mise à jour : 2010",
+            "tourism": "hostel"
+          }
+        },
+        {
+          "id": "way/78052788",
+          "lat": 48.8389901,
+          "lon": 2.3925633,
+          "edited": "2026-02-08T16:35:32Z",
+          "tags": {
+            "branch": "Paris Bercy",
+            "brand": "The People",
+            "brand:wikidata": "Q130213669",
+            "building": "apartments",
+            "building:levels": "8",
+            "check_date": "2024-07-15",
+            "name": "The People",
+            "tourism": "hostel",
+            "website": "https://www.thepeoplehostel.com/fr/destinations/paris-bercy/"
+          }
+        },
+        {
+          "id": "way/79688320",
+          "lat": 48.8318163,
+          "lon": 2.3247304,
+          "edited": "2026-07-28T10:56:22Z",
+          "tags": {
+            "building": "yes",
+            "building:colour": "lightyellow",
+            "building:levels": "6",
+            "email": "contact@enjoyhostel.paris",
+            "internet_access": "wlan",
+            "name": "Enjoy Hostel",
+            "phone": "+33 1 45 40 99 48",
+            "source": "cadastre-dgi-fr source : Direction Générale des Impôts - Cadastre. Mise à jour : 2010",
+            "tourism": "hostel",
+            "website": "https://www.enjoyhostel.paris/",
+            "wheelchair": "yes",
+            "wikidata": "Q111113706"
+          }
+        },
+        {
+          "id": "way/105534510",
+          "lat": 48.838896,
+          "lon": 2.2893326,
+          "edited": "2022-11-13T19:23:31Z",
+          "tags": {
+            "building": "yes",
+            "building:levels": "8",
+            "contact:city": "Paris",
+            "contact:email": "h7308@accor.com",
+            "contact:housenumber": "192",
+            "contact:phone": "+33 1 45 58 16 08",
+            "contact:postcode": "75015",
+            "contact:street": "Rue de la Croix Nivert",
+            "contact:website": "https://ibis.accor.com/",
+            "internet_access": "wlan",
+            "name": "Ibis Styles Paris 15 Lecourbe",
+            "operator": "Ibis",
+            "source": "cadastre-dgi-fr source : Direction Générale des Impôts - Cadastre ; mise à jour : 2011;survey",
+            "tourism": "hostel"
+          }
+        },
+        {
+          "id": "way/167953195",
+          "lat": 48.8753942,
+          "lon": 2.3603251,
+          "edited": "2026-04-25T16:39:39Z",
+          "tags": {
+            "alt_name": "Ancien hôpital Villemin",
+            "area": "yes",
+            "heritage": "3",
+            "heritage:operator": "mhs",
+            "mhs:inscription_date": "1974-07-25",
+            "name": "Centre international d’accueil et d’échanges des Récollets",
+            "old_name": "Couvent des Recollets",
+            "ref:mhs": "PA00086485",
+            "short_name": "Couvent des Récollets",
+            "source:heritage": "Ministère de la Culture - 06/2019",
+            "tourism": "hostel",
+            "website": "https://centre-les-recollets.com",
+            "wikidata": "Q72942",
+            "wikipedia": "fr:Couvent des Récollets de Paris"
+          }
+        },
+        {
+          "id": "way/1061393200",
+          "lat": 48.8499512,
+          "lon": 2.3632175,
+          "edited": "2026-02-08T16:58:11Z",
+          "tags": {
+            "addr:city": "Paris",
+            "addr:housenumber": "17",
+            "addr:postcode": "75004",
+            "addr:street": "Boulevard Morland",
+            "architect": "David Chipperfield",
+            "brand": "The People",
+            "brand:wikidata": "Q130213669",
+            "building": "hotel",
+            "building:levels": "6",
+            "building:min_level": "1",
+            "contact:instagram": "https://www.instagram.com/the_people_hostel",
+            "guest_house": "hostel",
+            "internet_access": "wlan",
+            "name": "The People",
+            "phone": "+33 1 81 22 40 88",
+            "start_date": "2022-05",
+            "tourism": "hostel",
+            "website": "https://www.thepeoplehostel.com/paris-marais/",
+            "wheelchair": "yes"
+          }
+        },
+        {
+          "id": "way/1080578730",
+          "lat": 48.8524777,
+          "lon": 2.4008575,
+          "edited": "2025-07-22T17:33:21Z",
+          "tags": {
+            "building": "hotel",
+            "building:levels": "5",
+            "check_date": "2025-07-19",
+            "name": "Jo&Joe",
+            "roof:shape": "flat",
+            "tourism": "hostel",
+            "website": "https://www.joandjoe.com/paris-nation/fr/",
+            "wheelchair": "yes"
+          }
+        },
+        {
+          "id": "way/1528898271",
+          "lat": 48.882753,
+          "lon": 2.3450815,
+          "edited": "2026-07-28T12:46:08Z",
+          "tags": {
+            "check_date": "2026-05-29",
+            "contact:phone": "+33 1 48 78 24 00",
+            "contact:website": "http://www.leregent.com/",
+            "name": "Le Régent Montmartre",
+            "opening_hours": "24/7",
+            "payment:cash": "yes",
+            "payment:credit_cards": "yes",
+            "payment:debit_cards": "yes",
+            "source": "survey",
+            "stars": "2",
+            "tourism": "hostel",
+            "wikidata": "Q111113660"
+          }
+        },
+        {
+          "id": "relation/1002469",
+          "lat": 48.851188,
+          "lon": 2.3789073,
+          "edited": "2024-10-27T18:38:31Z",
+          "tags": {
+            "addr:housenumber": "10",
+            "addr:street": "Rue Trousseau",
+            "building": "hotel",
+            "building:levels": "5",
+            "name": "Auberge Internationale de Jeunesse (AIJ)",
+            "operator": "Youth hostel",
+            "source": "cadastre-dgi-fr source : Direction Générale des Impôts - Cadastre. Mise à jour : 2011",
+            "tourism": "hostel",
+            "type": "multipolygon"
+          }
+        },
+        {
+          "id": "relation/1103362",
+          "lat": 48.8722465,
+          "lon": 2.3827518,
+          "edited": "2025-03-07T11:31:46Z",
+          "tags": {
+            "addr:housenumber": "70",
+            "addr:postcode": "75020",
+            "addr:street": "Rue Julien Lacroix",
+            "building": "yes",
+            "building:colour": "#ffe0a0",
+            "building:levels": "3",
+            "name": "The Loft",
+            "tourism": "hostel",
+            "type": "multipolygon",
+            "website": "http://theloft-paris.com/"
+          }
+        }
+      ]
+    },
+    "Rennes": {
+      "bbox": [
+        48.07,
+        -1.73,
+        48.155,
+        -1.6
+      ],
+      "datatourisme": [
+        {
+          "name": "Les Chouettes Hostel",
+          "strict": false,
+          "lat": 48.10927,
+          "lon": -1.67098,
+          "updated": "2026-06-23",
+          "producer": "ADT 35 - ADMIN",
+          "contacts": "Les Chouettes Hostel#https://www.chouettes-hostel.com/",
+          "description": "",
+          "types": "https://www.datatourisme.fr/ontology/core#PlaceOfInterest|https://www.datatourisme.fr/ontology/core#PointOfInterest|https://www.datatourisme.fr/ontology/core#Accommodation|https://www.datatourisme.fr/ontology/core#CollectiveAccommodation|http://schema.org/Accommodation|http://schema.org/LodgingBusiness",
+          "url": "https://data.datatourisme.fr/38/1ea4b6d5-6bd1-3af6-a5b5-35fb142615e1"
+        },
+        {
+          "name": "Auberge de jeunesse HI Rennes",
+          "strict": false,
+          "lat": 48.1211779,
+          "lon": -1.6811035,
+          "updated": "2026-09-14",
+          "producer": "ADT 35 - ADMIN",
+          "contacts": "Auberge de jeunesse HI Rennes#https://www.hifrance.org/auberges-de-jeunesse/rennes/",
+          "description": "",
+          "types": "https://www.datatourisme.fr/ontology/core#PlaceOfInterest|https://www.datatourisme.fr/ontology/core#PointOfInterest|https://www.datatourisme.fr/ontology/core#Accommodation|https://www.datatourisme.fr/ontology/core#CollectiveAccommodation|http://schema.org/Accommodation|http://schema.org/LodgingBusiness",
+          "url": "https://data.datatourisme.fr/38/cb120e81-3a37-36a3-8f41-dc07b26230e0"
+        }
+      ],
+      "osm": [
+        {
+          "id": "node/262831424",
+          "lat": 48.0810904,
+          "lon": -1.6106511,
+          "edited": "2009-10-12T10:26:13Z",
+          "tags": {
+            "name": "Bonsaï Hotel",
+            "tourism": "hostel"
+          }
+        },
+        {
+          "id": "way/81593133",
+          "lat": 48.1211932,
+          "lon": -1.6810286,
+          "edited": "2026-09-02T11:33:36Z",
+          "tags": {
+            "addr:city": "Rennes",
+            "addr:housenumber": "10-12",
+            "addr:postcode": "35700",
+            "addr:street": "Canal Saint-Martin",
+            "air_conditioning": "no",
+            "bar": "yes",
+            "building": "yes",
+            "contact:facebook": "61555142235884",
+            "contact:instagram": "hostel_rennes",
+            "email": "contact@hostel-rennes.com",
+            "food": "yes",
+            "internet_access": "wlan",
+            "internet_access:fee": "customers",
+            "name": "Hostel20",
+            "opening_hours": "24/7",
+            "operator": "Fédération Unie des Auberges de Jeunesse",
+            "phone": "+33 2 99 33 22 33",
+            "rooms": "38",
+            "source": "cadastre-dgi-fr source : Direction Générale des Impôts - Cadastre. Mise à jour : 2010",
+            "swimming_pool": "no",
+            "toilets:wheelchair": "yes",
+            "tourism": "hostel",
+            "website": "https://hostel-rennes.com/",
+            "wheelchair": "limited"
+          }
+        }
+      ]
+    },
+    "Toulouse": {
+      "bbox": [
+        43.535,
+        1.35,
+        43.675,
+        1.52
+      ],
+      "datatourisme": [],
+      "osm": [
+        {
+          "id": "node/2475403536",
+          "lat": 43.6090696,
+          "lon": 1.4382772,
+          "edited": "2026-06-23T10:18:40Z",
+          "tags": {
+            "check_date": "2025-11-16",
+            "contact:facebook": "https://www.facebook.com/lapetiteaubergetoulouse/",
+            "contact:housenumber": "17",
+            "contact:street": "Rue d'Embarthe",
+            "internet_access": "wlan",
+            "internet_access:fee": "customers",
+            "name": "La Petite Auberge de Saint-Sernin",
+            "old_name": "La Petite Auberge de Compostelle",
+            "opening_hours": "10:00-12:30,14:00-20:00",
+            "payment:cash": "yes",
+            "payment:credit_cards": "yes",
+            "payment:debit_cards": "yes",
+            "phone": "+33 7 60 88 17 17",
+            "ref:FR:SIRET": "53998191000018",
+            "tourism": "hostel",
+            "website": "https://lapetiteaubergedesaintsernin.com/",
+            "wheelchair": "yes"
+          }
+        },
+        {
+          "id": "node/11453077744",
+          "lat": 43.6029241,
+          "lon": 1.4076328,
+          "edited": "2024-08-20T20:46:59Z",
+          "tags": {
+            "name": "Eklo Toulouse",
+            "phone": "+33 5 82 95 92 31",
+            "tourism": "hostel",
+            "website": "https://www.eklohotels.com/fr/toulouse"
+          }
+        },
+        {
+          "id": "way/132302378",
+          "lat": 43.6045723,
+          "lon": 1.4492592,
+          "edited": "2025-10-27T09:45:10Z",
+          "tags": {
+            "addr:housenumber": "6",
+            "addr:street": "Rue Labéda",
+            "building": "hotel",
+            "contact:phone": "+33 5 61 12 41 41;+33 5 61 12 41 53",
+            "name": "Hostel Toulouse Wilson",
+            "source": "cadastre-dgi-fr source : Direction Générale des Impôts - Cadastre. Mise à jour : 2011",
+            "stars": "2",
+            "tourism": "hostel",
+            "was:name": "Hôtel Royal Wilson",
+            "was:tourism": "hotel",
+            "website": "https://hostel-toulouse-wilson.com/"
+          }
+        }
+      ]
+    },
+    "Narbonne": {
+      "bbox": [
+        43.14,
+        2.9,
+        43.22,
+        3.08
+      ],
+      "datatourisme": [
+        {
+          "name": "CENTRE INTERNATIONAL DE SÉJOUR DE NARBONNE - ÉTHIC ÉTAPES",
+          "strict": true,
+          "lat": 43.1856765,
+          "lon": 3.0031675,
+          "updated": "2026-01-01",
+          "producer": "11 - ADT Aude",
+          "contacts": "#https://www.cis-narbonne.com/",
+          "description": "",
+          "types": "https://www.datatourisme.fr/ontology/core#PlaceOfInterest|https://www.datatourisme.fr/ontology/core#PointOfInterest|https://www.datatourisme.fr/ontology/core#Accommodation|https://www.datatourisme.fr/ontology/core#CollectiveAccommodation|https://www.datatourisme.fr/ontology/core#YouthHostelAndInternationalCenter|https://www.datatourisme.fr/ontology/core#CollectiveHostel|http://schema.org/Accommodation|http://schema.org/LodgingBusiness|http://schema.org/Hostel",
+          "url": "https://data.datatourisme.fr/41/c46fbf18-61c1-3573-b9f5-edb7bd0f6b3f"
+        }
+      ],
+      "osm": []
+    }
+  }
+}

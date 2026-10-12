@@ -46,6 +46,15 @@ jobs:
           path: |
             /tmp/pois.pmtiles
             /tmp/routes.pmtiles
+      - name: Rapport de fusion des auberges (sources, ajouts, cas ambigus)
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: hostel-merge-report
+          retention-days: 90
+          if-no-files-found: error
+          path: |
+            /tmp/hostel-merge-report.json
+            /tmp/datatourisme-place.csv.metadata.json
 
   upload:
     needs: build

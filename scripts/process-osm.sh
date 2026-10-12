@@ -48,7 +48,7 @@ for c in $COUNTRIES; do
     nwr/power=outlet \
     nwr/man_made=water_tap \
     nwr/leisure=picnic_table \
-    nwr/tourism=picnic_site,viewpoint,alpine_hut,wilderness_hut,hostel,camp_site \
+    nwr/tourism=picnic_site,viewpoint,alpine_hut,wilderness_hut,hostel,camp_site,hotel,guest_house,apartment \
     nwr/shop=bakery,supermarket,convenience,grocery,laundry \
     nwr/natural=peak,rock,stone,spring \
     nwr/waterway=waterfall \
@@ -79,6 +79,20 @@ osmium export /tmp/filtered.osm.pbf --add-unique-id=type_id \
 
 echo "→ Transformation (catégories + centroïdes)"
 node scripts/osm-to-pmtiles-input.mjs < /tmp/filtered.geojsonseq > /tmp/input.geojsonseq
+
+# The extra hotel/guesthouse records above are context only: the OSM converter
+# excludes them. They help recognise hostels classified differently across sources.
+# Fail the build on missing/invalid DT data, leaving the published tiles untouched.
+if [[ " $COUNTRIES " == *" france "* ]]; then
+  echo "→ Fusion des auberges DATAtourisme (France), rapprochement conservateur"
+  python3 scripts/merge-hostels.py --download \
+    --csv /tmp/datatourisme-place.csv \
+    --osm-context /tmp/filtered.geojsonseq \
+    --input /tmp/input.geojsonseq \
+    --output /tmp/merged.geojsonseq \
+    --report /tmp/hostel-merge-report.json
+  mv /tmp/merged.geojsonseq /tmp/input.geojsonseq
+fi
 
 echo "→ Construction de pois.pmtiles"
 # -r1 : pas d'éclaircissement automatique au dézoom (sinon les points

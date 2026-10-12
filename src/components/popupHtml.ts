@@ -1,6 +1,7 @@
 import { getCategory } from '../data/categories'
 import { freshnessLabel, freshnessOf, type CheckinRecord } from '../data/checkinLogic'
 import type { PersonalPoint } from '../types'
+import { safeExternalUrl } from '../data/safeUrl'
 
 /** Échappe le HTML pour éviter toute injection depuis les tags OSM. */
 function esc(s: string): string {
@@ -19,12 +20,30 @@ const INTERESTING_TAGS = [
   'drinking_water',
   'description',
   'operator',
+  'address',
 ]
 
 /** "2024-03-12" (ou ISO complet) → "12/03/2024" ; valeur brute sinon. */
 function frDate(s: string): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s)
   return m ? `${m[3]}/${m[2]}/${m[1]}` : s
+}
+
+/** Record-level attribution is retained when several tourist-office records merge. */
+function tourismCredits(p: Record<string, unknown>): string {
+  if (!p.dt_uri) return ''
+  let records: Array<{ uri?: unknown; producer?: unknown; updated?: unknown }> = []
+  try {
+    const parsed: unknown = JSON.parse(String(p.dt_records ?? '[]'))
+    if (Array.isArray(parsed)) records = parsed.filter((r) => r && typeof r === 'object')
+  } catch { /* Older tiles can have only the flat source fields. */ }
+  if (!records.length) records = [{ uri: p.dt_uri, producer: p.dt_producer, updated: p.dt_updated }]
+  return records.map((r) => {
+    const url = safeExternalUrl(r.uri, 'data.datatourisme.fr')
+    const label = `DATAtourisme · ${String(r.producer ?? '')}`
+    const credit = url ? `<a href="${esc(url)}" target="_blank" rel="noopener noreferrer" style="text-decoration:underline">${esc(label)}</a>` : esc(label)
+    return `<div class="text-slate-400" style="font-size:0.72rem;margin-top:4px">${credit}${r.updated ? ' · mise à jour le ' + esc(frDate(String(r.updated))) : ''} · Licence Ouverte 2.0</div>`
+  }).join('')
 }
 
 /**
@@ -53,12 +72,15 @@ export function featurePopupHtml(
     : checked
       ? `<div class="text-slate-500" style="font-size:0.72rem;margin-top:4px">✓ Vérifié sur le terrain le ${esc(frDate(String(checked)))}</div>`
       : `<div data-freshness class="text-slate-400" style="font-size:0.72rem;margin-top:4px"></div>`
+  const site = safeExternalUrl(p.website)
   return `
     <div style="min-width:140px">
       <div style="color:${cat.color};font-weight:600">${esc(name)}</div>
       <div class="text-slate-400" style="font-size:0.72rem;margin-bottom:4px">${esc(cat.label)}</div>
       ${rows}
       ${fresh}
+      ${tourismCredits(p)}
+      ${site ? `<div style="margin-top:4px"><a href="${esc(site)}" target="_blank" rel="noopener noreferrer" style="text-decoration:underline">Site de l’établissement</a></div>` : ''}
       <div data-refuges class="text-slate-500" style="font-size:0.72rem"></div>
     </div>`
 }

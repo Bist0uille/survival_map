@@ -3,6 +3,27 @@ import { featurePopupHtml, checkinSectionHtml } from './popupHtml'
 import type { CheckinRecord } from '../data/checkinLogic'
 
 describe('featurePopupHtml', () => {
+  it('conserve les crédits de chaque fiche fusionnée sans créer de lien dangereux', () => {
+    const html = featurePopupHtml({ categoryId: 'hostel', dt_uri: 'https://data.datatourisme.fr/one',
+      dt_records: JSON.stringify([
+        { uri: 'https://data.datatourisme.fr/one', producer: 'Office <test>', updated: '2026-09-01' },
+        { uri: 'javascript:alert(1)', producer: 'Second producteur', updated: '2026-08-01' },
+      ]), website: 'javascript:alert(1)' })
+    expect(html).toContain('Office &lt;test&gt;')
+    expect(html).toContain('Second producteur')
+    expect(html).toContain('01/09/2026')
+    expect(html).toContain('Licence Ouverte 2.0')
+    expect(html).toContain('data-freshness')
+    expect(html).not.toContain('javascript:')
+  })
+
+  it('affiche le site HTTPS et accepte les anciennes métadonnées plates', () => {
+    const html = featurePopupHtml({ categoryId: 'hostel', source: 'DATAtourisme', dt_uri: 'https://data.datatourisme.fr/one',
+      dt_producer: 'Tourisme', dt_updated: '2026-09-01', dt_records: 'invalid', website: 'https://example.org/' })
+    expect(html).toContain('href="https://example.org/"')
+    expect(html).toContain('DATAtourisme · Tourisme')
+    expect(html).not.toContain('data-freshness')
+  })
   it('affiche la vérification terrain quand check_date est présent', () => {
     const html = featurePopupHtml({ categoryId: 'water', name: 'Fontaine', check_date: '2024-03-12' })
     expect(html).toContain('Vérifié sur le terrain le 12/03/2024')

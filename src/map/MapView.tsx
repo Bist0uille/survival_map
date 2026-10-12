@@ -419,7 +419,7 @@ export function MapView({
       style: TOPO_STYLE,
       center: NARBONNE,
       zoom: 12,
-      attributionControl: { customAttribution: '<a href="/guides/">Guides</a> · <a href="/privacy.html" target="_blank" rel="noopener">Confidentialité</a>' },
+      attributionControl: { customAttribution: '<a href="/guides/">Guides</a> · Auberges © <a href="https://www.datatourisme.fr/" target="_blank" rel="noopener">DATAtourisme</a> (Licence Ouverte 2.0) · <a href="/privacy.html" target="_blank" rel="noopener">Confidentialité</a>' },
     })
     map.current = m
 
