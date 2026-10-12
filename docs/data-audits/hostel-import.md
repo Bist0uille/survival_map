@@ -30,3 +30,11 @@ Attribution générale dans la carte ; crédits par producteur, URI et dates dan
 Tests React existants et tests des crédits/liens de la fiche ; compilation de production. Essai bout en bout sur les quatre périmètres de l'audit avec les données réelles : 54 points OSM conservés, 24 fiches candidates, 15 rapprochements, 8 ajouts, 1 cas ambigu écarté. Cet essai utilise les auberges OSM de l'audit ; la génération nationale consulte aussi les autres catégories d'hébergement avant de décider des ajouts.
 
 L'export national du 12 octobre 2026 fournit 235 fiches candidates avant rapprochement. Ce nombre inclut des doublons potentiels et des centres de séjour, et ne représente pas 235 nouveaux points.
+
+## Publication nationale du 12 octobre 2026
+
+Workflow https://github.com/Bist0uille/survival_map/actions/runs/38276266837 terminé avec succès. Données R2 remplacées le 12 octobre à 16:39 UTC : 1 459 454 POI OSM conservés, 122 nouveaux points DATAtourisme, 41 rapprochements OSM, 1 doublon DATAtourisme regroupé et 71 cas ambigus écartés. Rapport complet : `hostel-merge-national-2026-10-12.json`.
+
+`node scripts/check-hostel-tiles.mjs` contrôle directement les tuiles publiques : Narbonne une fois, Yves Robert une fois avec deux crédits DATAtourisme. Les Chouettes à Rennes restent volontairement absentes de la sélection auberges, car l'export contient deux correspondances (chemin `w81026062` et surface `a162052124`) ; le test autorise cette exclusion documentée, sans autoriser un doublon. Les correspondances multiples restent à examiner avant tout ajout supplémentaire.
+
+Contrôle Chrome mobile sur https://survimap.com/?filters=hostel : Narbonne rendu une seule fois, fiche affichant DATAtourisme, aucune erreur JavaScript. Capture locale `hostels-live.png`. Au moment de cette vérification, Vercel n'avait pas encore déployé les nouvelles mentions détaillées de producteurs ; les métadonnées complètes sont présentes dans les tuiles et le code d'affichage est poussé sur main.
