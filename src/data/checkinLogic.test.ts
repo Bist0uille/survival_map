@@ -68,8 +68,10 @@ describe('freshnessOf', () => {
     expect(freshnessOf(rec({ lastOk: NOW - SIX_MONTHS_MS - DAY }), NOW)).toBe('stale')
   })
 
-  it('rouge si le dernier verdict est « disparu »', () => {
-    expect(freshnessOf(rec({ lastGone: NOW }), NOW)).toBe('gone')
+  it('un seul signalement ne suffit pas ; un quorum récent devient rouge', () => {
+    expect(freshnessOf(rec({ lastGone: NOW }), NOW)).toBe('confirmed')
+    expect(freshnessOf(rec({ lastGone: NOW, goneVerified: true, windowStart: NOW }), NOW)).toBe('gone')
+    expect(freshnessOf(rec({ goneVerified: true, windowStart: NOW - 8 * DAY }), NOW)).toBe('confirmed')
   })
 
   it('une confirmation postérieure réhabilite le point', () => {
@@ -86,14 +88,15 @@ describe('freshnessLabel / agoLabel', () => {
 
   it('décrit chaque état', () => {
     expect(freshnessLabel(rec({ ok: 3 }), NOW)).toBe('✓ Confirmé il y a 1 j (3 confirmations)')
-    expect(freshnessLabel(rec({ lastGone: NOW }), NOW)).toBe("⚠ Signalé disparu aujourd'hui")
+    expect(freshnessLabel(rec({ lastGone: NOW }), NOW)).toContain('à vérifier')
+    expect(freshnessLabel(rec({ lastGone: NOW, goneVerified: true, windowStart: NOW }), NOW)).toBe("⚠ Signalé disparu aujourd'hui")
     expect(freshnessLabel(rec({ lastOk: NOW - SIX_MONTHS_MS - DAY }), NOW)).toContain('à revérifier')
   })
 })
 
 describe('checkinsToFC', () => {
   it('produit un point par enregistrement avec sa fraîcheur', () => {
-    const fc = checkinsToFC({ n1: rec(), n2: rec({ lastGone: NOW }) }, NOW)
+    const fc = checkinsToFC({ n1: rec(), n2: rec({ lastGone: NOW, goneVerified: true, windowStart: NOW }) }, NOW)
     expect(fc.features).toHaveLength(2)
     const byId = Object.fromEntries(fc.features.map((f) => [f.properties!.id, f]))
     expect(byId.n1.properties!.freshness).toBe('confirmed')

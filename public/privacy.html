@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Confidentialité — Survimap</title>
+  <style>
+    body { max-width: 720px; margin: 40px auto; padding: 0 20px; font: 16px/1.65 system-ui; color: #1e293b; }
+    a { color: #15803d; } button { padding: 12px; border: 1px solid #b91c1c; border-radius: 8px; background: white; color: #b91c1c; cursor: pointer; }
+  </style>
+  <script src="/privacy.js" defer></script>
+</head>
+<body>
+  <a href="/">← Revenir à la carte</a>
+  <h1>Confidentialité</h1>
+  <p>Survimap fonctionne sans compte. Tes points personnels et itinéraires enregistrés sont conservés dans le navigateur de cet appareil. L’enregistrement GPS n’envoie pas ta trace en continu à notre serveur.</p>
+  <h2>Services utilisés</h2>
+  <ul>
+    <li>Le calcul d’itinéraire transmet les étapes choisies à <a href="https://brouter.de/">BRouter</a>, y compris ta position si tu l’utilises comme départ.</li>
+    <li>La météo transmet les coordonnées du lieu consulté à <a href="https://open-meteo.com/en/terms">Open-Meteo</a>.</li>
+    <li>La recherche transmet le texte saisi à <a href="https://osmfoundation.org/wiki/Privacy_Policy">Nominatim / OpenStreetMap</a>.</li>
+    <li>Les cartes et données proviennent d’OpenTopoMap, Esri, AWS, Cloudflare R2 et OpenStreetMap. Leurs serveurs reçoivent ton adresse IP et les requêtes sur la zone consultée.</li>
+    <li>L’ouverture de certaines fiches consulte <a href="https://www.refuges.info/">Refuges.info</a> avec la zone du point.</li>
+    <li>Le site est hébergé par Vercel ; les signalements communautaires sont stockés chez Upstash. Ces prestataires peuvent traiter des données techniques de connexion selon leurs politiques.</li>
+  </ul>
+  <h2>Signalements communautaires</h2>
+  <p>Quand tu confirmes un point ou le signales disparu, son identifiant, ses coordonnées officielles, les compteurs et dates de signalement deviennent publics. Ta position GPS personnelle n’est pas nécessaire à cette contribution.</p>
+  <p>Pour limiter les abus, le serveur dérive de ton adresse IP une empreinte avec une clé secrète. Cette empreinte n’est pas publiée ; les compteurs de débit expirent après une heure et les marqueurs de contribution après sept jours. Ce mécanisme peut regrouper les personnes partageant la même connexion. Les signalements expirent de l’affichage après 183 jours ; les enregistrements périmés sont purgés progressivement lors des nouvelles contributions.</p>
+  <h2>Effacer tes données personnelles locales</h2>
+  <p>Le bouton ci-dessous supprime les points personnels et itinéraires enregistrés dans ce navigateur. Il conserve les cartes téléchargées et ne supprime pas les signalements publics. Exporte d’abord les traces que tu souhaites garder, et termine tout enregistrement GPS dans les autres onglets.</p>
+  <button id="clear-personal" type="button">Effacer mes points et itinéraires de cet appareil</button>
+  <p id="clear-status" role="status"></p>
+  <p>Pour retirer également les cartes et toutes les préférences, utilise l’effacement des données de survimap.com dans les paramètres de ton navigateur.</p>
+  <p>Dernière mise à jour : 12 octobre 2026.</p>
+</body>
+</html>

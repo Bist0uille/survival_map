@@ -1,6 +1,6 @@
 import { useRef } from 'react'
 import { Upload } from 'lucide-react'
-import { parseGpx } from '../data/gpx'
+import { parseGpx, MAX_GPX_BYTES } from '../data/gpx'
 import { summarizeRoute } from '../data/routing'
 import { toast } from '../data/toast'
 import type { PersonalRoute } from '../types'
@@ -14,6 +14,10 @@ export function ImportGpxButton({ onImport }: ImportGpxButtonProps) {
   const input = useRef<HTMLInputElement>(null)
 
   const handleFile = async (file: File) => {
+    if (file.size > MAX_GPX_BYTES) {
+      toast('GPX trop volumineux (maximum 5 Mo)', 'error')
+      return
+    }
     try {
       const parsed = parseGpx(await file.text())
       if (!parsed) {

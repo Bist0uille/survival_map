@@ -1,6 +1,6 @@
 // Helpers purs extraits de MapView : détection PMTiles, repli statique,
 // expressions de filtre et fabriques d'éléments DOM pour les marqueurs.
-import type maplibregl from 'maplibre-gl'
+import type * as maplibregl from 'maplibre-gl'
 import { getOfflineBlob } from '../data/db'
 
 const STATIC_JSON = '/data/pois.json' // repli : base statique Aude

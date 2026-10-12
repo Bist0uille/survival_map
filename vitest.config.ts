@@ -8,8 +8,9 @@ export default defineConfig({
   plugins: [react()],
   test: {
     environment: 'jsdom',
+    execArgv: ['--no-experimental-webstorage'],
     globals: true,
     setupFiles: ['src/test-setup.ts'],
-    include: ['src/**/*.test.ts', 'src/**/*.test.tsx'],
+    include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'server/**/*.test.ts', 'api/**/*.test.ts'],
   },
 })

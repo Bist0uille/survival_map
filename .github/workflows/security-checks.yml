@@ -1,0 +1,34 @@
+name: Tests et sécurité
+on:
+  pull_request:
+  push:
+    branches: [main, 'security/**']
+  schedule:
+    - cron: '0 7 * * 1'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    services:
+      redis:
+        image: redis:7.4.2@sha256:fbdbaea47b9ae4ecc2082ecdb4e1cea81e32176ffb1dcf643d422ad07427e5d9
+        ports:
+          - 6379:6379
+        options: --health-cmd "redis-cli ping" --health-interval 5s --health-timeout 3s --health-retries 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: sudo apt-get update && sudo apt-get install -y redis-tools
+      - run: npm run test
+        env:
+          REDIS_TEST_PORT: 6379
+      - run: npm run build
+      - run: npm audit --audit-level=moderate

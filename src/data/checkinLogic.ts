@@ -13,6 +13,9 @@ export interface CheckinRecord {
   lastGone: number | null // epoch ms du dernier signalement disparu
   lon: number
   lat: number
+  goneVerified?: boolean // quorum of independent recent reports, computed by server
+  recentGone?: number
+  windowStart?: number
 }
 
 /** confirmed = vert, stale = gris (vieux), gone = rouge. */
@@ -35,7 +38,7 @@ export function validateCheckinBody(b: unknown): CheckinBody | null {
   const verdict = o.verdict
   const lon = o.lon
   const lat = o.lat
-  if (typeof id !== 'string' || !/^[nwa]\d{1,12}$/.test(id)) return null
+  if (typeof id !== 'string' || !/^[nwa][1-9]\d{0,11}$/.test(id)) return null
   if (verdict !== 'ok' && verdict !== 'gone') return null
   if (typeof lon !== 'number' || !Number.isFinite(lon) || lon < -180 || lon > 180) return null
   if (typeof lat !== 'number' || !Number.isFinite(lat) || lat < -85 || lat > 85) return null
@@ -71,12 +74,11 @@ export function applyCheckin(
 }
 
 /**
- * Fraîcheur d'un enregistrement : le dernier verdict l'emporte (une
- * confirmation postérieure à un « disparu » réhabilite le point) ; une
- * confirmation de moins de 6 mois est verte, plus ancienne grise.
+ * Le serveur calcule le quorum des signalements récents ; un signalement
+ * isolé ne suffit pas à rendre le badge rouge. Les anciens quorums expirent.
  */
 export function freshnessOf(rec: CheckinRecord, now: number): Freshness {
-  if (rec.lastGone && rec.lastGone >= (rec.lastOk ?? 0)) return 'gone'
+  if (rec.goneVerified === true && rec.windowStart && now - rec.windowStart <= 7 * 86400000) return 'gone'
   if (rec.lastOk && now - rec.lastOk < SIX_MONTHS_MS) return 'confirmed'
   return 'stale'
 }
@@ -93,6 +95,7 @@ export function agoLabel(ts: number, now: number): string {
 export function freshnessLabel(rec: CheckinRecord, now: number): string | null {
   const f = freshnessOf(rec, now)
   if (f === 'gone' && rec.lastGone) return `⚠ Signalé disparu ${agoLabel(rec.lastGone, now)}`
+  if (rec.lastGone && rec.lastGone >= (rec.lastOk ?? 0)) return `Signalement « disparu » ${agoLabel(rec.lastGone, now)} — à vérifier`
   if (!rec.lastOk) return null
   const count = rec.ok > 1 ? ` (${rec.ok} confirmations)` : ''
   return f === 'confirmed'

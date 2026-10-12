@@ -7,7 +7,7 @@ import type { CheckinRecord, Verdict } from './checkinLogic'
  * l'écriture exige le réseau.
  */
 
-const OFFLINE_KEY = 'checkins'
+const OFFLINE_KEY = 'checkins-v2'
 
 export type CheckinMap = Record<string, CheckinRecord>
 
@@ -25,9 +25,17 @@ function blobText(blob: Blob): Promise<string> {
 /** Tous les check-ins ; en échec réseau, la dernière copie locale ; sinon {}. */
 export async function fetchAllCheckins(): Promise<CheckinMap> {
   try {
-    const r = await fetch('/api/checkins')
-    if (!r.ok) throw new Error(String(r.status))
-    const data = (await r.json()) as CheckinMap
+    const data: CheckinMap = {}
+    let cursor = ''
+    for (let page = 0; page < 50; page++) {
+      const r = await fetch('/api/checkins' + (cursor ? `?cursor=${cursor}` : ''))
+      if (!r.ok) throw new Error(String(r.status))
+      Object.assign(data, await r.json())
+      const next = r.headers?.get('X-Next-Cursor') ?? ''
+      if (!next) break
+      if (!/^\d{1,4}$/.test(next) || Number(next) <= Number(cursor)) throw new Error('Invalid cursor')
+      cursor = next
+    }
     // Copie hors-ligne (best-effort) pour afficher les badges sans réseau.
     saveOfflineBlob(OFFLINE_KEY, new Blob([JSON.stringify(data)])).catch(() => {})
     return data
@@ -55,6 +63,7 @@ export async function postCheckin(
     body: JSON.stringify({ id, verdict, lon, lat }),
   })
   if (r.status === 429) throw new Error('Trop de signalements pour le moment, réessaie plus tard')
+  if (r.status === 409) throw new Error('Tu as déjà signalé ce point cette semaine')
   if (!r.ok) throw new Error('Signalement impossible pour le moment')
   const j = (await r.json()) as { record: CheckinRecord }
   return j.record

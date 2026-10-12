@@ -19,6 +19,19 @@ beforeEach(() => {
 })
 
 describe('fetchAllCheckins', () => {
+  it('parcourt les pages bornées et ne réutilise pas les anciens votes non vérifiés', async () => {
+    blobs.set('checkins', new Blob([JSON.stringify({ n99: RECORD })]))
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ n1: RECORD }), headers: new Headers({ 'X-Next-Cursor': '100' }) })
+      .mockResolvedValueOnce({ ok: true, json: async () => ({ n2: RECORD }), headers: new Headers() })
+    vi.stubGlobal('fetch', fetchMock)
+    const all = await fetchAllCheckins()
+    expect(Object.keys(all)).toEqual(['n1', 'n2'])
+    expect(fetchMock.mock.calls[1][0]).toBe('/api/checkins?cursor=100')
+    vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')))
+    blobs.delete('checkins-v2')
+    expect(await fetchAllCheckins()).toEqual({})
+  })
   it('lit /api/checkins et garde une copie hors-ligne', async () => {
     vi.stubGlobal(
       'fetch',
@@ -28,11 +41,11 @@ describe('fetchAllCheckins', () => {
     expect(all.n1.ok).toBe(2)
     // La copie offline a été posée (best-effort, laisser la microtâche passer).
     await new Promise((r) => setTimeout(r, 0))
-    expect(blobs.has('checkins')).toBe(true)
+    expect(blobs.has('checkins-v2')).toBe(true)
   })
 
   it('retombe sur la copie locale en échec réseau', async () => {
-    blobs.set('checkins', new Blob([JSON.stringify({ n9: RECORD })]))
+    blobs.set('checkins-v2', new Blob([JSON.stringify({ n9: RECORD })]))
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')))
     const all = await fetchAllCheckins()
     expect(all.n9.lon).toBe(3)

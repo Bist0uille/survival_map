@@ -17,6 +17,9 @@ export function routeToGpx(name: string, geometry: GeoJSON.LineString): string {
 </gpx>`
 }
 
+export const MAX_GPX_BYTES = 5 * 1024 * 1024
+export const MAX_GPX_POINTS = 20000
+
 export interface ParsedGpx {
   name: string
   geometry: GeoJSON.LineString
@@ -29,16 +32,22 @@ export interface ParsedGpx {
  * d'itinéraire (<rtept>). Renvoie null si invalide ou < 2 points.
  */
 export function parseGpx(xml: string): ParsedGpx | null {
+  if (xml.length > MAX_GPX_BYTES || new TextEncoder().encode(xml).byteLength > MAX_GPX_BYTES) return null
+  if (/<!DOCTYPE|<!ENTITY/i.test(xml)) return null
   const doc = new DOMParser().parseFromString(xml, 'application/xml')
   if (doc.querySelector('parsererror')) return null
 
   const pts = Array.from(doc.querySelectorAll('trkpt, rtept'))
+  if (pts.length > MAX_GPX_POINTS) return null
   const coords: GeoJSON.Position[] = []
   const elevations: Array<number | null> = []
   for (const p of pts) {
-    const lat = Number(p.getAttribute('lat'))
-    const lon = Number(p.getAttribute('lon'))
-    if (!Number.isFinite(lat) || !Number.isFinite(lon)) continue
+    const rawLat = p.getAttribute('lat')?.trim()
+    const rawLon = p.getAttribute('lon')?.trim()
+    if (!rawLat || !rawLon) continue
+    const lat = Number(rawLat)
+    const lon = Number(rawLon)
+    if (!Number.isFinite(lat) || !Number.isFinite(lon) || Math.abs(lat) > 85 || Math.abs(lon) > 180) continue
     coords.push([lon, lat])
     const eleTxt = p.querySelector('ele')?.textContent
     const ele = eleTxt != null ? Number(eleTxt) : NaN

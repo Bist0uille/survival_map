@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import maplibregl from 'maplibre-gl'
+import * as maplibregl from 'maplibre-gl'
 import type { Map as MLMap, Marker as MLMarker } from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { Protocol, PMTiles } from 'pmtiles'
@@ -415,6 +415,7 @@ export function MapView({
       style: TOPO_STYLE,
       center: NARBONNE,
       zoom: 12,
+      attributionControl: { customAttribution: '<a href="/privacy.html" target="_blank" rel="noopener">Confidentialité</a>' },
     })
     map.current = m
 

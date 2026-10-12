@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { routeToGpx, parseGpx } from './gpx'
+import { routeToGpx, parseGpx, MAX_GPX_BYTES, MAX_GPX_POINTS } from './gpx'
 
 const LINE: GeoJSON.LineString = {
   type: 'LineString',
@@ -30,6 +30,16 @@ describe('routeToGpx', () => {
 })
 
 describe('parseGpx', () => {
+  it('refuse les fichiers trop volumineux, entités et trop de points', () => {
+    expect(parseGpx('x'.repeat(MAX_GPX_BYTES + 1))).toBeNull()
+    expect(parseGpx('<!DOCTYPE gpx [<!ENTITY x "test">]><gpx/>')).toBeNull()
+    expect(parseGpx('<gpx>' + '<trkpt lat="43" lon="3"/>'.repeat(MAX_GPX_POINTS + 1) + '</gpx>')).toBeNull()
+  })
+
+  it('ignore les attributs manquants, vides et coordonnées hors limites', () => {
+    const parsed = parseGpx('<gpx><trkpt lat="43"/><trkpt lat="" lon="3"/><trkpt lat="91" lon="3"/><trkpt lat="43" lon="181"/><trkpt lat="43" lon="3"/><trkpt lat="44" lon="4"/></gpx>')
+    expect(parsed!.geometry.coordinates).toEqual([[3, 43], [4, 44]])
+  })
   it('round-trip : export puis import redonne la même géométrie', () => {
     const parsed = parseGpx(routeToGpx('Boucle', LINE))
     expect(parsed).not.toBeNull()

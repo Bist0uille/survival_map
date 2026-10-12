@@ -1,4 +1,5 @@
 import { haversineKm } from './routing'
+import { safeExternalUrl } from './safeUrl'
 
 /**
  * Enrichissement live des fiches refuges/points d'eau via l'API Refuges.info
@@ -51,7 +52,9 @@ export function parseRefugesResponse(
   if (!best) return null
   const p = best.f.properties ?? {}
   if (!p.nom || !p.lien) return null
-  const info: RefugeInfo = { nom: String(p.nom), url: String(p.lien) }
+  const url = safeExternalUrl(p.lien, 'refuges.info')
+  if (!url) return null
+  const info: RefugeInfo = { nom: String(p.nom), url }
   if (p.type?.valeur) info.type = String(p.type.valeur)
   const places = Number(p.places?.valeur)
   if (Number.isFinite(places) && places > 0) info.places = places

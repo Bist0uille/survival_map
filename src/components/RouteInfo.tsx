@@ -13,6 +13,7 @@ import {
   Trash2,
 } from 'lucide-react'
 import { ElevationProfile } from './ElevationProfile'
+import { safeExternalUrl } from '../data/safeUrl'
 
 function fmtMinutes(min?: number): string | null {
   if (!min || min <= 0) return null
@@ -203,9 +204,9 @@ export function RouteInfo({
           </p>
         )}
 
-        {route.website && (
+        {safeExternalUrl(route.website) && (
           <a
-            href={route.website}
+            href={safeExternalUrl(route.website)!}
             target="_blank"
             rel="noreferrer"
             className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-blue-600 hover:underline"
