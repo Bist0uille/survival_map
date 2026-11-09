@@ -10,25 +10,7 @@ set -euo pipefail
 
 COUNTRIES="${1:-${COUNTRIES:-france spain italy}}"
 
-# URLs Geofabrik (+ miroir OSM-France pour la France).
-geofabrik_urls() {
-  case "$1" in
-    france)
-      echo "https://download.geofabrik.de/europe/france-latest.osm.pbf https://download.openstreetmap.fr/extracts/europe/france.osm.pbf"
-      ;;
-    *)
-      echo "https://download.geofabrik.de/europe/$1-latest.osm.pbf"
-      ;;
-  esac
-}
-download() { # $1 = pays, $2 = sortie
-  for u in $(geofabrik_urls "$1"); do
-    echo "Essai : $u"
-    if wget --tries=2 --read-timeout=60 --waitretry=20 -O "$2" "$u"; then return 0; fi
-  done
-  echo "Échec du téléchargement pour : $1" >&2
-  return 1
-}
+source "$(dirname "${BASH_SOURCE[0]}")/download-osm.sh"
 
 # Pour chaque pays : un seul téléchargement, deux filtres (POI + itinéraires),
 # puis suppression du gros .pbf avant le pays suivant (disque limité en CI).
