@@ -10,6 +10,7 @@ import {
 } from '../data/offline'
 import { downloadPmtiles } from '../map/cachedSource'
 import { hasOfflineBlob } from '../data/db'
+import { trackActivity } from '../data/activity'
 
 interface OfflinePanelProps {
   bounds: GeoBounds
@@ -48,6 +49,7 @@ export function OfflinePanel({ bounds, zoom, onClose }: OfflinePanelProps) {
   }, [])
 
   async function start() {
+    trackActivity('offline_start')
     setPhase('downloading')
     await requestPersistent()
     const dl = async (
@@ -74,6 +76,7 @@ export function OfflinePanel({ bounds, zoom, onClose }: OfflinePanelProps) {
     setStep('tiles')
     await downloadTiles(plan, (done, total) => setTiles({ done, total }))
     setPhase('done')
+    trackActivity('offline_complete')
   }
 
   const tilePct = tiles.total ? Math.round((tiles.done / tiles.total) * 100) : 0

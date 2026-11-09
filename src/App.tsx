@@ -33,6 +33,7 @@ import { TrackPanel } from './components/TrackPanel'
 import type { GeoBounds } from './data/offline'
 import type { PersonalPoint, PersonalRoute, Place } from './types'
 import { mapEntry } from './data/mapEntry'
+import { trackActivity } from './data/activity'
 
 function App() {
   // Les guides peuvent ouvrir des filtres ; l'accueil conserve la carte vide.
@@ -153,6 +154,7 @@ function App() {
   }, [])
 
   const toggleCategory = useCallback((id: string) => {
+    trackActivity('filter_change')
     setActive((prev) => {
       const next = new Set(prev)
       if (next.has(id)) next.delete(id)
@@ -163,6 +165,7 @@ function App() {
 
   // Toggle d'un groupe de besoin : tout actif → tout off, sinon tout on.
   const toggleGroup = useCallback((ids: string[]) => {
+    trackActivity('filter_change')
     setActive((prev) => {
       const next = new Set(prev)
       const allOn = ids.every((id) => next.has(id))
@@ -192,6 +195,7 @@ function App() {
 
   // --- Création d'itinéraire ---
   const enterCreate = useCallback(() => {
+    trackActivity('route_start')
     setCreateMode(true)
     setAddMode(false)
     setSelectedRoute(null)
@@ -289,6 +293,7 @@ function App() {
         createdAt: Date.now(),
       }
       await addPersonalRoute(route)
+      trackActivity('route_saved')
       setPersonalRoutes((prev) => [...prev, route])
       cancelCreate()
     },
@@ -343,6 +348,7 @@ function App() {
 
   const handleImportGpx = useCallback(async (route: PersonalRoute) => {
     await addPersonalRoute(route)
+    trackActivity('gpx_import')
     setPersonalRoutes((prev) => [...prev, route])
     setShowTrails(false)
     setSelectedPR(route)

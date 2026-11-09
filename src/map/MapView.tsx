@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { trackActivity } from '../data/activity'
 import * as maplibregl from 'maplibre-gl'
 import mapWorkerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url'
 import type { Map as MLMap, Marker as MLMarker } from 'maplibre-gl'
@@ -151,6 +152,7 @@ function openPoiPopup(
   checkin: CheckinRecord | null,
   extraHtml = '',
 ): maplibregl.Popup {
+  trackActivity('poi_open')
   const section = checkinSectionHtml(
     String(props.id ?? ''),
     lnglat[0],

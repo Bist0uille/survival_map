@@ -26,11 +26,15 @@
   <h2>Signalements communautaires</h2>
   <p>Quand tu confirmes un point ou le signales disparu, son identifiant, ses coordonnées officielles, les compteurs et dates de signalement deviennent publics. Ta position GPS personnelle n’est pas nécessaire à cette contribution.</p>
   <p>Pour limiter les abus, le serveur dérive de ton adresse IP une empreinte avec une clé secrète. Cette empreinte n’est pas publiée ; les compteurs de débit expirent après une heure et les marqueurs de contribution après sept jours. Ce mécanisme peut regrouper les personnes partageant la même connexion. Les signalements expirent de l’affichage après 183 jours ; les enregistrements périmés sont purgés progressivement lors des nouvelles contributions.</p>
+  <h2>Compteurs sans cookie</h2>
+  <p>Survimap compte les ouvertures de pages, leur provenance générale et certaines actions sur la carte. Un compteur additionne aussi les secondes où l’onglet est visible, par petits intervalles. Cela ne mesure ni les personnes uniques ni l’attention réelle : une actualisation compte une nouvelle visite et deux onglets peuvent compter séparément.</p>
+  <p>Ce suivi ne lit ni n’écrit de cookie, localStorage ou sessionStorage. Il ne crée aucun identifiant visiteur et ne transmet ni texte recherché, nom de fichier, identifiant de point, trace GPX ni coordonnée GPS. Les compteurs sont agrégés par jour UTC dans Upstash et conservés 183 jours. Les signaux Do Not Track et Global Privacy Control empêchent l’envoi. Pour limiter les abus, une empreinte secrète de l’adresse IP renouvelée chaque minute expire après 60 secondes ; elle ne sert pas à reconnaître les visiteurs.</p>
+  <p>La connexion administrateur ne crée pas de cookie non plus : le jeton reste en mémoire dans l’onglet, jusqu’au rechargement ou à la fermeture, au maximum huit heures. Les empreintes limitant les tentatives de connexion expirent après quinze minutes. Les données Google Search Console restent réservées au propriétaire.</p>
   <h2>Effacer tes données personnelles locales</h2>
   <p>Le bouton ci-dessous supprime les points personnels et itinéraires enregistrés dans ce navigateur. Il conserve les cartes téléchargées et ne supprime pas les signalements publics. Exporte d’abord les traces que tu souhaites garder, et termine tout enregistrement GPS dans les autres onglets.</p>
   <button id="clear-personal" type="button">Effacer mes points et itinéraires de cet appareil</button>
   <p id="clear-status" role="status"></p>
   <p>Pour retirer également les cartes et toutes les préférences, utilise l’effacement des données de survimap.com dans les paramètres de ton navigateur.</p>
-  <p>Dernière mise à jour : 12 octobre 2026.</p>
+  <p>Dernière mise à jour : 9 novembre 2026.</p>
 </body>
 </html>

@@ -18,6 +18,7 @@ for (const pathname of urls) {
   titles.add(document.title)
   assert.ok(sitemap.includes(`<loc>${origin + pathname}</loc>`), `Sitemap: ${pathname}`)
   for (const script of document.querySelectorAll('script')) {
+    if (script.getAttribute('src') === '/activity.js') { assert.ok(script.defer); continue }
     assert.equal(script.type, 'application/ld+json')
     const schema = JSON.parse(script.textContent)
     assert.equal(schema[0].url, origin + pathname)

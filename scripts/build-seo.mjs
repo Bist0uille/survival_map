@@ -17,6 +17,7 @@ function html({ title, description, url, body, heading }) {
   return `<!doctype html>
 <html lang="fr"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="/activity.js" defer></script>
 <title>${escape(title)}</title><meta name="description" content="${escape(description)}">
 <link rel="canonical" href="${origin + url}"><link rel="icon" href="/favicon.svg" type="image/svg+xml">
 <meta name="theme-color" content="#15803d"><link rel="stylesheet" href="/guides.css">
