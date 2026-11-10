@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { missingBakeryUrl } from './data/osmContribution'
 import { Plus, X, Download, Spline, Footprints, Tent, Satellite, Mountain } from 'lucide-react'
 import { MapView, type NearestQuery } from './map/MapView'
 import { FilterBar } from './components/FilterBar'
@@ -424,6 +425,11 @@ function App() {
         onToggleTrails={toggleTrails}
         showProtected={showProtected}
         onToggleProtected={() => setShowProtected((v) => !v)}
+        onMissingBakery={online ? () => {
+          const b = viewport.current.bounds
+          const url = missingBakeryUrl((b.west + b.east) / 2, (b.south + b.north) / 2)
+          if (url) window.open(url, '_blank', 'noopener,noreferrer')
+        } : undefined}
       />
 
       {/* Vue satellite + mode 3D (haut droite). En ligne uniquement. */}

@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 const mocks = vi.hoisted(() => ({ eval: vi.fn(), hgetall: vi.fn(), exec: vi.fn() }))
 vi.mock('@upstash/redis', () => ({ Redis: class { eval = mocks.eval; pipeline() { return { hgetall: mocks.hgetall, exec: mocks.exec } } } }))
 vi.mock('../server/searchConsole.js', () => ({ searchConsole: vi.fn().mockResolvedValue({ connected: false }) }))
+vi.mock('../server/dataStatus.js', () => ({ dataStatus: vi.fn().mockResolvedValue({ report: null, alerts: [] }) }))
 import { GET, POST } from './admin'
 import { createSession } from '../server/adminAuth'
 const secret = 'private-test-admin-password-at-least-24-chars'

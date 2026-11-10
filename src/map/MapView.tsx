@@ -20,8 +20,8 @@ import {
   personalMarkerEl,
 } from './mapHelpers'
 import { toast } from '../data/toast'
-import { featurePopupHtml, personalPopupHtml, checkinSectionHtml } from '../components/popupHtml'
-import { fetchOsmTimestamp, formatFreshness } from '../data/freshness'
+import { featurePopupHtml, personalPopupHtml, checkinSectionHtml, bakeryHoursHtml } from '../components/popupHtml'
+import { fetchOsmDetails, formatFreshness } from '../data/freshness'
 import { fetchRefugeInfo } from '../data/refugesInfo'
 import { checkinsToFC, type CheckinRecord, type Verdict } from '../data/checkinLogic'
 import type { CheckinMap } from '../data/checkins'
@@ -166,11 +166,16 @@ function openPoiPopup(
     .setHTML(featurePopupHtml(props) + extraHtml + section)
     .addTo(m)
   // Fraîcheur OSM : seulement pour les données OSM (pas les sources open data).
-  if (navigator.onLine && !props.source && !props.check_date && !props['survey:date']) {
-    fetchOsmTimestamp(String(props.id ?? '')).then((ts) => {
-      if (!ts || !popup.isOpen()) return
+  const bakery = props.iconId === 'bakery' || (props.categoryId === 'bakery' && !props.iconId)
+  if (navigator.onLine && !props.source && (bakery || (!props.check_date && !props['survey:date']))) {
+    fetchOsmDetails(String(props.id ?? '')).then((details) => {
+      if (!details || !popup.isOpen()) return
       const el = popup.getElement()?.querySelector('[data-freshness]')
-      if (el) el.textContent = `Donnée OSM modifiée le ${formatFreshness(ts)}`
+      if (el && details.timestamp) el.textContent = `Donnée OSM modifiée le ${formatFreshness(details.timestamp)}`
+      const hours = popup.getElement()?.querySelector('[data-bakery-hours]')
+      if (bakery && hours) {
+        hours.outerHTML = bakeryHoursHtml(details.openingHours, details.hoursChecked)
+      }
     })
   }
   // Enrichissement Refuges.info (refuges et eau, en ligne) : fiche liée,

@@ -10,6 +10,7 @@ interface FilterBarProps {
   onToggleTrails: () => void
   showProtected: boolean
   onToggleProtected: () => void
+  onMissingBakery?: () => void
 }
 
 const NEEDS: { id: NeedId; label: string; description: string; icon: LucideIcon; color: string }[] = [
@@ -23,7 +24,7 @@ const NEEDS: { id: NeedId; label: string; description: string; icon: LucideIcon;
   { id: 'read', label: 'Lire', description: 'Boîtes à livres', icon: BookOpen, color: '#26858d' },
 ]
 
-export function FilterBar({ active, onToggle, onToggleGroup, showTrails, onToggleTrails, showProtected, onToggleProtected }: FilterBarProps) {
+export function FilterBar({ active, onToggle, onToggleGroup, showTrails, onToggleTrails, showProtected, onToggleProtected, onMissingBakery }: FilterBarProps) {
   const [open, setOpen] = useState(false)
   const [detail, setDetail] = useState<NeedId | null>(null)
   const dialog = useRef<HTMLDialogElement>(null)
@@ -132,6 +133,10 @@ export function FilterBar({ active, onToggle, onToggleGroup, showTrails, onToggl
         </div>
 
         <div className="shrink-0 border-t border-slate-100 bg-white px-5 pb-[max(1rem,env(safe-area-inset-bottom))] pt-3">
+          {onMissingBakery && <div className="mb-3 text-xs">
+            <button type="button" onClick={onMissingBakery} className="min-h-9 text-green-800 underline underline-offset-2">Il manque une boulangerie ? Signaler sur OpenStreetMap ↗</button>
+            <p className="text-[10px] text-slate-500">Une note publique s’ouvre au centre de la carte. Place le repère et indique le nom, l’adresse et les horaires connus.</p>
+          </div>}
           <div className="mb-3 flex items-center justify-between text-xs text-slate-500"><span role="status">{count === 0 ? 'Aucun filtre actif' : `${count} filtre${count > 1 ? 's' : ''} actif${count > 1 ? 's' : ''}`}</span><button type="button" onClick={clear} disabled={count === 0} className="min-h-8 text-green-800 underline underline-offset-2 disabled:opacity-40">Tout effacer</button></div>
           <button type="button" onClick={() => setOpen(false)} className="min-h-12 w-full rounded-xl bg-green-800 px-4 text-sm font-semibold text-white hover:bg-green-900">Voir la carte</button>
         </div>

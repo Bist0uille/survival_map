@@ -11,7 +11,7 @@ async function api(options = {}, days = $('days').value) {
   if (!response.ok) { if (response.status === 401) lock(); throw new Error(data.error || 'Service indisponible') }
   return data
 }
-function lock() { sessionToken = null; generation++; current = null; $('dashboard').hidden = true; $('logout').hidden = true; $('login').hidden = false; for (const id of ['metrics', 'chart', 'pages', 'sources', 'events', 'google-metrics', 'queries', 'google-pages', 'baseline-metrics', 'baseline-queries']) $(id).replaceChildren() }
+function lock() { sessionToken = null; generation++; current = null; $('dashboard').hidden = true; $('logout').hidden = true; $('login').hidden = false; for (const id of ['metrics', 'chart', 'pages', 'sources', 'events', 'google-metrics', 'queries', 'google-pages', 'baseline-metrics', 'baseline-queries', 'data-metrics', 'data-status']) $(id).replaceChildren() }
 function table(id, headings, rows) {
   const root = $(id); root.replaceChildren()
   if (!rows.length) { const p = document.createElement('p'); p.className = 'muted'; p.textContent = 'Aucune donnée sur cette période.'; root.append(p); return }
@@ -28,6 +28,18 @@ function metrics(id, values) {
 function seoMetrics(id, data, percent = false) { metrics(id, [['Clics Google', fmt(data.clicks)], ['Impressions', fmt(data.impressions)], ['Taux de clics', fmt(data.ctr * (percent ? 1 : 100)) + ' %'], ['Position moyenne', data.impressions ? fmt(data.position) : '—']]) }
 function render(data) {
   current = data; $('login').hidden = true; $('dashboard').hidden = false; $('logout').hidden = false
+  const quality = data.dataStatus
+  const report = quality?.report
+  metrics('data-metrics', [
+    ['Dernière publication', quality?.publishedAt ? new Date(quality.publishedAt).toLocaleString('fr-FR') : 'Inconnue'],
+    ['Boulangeries · FR/ES/IT', report ? fmt(report.count) : 'En attente'],
+    ['Avec horaires renseignés', report ? fmt(report.withHours) + ' · ' + fmt(report.withHours / report.count * 100) + ' %' : 'En attente'],
+  ])
+  $('data-status').textContent = quality ? [
+    quality.latestRun && quality.latestRun.status !== 'completed' ? 'Import en cours ou en attente.' : '',
+    ...(quality.alerts || []),
+  ].filter(Boolean).join(' ') || 'Dernier import publié sans alerte. État vérifié au plus toutes les 5 minutes.' : 'Suivi des imports temporairement indisponible.'
+  $('data-status').classList.toggle('warning', !quality || quality.alerts?.length > 0)
   $('updated').textContent = 'Actualisé à ' + new Date().toLocaleTimeString('fr-FR') + ' · audience sur ' + $('days').value + ' jours, aujourd’hui inclus'
   $('collection').textContent = data.enabled ? 'Compteurs sans cookie ni identifiant visiteur. Une ouverture de page compte une visite ; recharger ou ouvrir un autre onglet compte à nouveau. Aucun historique antérieur à l’installation n’est reconstitué.' : 'Collecte désactivée. Définir ANALYTICS_ENABLED=true dans les variables serveur, puis redéployer pour démarrer la mesure.'
   const totals = {}

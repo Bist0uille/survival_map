@@ -61,6 +61,7 @@ osmium export /tmp/filtered.osm.pbf --add-unique-id=type_id \
 
 echo "→ Transformation (catégories + centroïdes)"
 node scripts/osm-to-pmtiles-input.mjs < /tmp/filtered.geojsonseq > /tmp/input.geojsonseq
+node scripts/bakery-report.mjs generate /tmp/input.geojsonseq /tmp/bakery-status.json
 
 # The extra hotel/guesthouse records above are context only: the OSM converter
 # excludes them. They help recognise hostels classified differently across sources.

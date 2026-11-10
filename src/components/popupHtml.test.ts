@@ -3,6 +3,26 @@ import { featurePopupHtml, checkinSectionHtml } from './popupHtml'
 import type { CheckinRecord } from '../data/checkinLogic'
 
 describe('featurePopupHtml', () => {
+  it('shows missing hours without claiming the bakery is open and links the correct OSM area', () => {
+    const html = featurePopupHtml({ id: 'a889', iconId: 'bakery', categoryId: 'bakery' })
+    expect(html).toContain('Horaires inconnus')
+    expect(html).not.toContain('Ouvert maintenant')
+    expect(html).toContain('editor=id&amp;relation=444')
+    expect(html).toContain('Corriger les infos')
+  })
+  it('escapes opening hours and keeps their own verification date separate from the object date', () => {
+    const html = featurePopupHtml({ id: 'node/123', categoryId: 'bakery', opening_hours: '<img src=x onerror=alert(1)>',
+      check_date: '2026-10-01', 'check_date:opening_hours': '2026-09-01' })
+    expect(html).toContain('Horaires vérifiés le 01/09/2026')
+    expect(html).toContain('&lt;img')
+    expect(html).not.toContain('<img')
+    expect(html).toContain('editor=id&amp;node=123')
+  })
+  it('does not mistake groceries for bakeries or offer OSM edits on a third-party record', () => {
+    const html = featurePopupHtml({ id: 'n10', categoryId: 'bakery', iconId: 'grocery', source: 'External' })
+    expect(html).not.toContain('data-bakery-hours')
+    expect(html).not.toContain('Corriger les infos')
+  })
   it('conserve les crédits de chaque fiche fusionnée sans créer de lien dangereux', () => {
     const html = featurePopupHtml({ categoryId: 'hostel', dt_uri: 'https://data.datatourisme.fr/one',
       dt_records: JSON.stringify([
