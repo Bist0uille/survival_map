@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import {
   parseOsmId,
   fetchOsmTimestamp,
+  fetchOsmDetails,
   formatFreshness,
   clearFreshnessCache,
 } from './freshness'
@@ -38,7 +39,7 @@ describe('fetchOsmTimestamp', () => {
     vi.stubGlobal('fetch', fetchMock)
     const ts = await fetchOsmTimestamp('n123')
     expect(ts).toBe('2024-03-12T09:41:00Z')
-    expect(fetchMock).toHaveBeenCalledWith('https://api.openstreetmap.org/api/0.6/node/123.json')
+    expect(fetchMock).toHaveBeenCalledWith('https://api.openstreetmap.org/api/0.6/node/123.json', expect.objectContaining({ credentials: 'omit' }))
   })
 
   it('met en cache : deux appels même id = un seul fetch', async () => {
@@ -61,6 +62,25 @@ describe('fetchOsmTimestamp', () => {
   it('renvoie null sur réponse non-ok (404, 410, 429)', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }))
     expect(await fetchOsmTimestamp('w7')).toBeNull()
+  })
+})
+
+describe('bakery hours freshness', () => {
+  it('shares one request across encoded area IDs, fallback IDs and timestamp lookups', async () => {
+    const fetchMock = vi.fn().mockResolvedValue({ ok: true, json: async () => ({ elements: [{
+      timestamp: '2026-11-10T12:00:00Z', tags: { opening_hours: 'Mo-Sa 06:00-19:00', 'check_date:opening_hours': '2026-11-01' },
+    }] }) })
+    vi.stubGlobal('fetch', fetchMock)
+    expect(await fetchOsmDetails('a889')).toEqual({ timestamp: '2026-11-10T12:00:00Z', openingHours: 'Mo-Sa 06:00-19:00', hoursChecked: '2026-11-01' })
+    await fetchOsmTimestamp('relation/444')
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+    expect(fetchMock.mock.calls[0][0]).toContain('/relation/444.json')
+  })
+  it('explicitly clears removed hours, but preserves fallback data on a request failure', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ elements: [{ tags: {} }] }) }))
+    expect((await fetchOsmDetails('n99'))?.openingHours).toBeNull()
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false }))
+    expect(await fetchOsmDetails('n100')).toBeNull()
   })
 })
 

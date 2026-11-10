@@ -24,7 +24,7 @@ const CATEGORIES = [
 ]
 
 // Tags conservés dans la sortie (popups), pour garder le fichier léger.
-const KEEP_TAGS = ['ele', 'opening_hours', 'access', 'fee', 'description', 'operator', 'website']
+const KEEP_TAGS = ['ele', 'opening_hours', 'check_date:opening_hours', 'access', 'fee', 'description', 'operator', 'website']
 
 function buildQuery() {
   const { south, west, north, east } = AUDE_BBOX
@@ -32,8 +32,7 @@ function buildQuery() {
   const clauses = []
   for (const cat of CATEGORIES) {
     for (const [k, v] of cat.osm) {
-      clauses.push(`  node["${k}"="${v}"]${bbox};`)
-      clauses.push(`  way["${k}"="${v}"]${bbox};`)
+      clauses.push(`  nwr["${k}"="${v}"]${bbox};`)
     }
   }
   return `[out:json][timeout:60];\n(\n${clauses.join('\n')}\n);\nout center tags;`

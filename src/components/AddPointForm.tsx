@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { X } from 'lucide-react'
 import { CATEGORIES, CUSTOM_CATEGORY } from '../data/categories'
 import type { PersonalPoint } from '../types'
+import { missingBakeryUrl } from '../data/osmContribution'
 
 interface AddPointFormProps {
   lat: number
@@ -100,6 +101,7 @@ export function AddPointForm({ lat, lon, onSave, onCancel }: AddPointFormProps) 
             Enregistrer
           </button>
         </div>
+        {categoryId === 'bakery' && navigator.onLine && <p className="mt-3 text-xs text-slate-500">Pour l’ajouter à la carte publique : <a href={missingBakeryUrl(lon, lat) ?? undefined} target="_blank" rel="noopener noreferrer" className="text-green-800 underline">signaler cette boulangerie sur OpenStreetMap ↗</a>.</p>}
       </div>
     </div>
   )

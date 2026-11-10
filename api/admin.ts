@@ -3,6 +3,7 @@ import { adminSecret, authenticated, createSession, equalSecret } from '../serve
 import { redis } from '../server/analytics.js'
 import { isSameSiteRequest, json, readLimitedJson } from '../server/security.js'
 import { searchConsole } from '../server/searchConsole.js'
+import { dataStatus } from '../server/dataStatus.js'
 
 const headers = { 'X-Robots-Tag': 'noindex, nofollow, noarchive', Vary: 'Authorization' }
 const reply = (status: number, data: unknown, extra = {}) => json(status, data, { ...headers, ...extra })
@@ -46,6 +47,7 @@ export async function GET(req: Request) {
     let google
     try { google = await searchConsole(days) } catch { google = { connected: false, error: 'Connexion Google indisponible. Vérifie les identifiants, l’API et les droits Search Console.' } }
     return reply(200, {
+      dataStatus: await dataStatus(),
       enabled: process.env.ANALYTICS_ENABLED === 'true',
       daily: dates.map((date, i) => ({ date, counts: values[i] ?? {} })), google,
       baseline: { source: 'Captures fournies le 9 novembre 2026, fenêtre affichée : 3 mois (dates exactes non confirmées)', clicks: 2, impressions: 135, ctr: 1.5, position: 16.1,

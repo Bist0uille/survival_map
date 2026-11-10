@@ -2,6 +2,7 @@ import { getCategory } from '../data/categories'
 import { freshnessLabel, freshnessOf, type CheckinRecord } from '../data/checkinLogic'
 import type { PersonalPoint } from '../types'
 import { safeExternalUrl } from '../data/safeUrl'
+import { osmEditUrl } from '../data/osmContribution'
 
 /** Échappe le HTML pour éviter toute injection depuis les tags OSM. */
 function esc(s: string): string {
@@ -14,7 +15,6 @@ function esc(s: string): string {
 
 const INTERESTING_TAGS = [
   'ele',
-  'opening_hours',
   'access',
   'fee',
   'drinking_water',
@@ -22,6 +22,15 @@ const INTERESTING_TAGS = [
   'operator',
   'address',
 ]
+
+export function bakeryHoursHtml(hours: unknown, checked: unknown = null): string {
+  const value = typeof hours === 'string' ? hours.trim() : ''
+  return `<div data-bakery-hours style="margin:6px 0;font-size:0.8rem">
+    <b>Horaires ${value ? 'renseignés' : 'inconnus'}</b>${value ? `<div style="overflow-wrap:anywhere">${esc(value)}</div>` : ''}
+    ${typeof checked === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(checked) ? `<div>Horaires vérifiés le ${esc(frDate(checked))}</div>` : ''}
+    <div class="text-slate-500" style="font-size:0.72rem">${value ? 'Selon les horaires renseignés dans OpenStreetMap. Vacances et fermetures exceptionnelles possibles.' : 'Aucune ouverture actuelle ne peut être confirmée.'}</div>
+  </div>`
+}
 
 /** "2024-03-12" (ou ISO complet) → "12/03/2024" ; valeur brute sinon. */
 function frDate(s: string): string {
@@ -57,6 +66,8 @@ export function featurePopupHtml(
   const categoryId = String(p.categoryId ?? '')
   const cat = getCategory(categoryId)
   const name = String(p.name ?? '') || cat.label
+  const bakery = p.iconId === 'bakery' || (categoryId === 'bakery' && !p.iconId)
+  const editUrl = !p.source ? osmEditUrl(String(p.id ?? '')) : null
   const rows = INTERESTING_TAGS.filter((k) => p[k] != null && p[k] !== '')
     .map(
       (k) =>
@@ -78,9 +89,11 @@ export function featurePopupHtml(
       <div style="color:${cat.color};font-weight:600">${esc(name)}</div>
       <div class="text-slate-400" style="font-size:0.72rem;margin-bottom:4px">${esc(cat.label)}</div>
       ${rows}
+      ${bakery ? bakeryHoursHtml(p.opening_hours, p['check_date:opening_hours']) : p.opening_hours ? `<div class="text-slate-500"><b>Horaires renseignés</b> : ${esc(String(p.opening_hours))}</div>` : ''}
       ${fresh}
       ${tourismCredits(p)}
       ${site ? `<div style="margin-top:4px"><a href="${esc(site)}" target="_blank" rel="noopener noreferrer" style="text-decoration:underline">Site de l’établissement</a></div>` : ''}
+      ${editUrl ? `<div style="margin-top:8px"><a href="${esc(editUrl)}" target="_blank" rel="noopener noreferrer" style="text-decoration:underline">Corriger les infos sur OpenStreetMap ↗</a><div class="text-slate-400" style="font-size:0.7rem">Compte OSM requis. La carte intégrera la correction après une prochaine mise à jour.</div></div>` : ''}
       <div data-refuges class="text-slate-500" style="font-size:0.72rem"></div>
     </div>`
 }
